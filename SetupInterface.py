@@ -2,8 +2,9 @@
 # 此文件负责定义：各个设置参数界面
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from ConstValues import ConstValues
 
 
 class SetupInterface():
@@ -17,78 +18,319 @@ class SetupInterface():
         self.deleteBlankPPM = None
         self.deleteBlankPercentage = None
 
-    #######################################
+        # 生成数据库所需要返回的数据，数据初值无所谓
+        self.GDBClass = None  # 数据库生成(参数)：Class类型
+        # 1~100（整数）
+        self.GDBCarbonRangeLow = None  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+        self.GDBCarbonRangeHigh = None  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
+        # 1~30（整数）
+        self.GDBDBERageLow = None  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
+        self.GDBDBERageHigh = None  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+        # 50~1500(整数)
+        self.GDBM_ZRageLow = None  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageHigh = None  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        # 离子类型
+        self.GDB_MHPostive = None  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = None  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = None  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = None  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+
+    # 设置有int校验器的QLineEdit
+    def IntQLineEdit(self, low, high, text):
+        # 设置校验器
+        intValidator = QIntValidator()
+        intValidator.setRange(low, high)
+        # 创建QLineEdit
+        lineEdit = QLineEdit()
+        lineEdit.setValidator(intValidator)  # 设置校验器
+        lineEdit.setPlaceholderText(text)  # 默认显示内容
+        lineEdit.setAlignment(Qt.AlignRight)  # 对齐方式
+        lineEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        return lineEdit
+
+    # 设置有double校验器的QLineEdit
+    def DoubleQLineEdit(self, low, high, decimals, text):
+        # 设置校验器
+        doubleValidator = QDoubleValidator()
+        doubleValidator.setRange(low, high, decimals)
+        doubleValidator.setNotation(QDoubleValidator.StandardNotation)  # 必须有这一句校验器设置的范围才有效
+        # 创建QLineEdit
+        lineEdit = QLineEdit()
+        lineEdit.setValidator(doubleValidator)  # 设置校验器
+        lineEdit.setPlaceholderText(text)  # 默认显示内容
+        lineEdit.setAlignment(Qt.AlignRight)  # 对齐方式
+        lineEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        return lineEdit
+
+    # 设置正则表示式校验器QLineEdit
+    def RegExpQLineEdit(self, reg, text):
+        # 设置校验器
+        regExpValidator = QRegExpValidator()
+        regExpValidator.setRegExp(QRegExp(reg))
+        # 创建QLineEdit
+        lineEdit = QLineEdit()
+        lineEdit.setValidator(regExpValidator)  # 设置校验器
+        lineEdit.setPlaceholderText(text)  # 默认显示内容
+        lineEdit.setAlignment(Qt.AlignLeft)  # 对齐方式
+        lineEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        return lineEdit
+
+    # 设置QLabel
+    def GetQLabel(self, text):
+        label = QLabel()
+        label.setText(text)
+        label.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        return label
+
+    #############################################################
     # 扣空白设置对话框
-    def DeleteBlankSetup(self, defaultIntensity=1000, defalutPPM=1.00, defaultPercentage=50):
-        """
-        :param defaultIntensity: 默认强度
-        :param defalutPPM: 默认PPM
-        :param defaultPercentage: 默认百分比
-        :return: 返回设置后的强度，PPM，百分比
-        """
-        self.deleteBlankIntensity = defaultIntensity
-        self.deleteBlankPPM = defalutPPM
-        self.deleteBlankPercentage = defaultPercentage
+    def DeleteBlankSetup(self, parameters):
+        # 设置默认参数
+        self.DeleteBlankSetDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.deleteBlankDialog = QDialog()
+        self.deleteBlankDialog.setWindowTitle("扣空白参数设置")
+        self.deleteBlankDialog.setFixedSize(ConstValues.PsSetupFontSize * 25, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
 
         # Intensity对话框
-        self.deleteBlankdialog = QDialog()
-        self.deleteBlankdialog.setWindowTitle("扣空白参数设置")
-        self.deleteBlankdialog.setFixedSize(200, 120)  # 固定窗口大小
-        # 创建QLineEdit
-        self.deleteBlankEdit1 = QLineEdit()
-        self.deleteBlankEdit1.setValidator(QIntValidator())  # 设置int校验器
-        self.deleteBlankEdit1.setMaxLength(4)  # 不超过9999
-        self.deleteBlankEdit1.setAlignment(Qt.AlignRight)  # 设置右对齐
-        self.deleteBlankEdit1.setPlaceholderText(str(defaultIntensity))  # 设置默认显示数值
-        self.deleteBlankEdit1.textChanged.connect(self.HandleTextChangedIntensity)
-        #edit1.setFont(QFont("Arial", 10))  # 设置字体
-
+        deleteBlankEdit1 = self.IntQLineEdit(1, 9999, str(self.deleteBlankIntensity))
+        deleteBlankEdit1.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Intensity", deleteBlankEdit1))
         # PPM对话框
-        self.deleteBlankEdit2 = QLineEdit()  # ppm 范围[0.01,99.99]浮点数
-        doubleValidator = QDoubleValidator()
-        doubleValidator.setRange(0, 100)  # 设置校验器范围
-        doubleValidator.setNotation(QDoubleValidator.StandardNotation)  # 必须有这一句校验器设置的范围才有效
-        doubleValidator.setDecimals(2)  # 设置校验器小数点位数
-        self.deleteBlankEdit2.setValidator(doubleValidator)  # 设置浮点数校验器
-        self.deleteBlankEdit2.setAlignment(Qt.AlignRight)
-        self.deleteBlankEdit2.setPlaceholderText(str(defalutPPM))  # 设置默认显示数值
-        self.deleteBlankEdit2.textChanged.connect(self.HandleTextChangedPPM)
-
+        deleteBlankEdit2 = self.DoubleQLineEdit(1, 99, 2, str(self.deleteBlankPPM))
+        deleteBlankEdit2.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("PPM", deleteBlankEdit2))
         # Percentage对话框
-        self.deleteBlankEdit3 = QLineEdit()  # percentage 范围[0,99]整数
-        self.deleteBlankEdit3.setValidator(QIntValidator())  # 设置int校验器
-        self.deleteBlankEdit3.setMaxLength(2)  # 不超过99
-        self.deleteBlankEdit3.setAlignment(Qt.AlignRight)  # 设置右对齐
-        self.deleteBlankEdit3.setPlaceholderText(str(defaultPercentage))  # 设置默认显示数值
-        self.deleteBlankEdit3.textChanged.connect(self.HandleTextChangedPercentage)
+        deleteBlankEdit3 = self.IntQLineEdit(1, 99, str(self.deleteBlankPercentage))
+        deleteBlankEdit3.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Percentage", deleteBlankEdit3))
+        # 创建按钮
+        deleteBlankButton1 = QPushButton("确定")
+        deleteBlankButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        deleteBlankButton1.clicked.connect(lambda : self.HBCDeleteBlank(parameters, True))
+        deleteBlankButton2 = QPushButton("退出")
+        deleteBlankButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        deleteBlankButton2.clicked.connect(lambda : self.HBCDeleteBlank(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.deleteBlankDialog)
+        # 第一行内容，intensity
+        layout.addWidget(self.GetQLabel("intensity(<9999)："), 0, 0, 1, 2)
+        layout.addWidget(deleteBlankEdit1, 0, 2, 1, 2)
+        # 第二行内容，ppm
+        layout.addWidget(self.GetQLabel("ppm(0.01~99.99)："), 1, 0, 1, 2)
+        layout.addWidget(deleteBlankEdit2, 1, 2, 1, 2)
+        # 第三行内容，percentage
+        layout.addWidget(self.GetQLabel("percentage(0~99)%："), 2, 0, 1, 2)
+        layout.addWidget(deleteBlankEdit3, 2, 2, 1, 2)
+        # 最后一行内容，按钮行
+        layout.addWidget(deleteBlankButton1, 3, 2)
+        layout.addWidget(deleteBlankButton2, 3, 3)
+
+        self.deleteBlankDialog.exec()
+        # 返回值类型：list
+        retList = [self.deleteBlankIntensity,
+                   self.deleteBlankPPM,
+                   self.deleteBlankPercentage]
+        return retList
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedDeleteBlank(self, DBType, edit):
+        if edit.text() != "":
+            if DBType == "Intensity":
+                self.deleteBlankIntensity = int(edit.text())
+            elif DBType == "PPM":
+                self.deleteBlankPPM = float(edit.text())
+            elif DBType == "Percentage":
+                self.deleteBlankPercentage = int(edit.text())
+
+    # 设置参数为用户上次输入的值
+    def DeleteBlankSetDefaultParameters(self, parameters):
+        self.deleteBlankIntensity = parameters[0]
+        self.deleteBlankPPM = parameters[1]
+        self.deleteBlankPercentage = parameters[2]
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCDeleteBlank(self, parameters, isOK):
+        if not isOK:
+            self.DeleteBlankSetDefaultParameters(parameters)
+        self.deleteBlankDialog.close()
+
+    #############################################################
+    def GenerateDataBaseSetup(self, parameters):
+        # 设置参数（上一次更改后的参数）
+        self.GDBSetDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.GDBDialog = QDialog()
+        self.GDBDialog.setWindowTitle("数据库生成参数设置")
+        self.GDBDialog.setFixedSize(ConstValues.PsSetupFontSize * 52, ConstValues.PsSetupFontSize * 35)  # 固定窗口大小
+
+        # Class
+        GDBEdit1 = self.RegExpQLineEdit("([a-zA-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
+        GDBEdit1.textChanged.connect(lambda : self.HandleTextChangedGDB("Class", GDBEdit1))
+        # carbon rage(碳数范围)：1~100（整数）
+        GDBEdit2 = self.IntQLineEdit(1, 100, str(self.GDBCarbonRangeLow))
+        GDBEdit3 = self.IntQLineEdit(1, 100, str(self.GDBCarbonRangeHigh))
+        GDBEdit2.textChanged.connect(lambda: self.HandleTextChangedGDB("carbon rage low", GDBEdit2))
+        GDBEdit3.textChanged.connect(lambda: self.HandleTextChangedGDB("carbon rage high", GDBEdit3))
+        # DBE rage(不饱和度范围)：1~30（整数）
+        GDBEdit4 = self.IntQLineEdit(1, 30, str(self.GDBDBERageLow))
+        GDBEdit5 = self.IntQLineEdit(1, 30, str(self.GDBDBERageHigh))
+        GDBEdit4.textChanged.connect(lambda: self.HandleTextChangedGDB("DBE rage low", GDBEdit4))
+        GDBEdit5.textChanged.connect(lambda: self.HandleTextChangedGDB("DBE rage high", GDBEdit5))
+        # m/z rage(质荷比范围)：50~1500(整数)
+        GDBEdit6 = self.IntQLineEdit(50, 1500, str(self.GDBM_ZRageLow))
+        GDBEdit7 = self.IntQLineEdit(50, 1500, str(self.GDBM_ZRageHigh))
+        GDBEdit6.textChanged.connect(lambda: self.HandleTextChangedGDB("m/z rage low", GDBEdit6))
+        GDBEdit7.textChanged.connect(lambda: self.HandleTextChangedGDB("m/z rage high", GDBEdit7))
+        # 离子类型（复选按钮）
+        GDBCheckBox1 = QCheckBox("[M+H]+")  # 四个复选框
+        GDBCheckBox2 = QCheckBox("M+")
+        GDBCheckBox3 = QCheckBox("[M-H]-")
+        GDBCheckBox4 = QCheckBox("M-")
+        GDBCheckBox1.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))  # 设置字体
+        GDBCheckBox2.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        GDBCheckBox3.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        GDBCheckBox4.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        GDBCheckBox1.setChecked(self.GDB_MHPostive)  # 设置初始勾选
+        GDBCheckBox2.setChecked(self.GDB_MPostive)
+        GDBCheckBox3.setChecked(self.GDB_MHNegative)
+        GDBCheckBox4.setChecked(self.GDB_MNegative)
+        GDBCheckBox1.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 1))  # 绑定槽函数
+        GDBCheckBox2.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 2))
+        GDBCheckBox3.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 3))
+        GDBCheckBox4.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 4))
 
         # 创建按钮
-        self.deleteBlankButton1 = QPushButton("确定")
-        # self.deleteBlankButton1.resize(30, 10)
-        self.deleteBlankButton1.clicked.connect(self.HandleButton1Clicked)
+        GDBButton1 = QPushButton("确定")
+        GDBButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        GDBButton1.clicked.connect(lambda : self.HBCGDB(parameters, True))
+        GDBButton2 = QPushButton("退出")
+        GDBButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        GDBButton2.clicked.connect(lambda : self.HBCGDB(parameters, False))
 
-        formLayout = QFormLayout(self.deleteBlankdialog)
-        formLayout.addRow(QLabel("intensity"), self.deleteBlankEdit1)
-        formLayout.addRow(QLabel("ppm"), self.deleteBlankEdit2)
-        formLayout.addRow(QLabel("percentage%"), self.deleteBlankEdit3)
-        formLayout.addRow(self.deleteBlankButton1)
+        # 创建栅格布局
+        layout = QGridLayout(self.GDBDialog)
+        # layout.setSpacing(10)
+        # 第一行内容，Class
+        layout.addWidget(self.GetQLabel("class："), 0, 0)
+        layout.addWidget(GDBEdit1, 0, 1, 1, 6)  # 第0行第1列，占1行3列
+        # 第二行内容，carbon rage
+        layout.addWidget(self.GetQLabel("carbon rage(min)1~100:"), 1, 0, 1, 2)
+        layout.addWidget(GDBEdit2, 1, 2)
+        layout.addWidget(self.GetQLabel("carbon rage(max)1~100:"), 1, 4, 1, 2)
+        layout.addWidget(GDBEdit3, 1, 6)
+        # 第三行内容，DBE rage
+        layout.addWidget(self.GetQLabel("DBE rage(min)1~30:"), 2, 0, 1, 2)
+        layout.addWidget(GDBEdit4, 2, 2)
+        layout.addWidget(self.GetQLabel("DBE rage(max)1~30:"), 2, 4, 1, 2)
+        layout.addWidget(GDBEdit5, 2, 6)
+        # 第四行内容，m/z rage
+        layout.addWidget(self.GetQLabel("DBE rage(min)50~1500:"), 3, 0, 1, 2)
+        layout.addWidget(GDBEdit6, 3, 2)
+        layout.addWidget(self.GetQLabel("DBE rage(max)50~1500:"), 3, 4, 1, 2)
+        layout.addWidget(GDBEdit7, 3, 6)
+        # 第五行内容，离子类型
+        layout.addWidget(self.GetQLabel("选择离子类型："), 4, 0)
+        layout.addWidget(GDBCheckBox1, 4, 2)
+        layout.addWidget(GDBCheckBox2, 4, 3)
+        layout.addWidget(GDBCheckBox3, 4, 5)
+        layout.addWidget(GDBCheckBox4, 4, 6)
+        # 最后一行内容，按钮行
+        layout.addWidget(GDBButton1, 6, 5)
+        layout.addWidget(GDBButton2, 6, 6)
 
-        self.deleteBlankdialog.exec()
-        return self.deleteBlankIntensity, self.deleteBlankPPM, self.deleteBlankPercentage
+        self.GDBDialog.exec()
+        # 返回值类型：list
+        retList = [self.GDBClass,
+                   self.GDBCarbonRangeLow,
+                   self.GDBCarbonRangeHigh,
+                   self.GDBDBERageLow,
+                   self.GDBDBERageHigh,
+                   self.GDBM_ZRageLow,
+                   self.GDBM_ZRageHigh,
+                   self.GDB_MHPostive,
+                   self.GDB_MPostive,
+                   self.GDB_MHNegative,
+                   self.GDB_MNegative]
+        return retList
 
-    def HandleTextChangedIntensity(self, text):
-        if text != "":
-            self.deleteBlankIntensity = int(text)
+    # GDBEdit1~GDBEdit7文字改变会进入该函数
+    def HandleTextChangedGDB(self, GDBType, edit):
+        if edit.text() != "":
+            if GDBType == "Class":
+                self.GDBClass = edit.text().split(",")  # 转为list
+            elif GDBType == "carbon rage low":
+                self.GDBCarbonRangeLow = int(edit.text())
+            elif GDBType == "carbon rage high":
+                self.GDBCarbonRangeHigh = int(edit.text())
+            elif GDBType == "DBE rage low":
+                self.GDBDBERageLow = int(edit.text())
+            elif GDBType == "DBE rage high":
+                self.GDBDBERageHigh = int(edit.text())
+            elif type == "m/z rage low":
+                GDBType.GDBM_ZRageLow = int(edit.text())
+            elif type == "m/z rage high":
+                GDBType.GDBM_ZRageHigh = int(edit.text())
 
-    def HandleTextChangedPPM(self, text):
-        if text != "":
-            self.deleteBlankPPM = float(text)
+    # 当GDBCheckBox1~GDBCheckBox4状态改变会进入该函数
+    def GDBCheckboxState(self, cb1, cb2, cb3, cb4, type):
+        """
+        :param cb1: 第一个复选框
+        :param cb2: 第二个复选框
+        :param cb3: 第三个复选框
+        :param cb4: 第四个复选框
+        :param type: 区分是通过哪个复选框按下进入的
+        :return:
+        """
+        # 3种状态：未选中：0，半选中：1， 选中：2
+        if (cb1.isChecked() or cb2.isChecked()) and (cb3.isChecked() or cb4.isChecked()):
+            # 说明勾选某个复选框后造成不合法，正负离子均被选中
+            if type == 1:  # 正离子状态[M+H]+
+                cb3.setCheckState(False)
+                cb4.setCheckState(False)
+            elif type == 2:  # 正离子状态M+
+                cb3.setCheckState(False)
+                cb4.setCheckState(False)
+            elif type == 3:  # 负离子状态[M-H]-
+                cb1.setCheckState(False)
+                cb2.setCheckState(False)
+            elif type == 4:  # 负离子状态M-
+                cb1.setCheckState(False)
+                cb2.setCheckState(False)
+        if cb1.isChecked() or cb2.isChecked() or cb3.isChecked() or cb4.isChecked():  # 有一个勾选即可改变变量的值
+            self.GDB_MHPostive = cb1.isChecked()  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+            self.GDB_MPostive = cb2.isChecked()  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+            self.GDB_MHNegative = cb3.isChecked()  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+            self.GDB_MNegative = cb4.isChecked()  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
-    def HandleTextChangedPercentage(self, text):
-        if text != "":
-            self.deleteBlankPercentage = int(text)
+    # 设置参数为用户上次输入的值
+    def GDBSetDefaultParameters(self, parameters):
+        # 设置参数
+        self.GDBClass = parameters[0]  # 数据库生成(参数)：Class类型
+        # 1~100（整数）
+        self.GDBCarbonRangeLow = parameters[1]  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+        self.GDBCarbonRangeHigh = parameters[2]  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
+        # 1~30（整数）
+        self.GDBDBERageLow = parameters[3]  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
+        self.GDBDBERageHigh = parameters[4]  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+        # 50~1500(整数)
+        self.GDBM_ZRageLow = parameters[5]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageHigh = parameters[6]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        # 离子类型
+        self.GDB_MHPostive = parameters[7]  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = parameters[8]  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = parameters[9]  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = parameters[10]  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
-    def HandleButton1Clicked(self):
-        self.deleteBlankdialog.close()
-    #######################################
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCGDB(self, parameters, isOK):
+        if not isOK:
+            self.GDBSetDefaultParameters(parameters)
+        self.GDBDialog.close()
+
+    #############################################################
+
+
+
+
 

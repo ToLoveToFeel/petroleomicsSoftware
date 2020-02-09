@@ -2,11 +2,12 @@
 # 此文件负责定义：扣空白
 import numpy as np
 import pandas as pd
+import xlsxwriter
 from ConstValues import ConstValues
 
 
 class ClassDeleteBlank():
-    def __init__(self, samplePath, blankPath):
+    def __init__(self, samplePath, blankPath, parameterList):
         """
         :param samplePath: 样本文件路径
         :param blankPath: 空白文件路径
@@ -16,18 +17,27 @@ class ClassDeleteBlank():
         self.sampleData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
         self.blankData = pd.read_excel(io=blankPath, header=ConstValues.PsHeaderLine)
         self.blankData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
+        # 可调参数
+        assert len(parameterList) == 3, "ClassDeleteBlank参数不对"
+        self.deleteBlankIntensity = parameterList[0]
+        self.deleteBlankPPM = parameterList[1]
+        self.deleteBlankPercentage = parameterList[2]
 
-    # 删除Intensity小于dintensity的行
-    def DeleteSmallIntensity(self, intensity):
+    def DeleteBlank(self):
+        self.DeleteSmallIntensity()
+        return self.DeleteSimilarToBlank()
+
+    # 删除Intensity小于self.deleteBlankIntensity的行
+    def DeleteSmallIntensity(self):
         # 只保留大于intensity的行
-        self.sampleData = self.sampleData[self.sampleData.Intensity > intensity]
-        self.blankData = self.blankData[self.blankData.Intensity > intensity]
-        if ConstValues.PsIsDebug == True:
+        self.sampleData = self.sampleData[self.sampleData.Intensity > self.deleteBlankIntensity]
+        self.blankData = self.blankData[self.blankData.Intensity > self.deleteBlankIntensity]
+        if ConstValues.PsIsDebug:
             print(self.sampleData.shape[0])  # 180-onescan-external.xlsx处理后：5888
             print(self.blankData.shape[0])  # blank-3.xlsx处理后：3778
 
     # 删去样本和空白中相同的mass且intensity相近的mass，必须调过DeleteSmallIntensity函数调用此函数才有意义
-    def DeleteSimilarToBlank(self, ppm, percentage):
+    def DeleteSimilarToBlank(self):
         """
                     m1:样本中的mass
                     m2:空白中的mass
@@ -42,7 +52,7 @@ class ClassDeleteBlank():
         m2 = self.blankData["Mass"].values             # 空白中的mass
         in2 = self.blankData["Intensity"].values      # 空白中的intensity
         self.reslut = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
-        if ConstValues.PsIsDebug == True:
+        if ConstValues.PsIsDebug:
             print(type(self.reslut))
             print(self.reslut[:6, :])
 
@@ -56,8 +66,8 @@ class ClassDeleteBlank():
             breakFlag = False
             j = 0
             while j < m1.size:
-                if abs((m1[j] - m2[i]) * 1000000.0 / m1[j]) < ppm:
-                    if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < percentage:
+                if abs((m1[j] - m2[i]) * 1000000.0 / m1[j]) < self.deleteBlankPPM:
+                    if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < self.deleteBlankPercentage:
                         deleteList.append(j)
                         breakFlag = True
                 elif breakFlag == True or m1[j] > m2[i]:
@@ -74,25 +84,34 @@ class ClassDeleteBlank():
 
         self.reslut = np.delete(self.reslut, deleteList, axis=0)  # 删除索引在deleteList中的向量
 
-        if ConstValues.PsIsDebug == True:
+        if ConstValues.PsIsDebug:
             print(len(deleteList))
             print(self.reslut.shape)
             print(self.reslut[:6, :])
 
-        # # 将self.reslut写入excel文件，需要头文件openpyxl
-        # writer = pd.ExcelWriter("afterDeleteBlank.xlsx")
-        # data = pd.DataFrame(self.reslut)
-        # data.columns = ["Mass", "Intensity"]
-        # data.to_excel(writer)
-        # writer.save()
-        # writer.close()
-
-        # # 将self.reslut写入txt文件
-        # np.savetxt("afterDeleteBlank.txt", self.reslut, fmt='%.6f')
+        data = []
+        data.append(["Mass", "Intensity"])
+        for item in self.reslut:
+            data.append(item)
+        self.WriteDataToExcel(data, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
 
         deleteBlankIsFinished = True  # 该过程已经完成
 
         return self.reslut, deleteBlankIsFinished
 
-
+    # 负责将数据写入xlsx文件
+    def WriteDataToExcel(self, data, filename):
+        """
+        :param data: 每一行是一组数据，第一行是表头
+        :return:
+        """
+        # 新建excel表
+        workbook = xlsxwriter.Workbook(filename)
+        # 创建sheet，默认名称sheet1
+        worksheet = workbook.add_worksheet()
+        # 数据写入excel
+        for i in range(len(data)):
+            worksheet.write_row("A{}".format(i + 1), data[i])
+        # 将excel文件保存关闭，如果没有这一行运行代码会报错
+        workbook.close()
 

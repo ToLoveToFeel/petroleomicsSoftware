@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 from ClassDeleteBlank import ClassDeleteBlank
+from ClassGenerateDataBase import ClassGenerateDataBase
 from SetupInterface import SetupInterface
 
 
@@ -58,45 +59,45 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
-        textList = ["扣空白状态：", "扣空白状态：", "扣空白状态：", "扣空白状态：", "扣空白状态："]
+        textList = ["扣空白状态：", "数据库生成状态：", "扣空白状态：", "扣空白状态：", "扣空白状态："]
         for i in range(len(textList)):
             self.TextLabel(textList[i], 20, (i + 1) * 120)
 
         # 扣空白message
         self.messageLabel1 = QLabel(self)
         self.messageLabel1.setText("未运行")
-        self.messageLabel1.resize(150, 50)
+        self.messageLabel1.resize(180, 50)
         self.messageLabel1.setFont(QFont("Arial", 15))
-        self.messageLabel1.move(150, 120)
-        # 扣空白message
+        self.messageLabel1.move(180, 120)
+        # 数据库生成message
         self.messageLabel2 = QLabel(self)
         self.messageLabel2.setText("未运行")
-        self.messageLabel2.resize(150, 50)
+        self.messageLabel2.resize(180, 50)
         self.messageLabel2.setFont(QFont("Arial", 15))
-        self.messageLabel2.move(150, 240)
+        self.messageLabel2.move(180, 240)
         # 扣空白message
         self.messageLabel3 = QLabel(self)
         self.messageLabel3.setText("未运行")
-        self.messageLabel3.resize(150, 50)
+        self.messageLabel3.resize(180, 50)
         self.messageLabel3.setFont(QFont("Arial", 15))
-        self.messageLabel3.move(150, 360)
+        self.messageLabel3.move(180, 360)
         # 扣空白message
         self.messageLabel4 = QLabel(self)
         self.messageLabel4.setText("未运行")
-        self.messageLabel4.resize(150, 50)
+        self.messageLabel4.resize(180, 50)
         self.messageLabel4.setFont(QFont("Arial", 15))
-        self.messageLabel4.move(150, 480)
+        self.messageLabel4.move(180, 480)
         # 扣空白message
         self.messageLabel5 = QLabel(self)
         self.messageLabel5.setText("未运行")
-        self.messageLabel5.resize(150, 50)
+        self.messageLabel5.resize(180, 50)
         self.messageLabel5.setFont(QFont("Arial", 15))
-        self.messageLabel5.move(150, 600)
+        self.messageLabel5.move(180, 600)
 
     # 主界面文本显示
     def TextLabel(self, text, x, y):
         textLabel = QLabel(self)
-        textLabel.resize(150, 50)
+        textLabel.resize(180, 50)
         textLabel.setText(text)
         textLabel.setFont(QFont("Arial", 15))
         textLabel.move(x, y)
@@ -119,14 +120,48 @@ class MainWin(QMainWindow):
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
         self.blankFilePath = ""  # 空白文件路径
-        # self.sampleFilePath = "D:/Code/Libratory/大连化物所/石油组学软件/inputData/180-onescan-external.xlsx"
-        # self.blankFilePath = "D:/Code/Libratory/大连化物所/石油组学软件/inputData/blank-3.xlsx"
+        # self.sampleFilePath = "./inputData/180-onescan-external.xlsx"
+        # self.blankFilePath = "./inputData/blank-3.xlsx"
+
         # 删空白全过程需要的数据
-        self.deleteBlankIntensity = 1000     # 删空白：删除Intensity小于deleteBlankIntensity的行
-        self.deleteBlankPPM = 1.00           # 删空白：删去样本和空白中相同的mass且intensity相近的mass中的指标
-        self.deleteBlankPercentage = 50      # 删空白：删去样本和空白中相同的mass且intensity相近的mass中的指标
+        self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 删空白(参数)：删除Intensity小于deleteBlankIntensity的行
+        self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM                  # 删空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
+        self.deleteBlankPercentage = ConstValues.PsDeleteBlankPercentage    # 删空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
+        self.deleteBlankList = [self.deleteBlankIntensity,
+                                self.deleteBlankPPM,
+                                self.deleteBlankPercentage]
         self.deleteBlankIsFinished = False   # 删空白：记录删空白过程是否完成
         self.deleteBlankResult = None        # 删空白：最终返回的结果（格式：numpy二维数组）
+
+        # 数据库生成全过程需要的数据
+        self.GDBClass = ["N1", "N1O1", "N1S1", "CH"]        # 数据库生成(参数)：Class类型
+        # 1~100（整数）
+        self.GDBCarbonRangeLow = ConstValues.PsGDBCarbonRangeLow    # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+        self.GDBCarbonRangeHigh = ConstValues.PsGDBCarbonRangeHigh  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
+        # 1~30（整数）
+        self.GDBDBERageLow = ConstValues.PsGDBDBERageLow            # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
+        self.GDBDBERageHigh = ConstValues.PsGDBDBERageHigh          # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+        # 50~1500(整数)
+        self.GDBM_ZRageLow = ConstValues.PsGDBM_ZRageLow            # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageHigh = ConstValues.PsGDBM_ZRageHigh          # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        # 离子类型
+        self.GDB_MHPostive = ConstValues.PsGDB_MHPostive            # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = ConstValues.PsGDB_MPostive              # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = ConstValues.PsGDB_MHNegative          # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = ConstValues.PsGDB_MNegative            # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        self.GDBList = [self.GDBClass,
+                        self.GDBCarbonRangeLow,
+                        self.GDBCarbonRangeHigh,
+                        self.GDBDBERageLow,
+                        self.GDBDBERageHigh,
+                        self.GDBM_ZRageLow,
+                        self.GDBM_ZRageHigh,
+                        self.GDB_MHPostive,
+                        self.GDB_MPostive,
+                        self.GDB_MHNegative,
+                        self.GDB_MNegative]
+        self.GDBIsFinished = False  # 数据库生成：记录数据库生成过程是否完成
+        self.GDBResult = None       # 数据库生成：最终返回的结果（格式：list二维数组）
 
     # 使窗口居中
     def center(self):
@@ -163,6 +198,10 @@ class MainWin(QMainWindow):
         set.addAction(deleteBlank)
         deleteBlank.triggered.connect(self.DeleteBlankSetup)
 
+        DBSearch = QAction("数据库生成", self)  # 添加二级菜单
+        set.addAction(DBSearch)
+        DBSearch.triggered.connect(self.GenerateDataBaseSetup)
+
         deleteIsotope = QAction("扣同位素", self)  # 添加二级菜单
         set.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotopeSetup)
@@ -170,10 +209,6 @@ class MainWin(QMainWindow):
         peakDistinguish = QAction("峰识别", self)  # 添加二级菜单
         set.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguishSetup)
-
-        DBSearch = QAction("数据库搜索", self)  # 添加二级菜单
-        set.addAction(DBSearch)
-        DBSearch.triggered.connect(self.DataBaseSearchSetup)
 
         disturbRemove = QAction("干扰排除", self)  # 添加二级菜单
         set.addAction(disturbRemove)
@@ -207,17 +242,17 @@ class MainWin(QMainWindow):
         tb2.addAction(deleteBlank)
         deleteBlank.triggered.connect(self.DeleteBlank)
 
-        deleteIsotope = QAction(QIcon('./images/work/j2.png'), "扣同位素", self)
+        DBSearch = QAction(QIcon('./images/work/j2.png'), "数据库生成", self)
+        tb2.addAction(DBSearch)
+        DBSearch.triggered.connect(self.GenerateDataBase)
+
+        deleteIsotope = QAction(QIcon('./images/work/j3.png'), "扣同位素", self)
         tb2.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotope)
 
-        peakDistinguish = QAction(QIcon('./images/work/j3.png'), "峰识别", self)
+        peakDistinguish = QAction(QIcon('./images/work/j4.png'), "峰识别", self)
         tb2.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguish)
-
-        DBSearch = QAction(QIcon('./images/work/j4.png'), "数据库搜索", self)
-        tb2.addAction(DBSearch)
-        DBSearch.triggered.connect(self.DataBaseSearch)
 
         disturbRemove = QAction(QIcon('./images/work/j5.png'), "干扰排除", self)
         tb2.addAction(disturbRemove)
@@ -269,6 +304,7 @@ class MainWin(QMainWindow):
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
         self.messageLabel1.setText("未运行")
+        self.messageLabel2.setText("未运行")
 
     # 退出程序
     def QuitApplication(self):
@@ -276,58 +312,21 @@ class MainWin(QMainWindow):
         # 退出应用程序
         app.quit()
 
-    # 扣空白 #######################################
-    def DeleteBlank(self):
-        # 扣空白前需要先读入数据
-        if self.sampleFilePath == "" or self.blankFilePath == "":
-            PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
-            return
-        # 弹出提示框
-        # gifQMovie = QMovie("./images/ajax-loading")  # gif会卡死
-        # self.messageLabel1.setMovie(gifQMovie)
-        # gifQMovie.start()
-        # self.messageLabel1.setPixmap(QPixmap("./images/load.png"))  # 图像可以正常显示
-        self.messageLabel1.setText("Running!")  # 文字可以正常显示
-        PromptBox().informationMessageAutoClose("即将运行......", 2000)
-
-        # 处理删空白
-        cdb = ClassDeleteBlank(self.sampleFilePath, self.blankFilePath)
-        # 第一步：过滤掉强度较小的数据
-        cdb.DeleteSmallIntensity(self.deleteBlankIntensity)
-        # 第二步：删去样本和空白中相同的mass且intensity相近的mass
-        self.deleteBlankResult, self.deleteBlankIsFinished = cdb.DeleteSimilarToBlank(self.deleteBlankPPM, self.deleteBlankPercentage)
-        # 显示完成提示
-        self.messageLabel1.setText("Finished!")
-        PromptBox().informationMessageAutoClose("处理完毕！", 2000)
-
-
-    # 扣同位素
-    def DeleteIsotope(self):
-        if self.deleteBlankIsFinished == False:
-            PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
-            return
-
-    # 峰识别
-    def PeakDistinguish(self):
-        self.messageLabel1.setPixmap(QPixmap("./images/load.png"))
-        for i in range(10000):
-            print("hello")
-
-    # 数据库搜索
-    def DataBaseSearch(self):
-        pass
-
-    # 干扰排除
-    def DisturbRemove(self):
-        pass
-
-    #######################################
-    # 扣空白参数设置
+    # 扣空白参数设置  #######################################
     def DeleteBlankSetup(self):
-        self.deleteBlankIntensity, self.deleteBlankPPM, self.deleteBlankPercentage \
-            = SetupInterface().DeleteBlankSetup(self.deleteBlankIntensity, self.deleteBlankPPM, self.deleteBlankPercentage)
-        if ConstValues.PsIsDebug == True:
-            print(self.deleteBlankIntensity, self.deleteBlankPPM, self.deleteBlankPercentage)
+        # 重新设置参数
+        self.deleteBlankList = SetupInterface().DeleteBlankSetup(self.deleteBlankList)
+
+        if ConstValues.PsIsDebug:
+            print(self.deleteBlankList)
+
+    # 数据库搜索参数设置
+    def GenerateDataBaseSetup(self):
+        # 重新设置参数
+        self.GDBList = SetupInterface().GenerateDataBaseSetup(self.GDBList)
+
+        if ConstValues.PsIsDebug:
+            print(self.GDBList)
 
     # 扣同位素参数设置
     def DeleteIsotopeSetup(self):
@@ -337,12 +336,56 @@ class MainWin(QMainWindow):
     def PeakDistinguishSetup(self):
         pass
 
-    # 数据库搜索参数设置
-    def DataBaseSearchSetup(self):
-        pass
-
     # 干扰排除参数设置
     def DisturbRemoveSetup(self):
+        pass
+
+    # 扣空白 #######################################
+    def DeleteBlank(self):
+        # 扣空白前需要先读入数据
+        if self.sampleFilePath == "" or self.blankFilePath == "":
+            PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
+            return
+
+        # 弹出提示框
+        # self.messageLabel1.setPixmap(QPixmap("./images/load.png"))  # 图像可以正常显示
+        self.messageLabel1.setText("正在处理，请稍后...")  # 文字可以正常显示
+        PromptBox().informationMessageAutoClose("即将运行......", 2000)
+
+        # 处理删空白
+        cdb = ClassDeleteBlank(self.sampleFilePath, self.blankFilePath, self.deleteBlankList)
+        self.deleteBlankResult, self.deleteBlankIsFinished = cdb.DeleteBlank()
+
+        # 显示完成提示
+        self.messageLabel1.setText("Finished!")
+        PromptBox().informationMessageAutoClose("处理完毕！", 2000)
+
+    # 数据库生成
+    def GenerateDataBase(self):
+        # 弹出提示框
+        self.messageLabel2.setText("正在处理，请稍后...")  # 文字可以正常显示
+        PromptBox().informationMessageAutoClose("即将运行......", 2000)
+
+        # 生成数据库
+        cgdb = ClassGenerateDataBase(self.GDBList)
+        self.GDBResult, self.GDBIsFinished = cgdb.GenerateData()
+
+        # 显示完成提示
+        self.messageLabel2.setText("Finished!")
+        PromptBox().informationMessageAutoClose("处理完毕！", 2000)
+
+    # 扣同位素
+    def DeleteIsotope(self):
+        if self.deleteBlankIsFinished == False:
+            PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
+            return
+
+    # 峰识别
+    def PeakDistinguish(self):
+        pass
+
+    # 干扰排除
+    def DisturbRemove(self):
         pass
 
 

@@ -27,7 +27,6 @@ class ClassGenerateDataBase():
 
     # 负责生成数据库
     def GenerateData(self):
-        data = []
         # excel表头
         header = ["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
 
@@ -40,10 +39,10 @@ class ClassGenerateDataBase():
             isChoiceTwo = self.GDB_MHNegative + self.GDB_MNegative
 
         # 生成数据主逻辑
-        if isPositive == True:
+        if isPositive:
             if isChoiceTwo == 2:  # 说明选择的是两个正离子
                 data = self._GenerateData([1, 2])
-            elif self.GDB_MHPostive == True:  # 说明选择的是一个正离子[M＋H]+
+            elif self.GDB_MHPostive:  # 说明选择的是一个正离子[M＋H]+
                 data = self._GenerateData([1])
             else:  # 说明选择的是一个正离子M+
                 data = self._GenerateData([2])
@@ -55,8 +54,8 @@ class ClassGenerateDataBase():
             else:  # 说明选择的是一个负离子M-
                 data = self._GenerateData([4])
 
-        reslut = []  # 根据m/z筛选符合条件的item
-        reslut.append(header)
+        reslut = [header]  # 根据m/z筛选符合条件的item
+        # reslut.append(header)
         for item in data:
             if self.GDBM_ZRageLow <= item[3] <= self.GDBM_ZRageHigh:
                 reslut.append(item)

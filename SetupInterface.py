@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ConstValues import ConstValues
+from PromptBox import PromptBox
 
 
 class SetupInterface():
@@ -83,8 +84,8 @@ class SetupInterface():
         return label
 
     #############################################################
-    # 扣空白设置对话框
     def DeleteBlankSetup(self, parameters):
+        # 扣空白设置对话框
         # 设置默认参数
         self.DeleteBlankSetDefaultParameters(parameters)
 
@@ -92,15 +93,16 @@ class SetupInterface():
         self.deleteBlankDialog = QDialog()
         self.deleteBlankDialog.setWindowTitle("扣空白参数设置")
         self.deleteBlankDialog.setFixedSize(ConstValues.PsSetupFontSize * 25, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.deleteBlankDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
 
         # Intensity对话框
-        deleteBlankEdit1 = self.IntQLineEdit(1, 9999, str(self.deleteBlankIntensity))
+        deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
         deleteBlankEdit1.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Intensity", deleteBlankEdit1))
         # PPM对话框
-        deleteBlankEdit2 = self.DoubleQLineEdit(1, 99, 2, str(self.deleteBlankPPM))
+        deleteBlankEdit2 = self.DoubleQLineEdit(int(ConstValues.PsDeleteBlankPPMMin), int(ConstValues.PsDeleteBlankPPMMax), 2, str(self.deleteBlankPPM))
         deleteBlankEdit2.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("PPM", deleteBlankEdit2))
         # Percentage对话框
-        deleteBlankEdit3 = self.IntQLineEdit(1, 99, str(self.deleteBlankPercentage))
+        deleteBlankEdit3 = self.IntQLineEdit(ConstValues.PsDeleteBlankPercentageMin, ConstValues.PsDeleteBlankPercentageMax, str(self.deleteBlankPercentage))
         deleteBlankEdit3.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Percentage", deleteBlankEdit3))
         # 创建按钮
         deleteBlankButton1 = QPushButton("确定")
@@ -113,13 +115,13 @@ class SetupInterface():
         # 创建栅格布局
         layout = QGridLayout(self.deleteBlankDialog)
         # 第一行内容，intensity
-        layout.addWidget(self.GetQLabel("intensity(<9999)："), 0, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("intensity(" + str(ConstValues.PsDeleteBlankIntensityMin) + "~" + str(ConstValues.PsDeleteBlankIntensityMax) + "):"), 0, 0, 1, 2)
         layout.addWidget(deleteBlankEdit1, 0, 2, 1, 2)
         # 第二行内容，ppm
-        layout.addWidget(self.GetQLabel("ppm(0.01~99.99)："), 1, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("ppm(" + str(ConstValues.PsDeleteBlankPPMMin) + "~" + str(ConstValues.PsDeleteBlankPPMMax) + "):"), 1, 0, 1, 2)
         layout.addWidget(deleteBlankEdit2, 1, 2, 1, 2)
         # 第三行内容，percentage
-        layout.addWidget(self.GetQLabel("percentage(0~99)%："), 2, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("percentage(" + str(ConstValues.PsDeleteBlankPercentageMin) + "~" + str(ConstValues.PsDeleteBlankPercentageMax) + "):"), 2, 0, 1, 2)
         layout.addWidget(deleteBlankEdit3, 2, 2, 1, 2)
         # 最后一行内容，按钮行
         layout.addWidget(deleteBlankButton1, 3, 2)
@@ -150,12 +152,38 @@ class SetupInterface():
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCDeleteBlank(self, parameters, isOK):
-        if not isOK:
+        if not isOK:  # 点击取消按钮
             self.DeleteBlankSetDefaultParameters(parameters)
-        self.deleteBlankDialog.close()
+            self.deleteBlankDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.DeleteBlankIsParameterValidate()
+            if inputState == 1:
+                self.deleteBlankDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("intensity输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("ppm输入不合法！")
+            elif inputState == 4:
+                PromptBox().warningMessage("percentage输入不合法！")
+
+    # 参数合法性检查
+    def DeleteBlankIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.deleteBlankIntensity是否合法，对应代码2
+        if not (ConstValues.PsDeleteBlankIntensityMin <= self.deleteBlankIntensity <= ConstValues.PsDeleteBlankIntensityMax):
+            return 2
+        # 判断self.deleteBlankPPM是否合法，对应代码3
+        if not (ConstValues.PsDeleteBlankPPMMin <= self.deleteBlankPPM <= ConstValues.PsDeleteBlankPPMMax):
+            return 3
+        # 判断self.deleteBlankPercentage是否合法，对应代码4
+        if not (ConstValues.PsDeleteBlankPercentageMin <= self.deleteBlankPercentage <= ConstValues.PsDeleteBlankPercentageMax):
+            return 4
+        # 合法
+        return 1
 
     #############################################################
     def GenerateDataBaseSetup(self, parameters):
+        # 数据库生成设置对话框
         # 设置参数（上一次更改后的参数）
         self.GDBSetDefaultParameters(parameters)
 
@@ -163,23 +191,24 @@ class SetupInterface():
         self.GDBDialog = QDialog()
         self.GDBDialog.setWindowTitle("数据库生成参数设置")
         self.GDBDialog.setFixedSize(ConstValues.PsSetupFontSize * 52, ConstValues.PsSetupFontSize * 35)  # 固定窗口大小
+        self.GDBDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
 
         # Class
         GDBEdit1 = self.RegExpQLineEdit("([a-zA-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
         GDBEdit1.textChanged.connect(lambda : self.HandleTextChangedGDB("Class", GDBEdit1))
         # carbon rage(碳数范围)：1~100（整数）
-        GDBEdit2 = self.IntQLineEdit(1, 100, str(self.GDBCarbonRangeLow))
-        GDBEdit3 = self.IntQLineEdit(1, 100, str(self.GDBCarbonRangeHigh))
+        GDBEdit2 = self.IntQLineEdit(ConstValues.PsGDBCarbonRangeMin, ConstValues.PsGDBCarbonRangeMax, str(self.GDBCarbonRangeLow))
+        GDBEdit3 = self.IntQLineEdit(ConstValues.PsGDBCarbonRangeMin, ConstValues.PsGDBCarbonRangeMax, str(self.GDBCarbonRangeHigh))
         GDBEdit2.textChanged.connect(lambda: self.HandleTextChangedGDB("carbon rage low", GDBEdit2))
         GDBEdit3.textChanged.connect(lambda: self.HandleTextChangedGDB("carbon rage high", GDBEdit3))
         # DBE rage(不饱和度范围)：1~30（整数）
-        GDBEdit4 = self.IntQLineEdit(1, 30, str(self.GDBDBERageLow))
-        GDBEdit5 = self.IntQLineEdit(1, 30, str(self.GDBDBERageHigh))
+        GDBEdit4 = self.IntQLineEdit(ConstValues.PsGDBDBERageMin, ConstValues.PsGDBDBERageMax, str(self.GDBDBERageLow))
+        GDBEdit5 = self.IntQLineEdit(ConstValues.PsGDBDBERageMin, ConstValues.PsGDBDBERageMax, str(self.GDBDBERageHigh))
         GDBEdit4.textChanged.connect(lambda: self.HandleTextChangedGDB("DBE rage low", GDBEdit4))
         GDBEdit5.textChanged.connect(lambda: self.HandleTextChangedGDB("DBE rage high", GDBEdit5))
         # m/z rage(质荷比范围)：50~1500(整数)
-        GDBEdit6 = self.IntQLineEdit(50, 1500, str(self.GDBM_ZRageLow))
-        GDBEdit7 = self.IntQLineEdit(50, 1500, str(self.GDBM_ZRageHigh))
+        GDBEdit6 = self.IntQLineEdit(ConstValues.PsGDBM_ZRageMin, ConstValues.PsGDBM_ZRageMax, str(self.GDBM_ZRageLow))
+        GDBEdit7 = self.IntQLineEdit(ConstValues.PsGDBM_ZRageMin, ConstValues.PsGDBM_ZRageMax, str(self.GDBM_ZRageHigh))
         GDBEdit6.textChanged.connect(lambda: self.HandleTextChangedGDB("m/z rage low", GDBEdit6))
         GDBEdit7.textChanged.connect(lambda: self.HandleTextChangedGDB("m/z rage high", GDBEdit7))
         # 离子类型（复选按钮）
@@ -215,19 +244,19 @@ class SetupInterface():
         layout.addWidget(self.GetQLabel("class："), 0, 0)
         layout.addWidget(GDBEdit1, 0, 1, 1, 6)  # 第0行第1列，占1行3列
         # 第二行内容，carbon rage
-        layout.addWidget(self.GetQLabel("carbon rage(min)1~100:"), 1, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("carbon rage(min)" + str(ConstValues.PsGDBCarbonRangeMin) + "~" + str(ConstValues.PsGDBCarbonRangeMax) + ":"), 1, 0, 1, 2)
         layout.addWidget(GDBEdit2, 1, 2)
-        layout.addWidget(self.GetQLabel("carbon rage(max)1~100:"), 1, 4, 1, 2)
+        layout.addWidget(self.GetQLabel("carbon rage(max)" + str(ConstValues.PsGDBCarbonRangeMin) + "~" + str(ConstValues.PsGDBCarbonRangeMax) + ":"), 1, 4, 1, 2)
         layout.addWidget(GDBEdit3, 1, 6)
         # 第三行内容，DBE rage
-        layout.addWidget(self.GetQLabel("DBE rage(min)1~30:"), 2, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("DBE rage(min)" + str(ConstValues.PsGDBDBERageMin) + "~" + str(ConstValues.PsGDBDBERageMax) + ":"), 2, 0, 1, 2)
         layout.addWidget(GDBEdit4, 2, 2)
-        layout.addWidget(self.GetQLabel("DBE rage(max)1~30:"), 2, 4, 1, 2)
+        layout.addWidget(self.GetQLabel("DBE rage(max)" + str(ConstValues.PsGDBDBERageMin) + "~" + str(ConstValues.PsGDBDBERageMax) + ":"), 2, 4, 1, 2)
         layout.addWidget(GDBEdit5, 2, 6)
         # 第四行内容，m/z rage
-        layout.addWidget(self.GetQLabel("DBE rage(min)50~1500:"), 3, 0, 1, 2)
+        layout.addWidget(self.GetQLabel("m/z rage(min)" + str(ConstValues.PsGDBM_ZRageMin) + "~" + str(ConstValues.PsGDBM_ZRageMax) + ":"), 3, 0, 1, 2)
         layout.addWidget(GDBEdit6, 3, 2)
-        layout.addWidget(self.GetQLabel("DBE rage(max)50~1500:"), 3, 4, 1, 2)
+        layout.addWidget(self.GetQLabel("m/z rage(max)" + str(ConstValues.PsGDBM_ZRageMin) + "~" + str(ConstValues.PsGDBM_ZRageMax) + ":"), 3, 4, 1, 2)
         layout.addWidget(GDBEdit7, 3, 6)
         # 第五行内容，离子类型
         layout.addWidget(self.GetQLabel("选择离子类型："), 4, 0)
@@ -267,10 +296,10 @@ class SetupInterface():
                 self.GDBDBERageLow = int(edit.text())
             elif GDBType == "DBE rage high":
                 self.GDBDBERageHigh = int(edit.text())
-            elif type == "m/z rage low":
-                GDBType.GDBM_ZRageLow = int(edit.text())
-            elif type == "m/z rage high":
-                GDBType.GDBM_ZRageHigh = int(edit.text())
+            elif GDBType == "m/z rage low":
+                self.GDBM_ZRageLow = int(edit.text())
+            elif GDBType == "m/z rage high":
+                self.GDBM_ZRageHigh = int(edit.text())
 
     # 当GDBCheckBox1~GDBCheckBox4状态改变会进入该函数
     def GDBCheckboxState(self, cb1, cb2, cb3, cb4, type):
@@ -324,10 +353,54 @@ class SetupInterface():
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCGDB(self, parameters, isOK):
-        if not isOK:
+        if not isOK:  # 点击取消按钮
             self.GDBSetDefaultParameters(parameters)
-        self.GDBDialog.close()
+            self.GDBDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.GDBIsParameterValidate()
+            if inputState == 1:
+                self.GDBDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("Class输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("carbon rage输入不合法！")
+            elif inputState == 4:
+                PromptBox().warningMessage("DBE rage输入不合法！")
+            elif inputState == 5:
+                PromptBox().warningMessage("m/z rage输入不合法！")
 
+    # 参数合法性检查
+    def GDBIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+
+        # 判断self.GDBClass是否合法，对应代码2
+        for item in self.GDBClass:
+            if item == "CH":
+                continue
+            for i in range(len(item)):
+                if i % 2 == 0:  # 应该是字母
+                    if not ("A" <= item[i] <= "Z"):
+                        return 2
+                else:  # 应该是数字字符
+                    if not ("0" <= item[i] <= "9"):
+                        return 2
+        # 判断self.GDBCarbonRangeLow，self.GDBCarbonRangeHigh是否合法，对应代码3
+        if (self.GDBCarbonRangeLow > self.GDBCarbonRangeHigh) or \
+                (not (ConstValues.PsGDBCarbonRangeMin <= self.GDBCarbonRangeLow <= ConstValues.PsGDBCarbonRangeMax)) or \
+                (not (ConstValues.PsGDBCarbonRangeMin <= self.GDBCarbonRangeHigh <= ConstValues.PsGDBCarbonRangeMax)):
+            return 3
+        # 判断self.GDBDBERageLow，self.GDBDBERageHigh是否合法，对应代码4
+        if self.GDBDBERageLow > self.GDBDBERageHigh or \
+                (not (ConstValues.PsGDBDBERageMin <= self.GDBDBERageLow <= ConstValues.PsGDBDBERageMax)) or \
+                (not (ConstValues.PsGDBDBERageMin <= self.GDBDBERageHigh <= ConstValues.PsGDBDBERageMax)):
+            return 4
+        # 判断self.GDBM_ZRageLow，self.GDBM_ZRageHigh是否合法，对应代码5
+        if self.GDBM_ZRageLow > self.GDBM_ZRageHigh or \
+                (not (ConstValues.PsGDBM_ZRageMin <= self.GDBM_ZRageLow <= ConstValues.PsGDBM_ZRageMax)) or \
+                (not (ConstValues.PsGDBM_ZRageMin <= self.GDBM_ZRageHigh <= ConstValues.PsGDBM_ZRageMax)):
+            return 5
+        # 合法
+        return 1
     #############################################################
 
 

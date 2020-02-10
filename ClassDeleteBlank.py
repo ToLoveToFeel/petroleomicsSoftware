@@ -11,18 +11,22 @@ class ClassDeleteBlank():
         """
         :param samplePath: 样本文件路径
         :param blankPath: 空白文件路径
+        :param parameterList: 程序运行所需要的参数列表
         """
-        self.reslut = None  # 最终处理后得到的数据
         self.sampleData = pd.read_excel(io=samplePath, header=ConstValues.PsHeaderLine)
         self.sampleData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
         self.blankData = pd.read_excel(io=blankPath, header=ConstValues.PsHeaderLine)
         self.blankData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
         # 可调参数
         assert len(parameterList) == 3, "ClassDeleteBlank参数不对"
+        # 1~9999（整数）
         self.deleteBlankIntensity = parameterList[0]
+        # 0.01~99.99（浮点数）
         self.deleteBlankPPM = parameterList[1]
+        # 1~100（整数）
         self.deleteBlankPercentage = parameterList[2]
 
+    # 负责扣空白
     def DeleteBlank(self):
         self.DeleteSmallIntensity()
         return self.DeleteSimilarToBlank()
@@ -45,20 +49,20 @@ class ClassDeleteBlank():
                     in2:空白中的intensity
         :param ppm: abs((m1 - m2) * 1000000.0 / m1) < ppm，则认为mass相同，这个ppm需要可以设置，条件1
         :param percentage: 0 < abs((in1 - in2)  * 100.0 / in1) < percentage%，则认为intensity相近，这个percentage也需要可以设置，条件2
-        :return: 处理后的数据(格式：numpy二维数组)
+        :return: 处理后的数据(格式：list二维数组)
         """
+        header = ["Mass", "Intensity"]
         m1 = self.sampleData["Mass"].values            # 样本中的mass，类型为numpy中的ndarray
         in1 = self.sampleData["Intensity"].values     # 样本中的intensity
         m2 = self.blankData["Mass"].values             # 空白中的mass
         in2 = self.blankData["Intensity"].values      # 空白中的intensity
-        self.reslut = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
+        reslut = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
         if ConstValues.PsIsDebug:
-            print(type(self.reslut))
-            print(self.reslut[:6, :])
+            print(type(reslut))
+            print(reslut[:6, :])
 
         # 核心处理逻辑
         deleteList = []  # 记录需要删除的索引
-        breakFlag = False
         # 要求m1和m2为升序
         i = 0
         j = 0
@@ -70,7 +74,7 @@ class ClassDeleteBlank():
                     if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < self.deleteBlankPercentage:
                         deleteList.append(j)
                         breakFlag = True
-                elif breakFlag == True or m1[j] > m2[i]:
+                elif breakFlag or m1[j] > m2[i]:
                     break
                 j += 1
             i += 1
@@ -82,22 +86,22 @@ class ClassDeleteBlank():
         #             if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < percentage:
         #                 deleteList.append(j)
 
-        self.reslut = np.delete(self.reslut, deleteList, axis=0)  # 删除索引在deleteList中的向量
+        reslut = np.delete(reslut, deleteList, axis=0)  # 删除索引在deleteList中的向量
+        reslut = reslut.tolist()
+        reslut.insert(0, header)
 
         if ConstValues.PsIsDebug:
             print(len(deleteList))
-            print(self.reslut.shape)
-            print(self.reslut[:6, :])
+            print(len(reslut))
+            print(type(reslut))
+            print(reslut[:6])
 
-        data = []
-        data.append(["Mass", "Intensity"])
-        for item in self.reslut:
-            data.append(item)
-        self.WriteDataToExcel(data, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
+        # 数据写入excel文件中
+        self.WriteDataToExcel(reslut, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
 
         deleteBlankIsFinished = True  # 该过程已经完成
 
-        return self.reslut, deleteBlankIsFinished
+        return reslut, deleteBlankIsFinished
 
     # 负责将数据写入xlsx文件
     def WriteDataToExcel(self, data, filename):

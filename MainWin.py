@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys
-import time
+import numpy as np
+import pandas as pd
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -8,6 +9,7 @@ from ConstValues import ConstValues
 from PromptBox import PromptBox
 from ClassDeleteBlank import ClassDeleteBlank
 from ClassGenerateDataBase import ClassGenerateDataBase
+from ClassDeleteIsotope import ClassDeleteIsotope
 from SetupInterface import SetupInterface
 
 
@@ -120,13 +122,13 @@ class MainWin(QMainWindow):
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
         self.blankFilePath = ""  # 空白文件路径
-        # self.sampleFilePath = "./inputData/180-onescan-external.xlsx"
-        # self.blankFilePath = "./inputData/blank-3.xlsx"
+        # self.sampleFilePath = "./inputData/test/180-onescan-external.xlsx"
+        # self.blankFilePath = "./inputData/test/blank-3.xlsx"
 
         # 扣空白全过程需要的数据
-        # 1~9999（整数）
+        # 0~10000（整数）
         self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 扣空白(参数)：删除Intensity小于deleteBlankIntensity的行
-        # 0.01~99.99（浮点数）
+        # 0.00~100.00（浮点数）
         self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM                  # 扣空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
         # 0~100（整数）
         self.deleteBlankPercentage = ConstValues.PsDeleteBlankPercentage    # 扣空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
@@ -173,14 +175,15 @@ class MainWin(QMainWindow):
         self.DelIsoIntensityX = ConstValues.PsDelIsoIntensityX
         # 0~100（整数）
         self.DelIso_13C2RelativeIntensity = ConstValues.PsDelIso_13C2RelativeIntensity
-        # TODO: 1.0~100.0（浮点数）？
+        # 0.00~20.00（浮点数）
         self.DelIsoMassDeviation = ConstValues.PsDelIsoMassDeviation
-        # TODO: 1.0~100.0（浮点数）？
+        # 0.00~20.00（浮点数）
         self.DelIsoIsotopeMassDeviation = ConstValues.PsDelIsoIsotopeMassDeviation
         # 1~100（整数）
         self.DelIsoIsotopeIntensityDeviation = ConstValues.PsDelIsoIsotopeIntensityDeviation
         self.DelIsoList = [self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
                            self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                           self.deleteBlankIntensity,
                            self.DelIsoIntensityX,  # 格式：整数
                            self.DelIso_13C2RelativeIntensity,  # 格式：整数
                            self.DelIsoMassDeviation,  # 格式：浮点数
@@ -292,6 +295,7 @@ class MainWin(QMainWindow):
         # 为第三个工具栏添加按钮
         allStart = QAction(QIcon('./images/work/j21.png'), "全部开始", self)
         tb3.addAction(allStart)
+        allStart.triggered.connect(self.StartAll)
 
         allReset = QAction(QIcon('./images/work/j12.png'), "重置软件", self)
         tb3.addAction(allReset)
@@ -358,7 +362,12 @@ class MainWin(QMainWindow):
 
     # 扣同位素参数设置
     def DeleteIsotopeSetup(self):
-        pass
+        # 重新设置参数
+        self.DelIsoList[3:] = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
+        # self.DelIsoList = [self.deleteBlankResult, self.GDBResult] + self.DelIsoList
+
+        if ConstValues.PsIsDebug:
+            print(self.DelIsoList[3:])
 
     # 峰识别参数设置
     def PeakDistinguishSetup(self):
@@ -400,16 +409,36 @@ class MainWin(QMainWindow):
 
     # 扣同位素
     def DeleteIsotope(self):
+        # 单独运行，调试使用
+        if ConstValues.PsIsSingleRun:
+            self.deleteBlankIsFinished = True
+            self.deleteBlankResult = [["Mass", "Intensity"]] + \
+                                     np.array(pd.read_excel(io="./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")).tolist()
+            self.GDBIsFinished = True
+            self.GDBResult = [["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]] + \
+                             np.array(pd.read_excel(io="./intermediateFiles/_2_generateDataBase/GDB.xlsx")).tolist()
+
         # 扣同位素前需要扣空白，数据库生成
         if (not self.deleteBlankIsFinished) or (not self.GDBIsFinished):
             PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
             return
 
+        # 因为有self.deleteBlankResult和self.GDBResult，所以需要更新self.DelIsoList（最开始前两项为空）
+        self.DelIsoList = [self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                           self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                           self.deleteBlankIntensity,
+                           self.DelIsoIntensityX,  # 格式：整数
+                           self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                           self.DelIsoMassDeviation,  # 格式：浮点数
+                           self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                           self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                           ]
         # 弹出提示框
         self.messageLabel3.setText("正在处理，请稍后...")  # 文字可以正常显示
         PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
         # 扣同位素
-
+        cdi = ClassDeleteIsotope(self.DelIsoList)
+        self.DelIsoResult, self.DelIsoIsFinished = cdi.DeleteIsotope()
         # 显示完成提示
         self.messageLabel3.setText("处理完毕!")
         PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
@@ -421,6 +450,15 @@ class MainWin(QMainWindow):
     # 干扰排除
     def DisturbRemove(self):
         pass
+
+    # 全部开始
+    def StartAll(self):
+        if self.sampleFilePath == "" or self.blankFilePath == "":
+            PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
+            return
+        self.DeleteBlank()
+        self.GenerateDataBase()
+        self.DeleteIsotope()
 
 
 if __name__ == '__main__':

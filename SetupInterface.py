@@ -15,8 +15,11 @@ class SetupInterface():
 
     def dataInit(self):
         # 扣空白所需要返回的数据，数据初值无所谓
+        # 0~10000（整数）
         self.deleteBlankIntensity = None
+        # 0.00~100.00（浮点数）
         self.deleteBlankPPM = None
+        # 0~100（整数）
         self.deleteBlankPercentage = None
 
         # 生成数据库所需要返回的数据，数据初值无所谓
@@ -36,7 +39,20 @@ class SetupInterface():
         self.GDB_MHNegative = None  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
         self.GDB_MNegative = None  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
-    # 设置有int校验器的QLineEdit
+        # 扣同位素所需要返回的数据，数据初值无所谓
+        # 0~正无穷（整数）
+        self.DelIsoIntensityX = None
+        # 0~100（整数）
+        self.DelIso_13C2RelativeIntensity = None
+        # 0.00~20.00（浮点数）
+        self.DelIsoMassDeviation = None
+        # 0.00~20.00（浮点数）
+        self.DelIsoIsotopeMassDeviation = None
+        # 1~100（整数）
+        self.DelIsoIsotopeIntensityDeviation = None
+
+
+        # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
         # 设置校验器
         intValidator = QIntValidator()
@@ -134,6 +150,12 @@ class SetupInterface():
                    self.deleteBlankPercentage]
         return retList
 
+    # 设置参数为用户上次输入的值
+    def DeleteBlankSetDefaultParameters(self, parameters):
+        self.deleteBlankIntensity = parameters[0]
+        self.deleteBlankPPM = parameters[1]
+        self.deleteBlankPercentage = parameters[2]
+
     # 用户输入文本后，会进入这个函数处理
     def HandleTextChangedDeleteBlank(self, DBType, edit):
         if edit.text() != "":
@@ -143,12 +165,6 @@ class SetupInterface():
                 self.deleteBlankPPM = float(edit.text())
             elif DBType == "Percentage":
                 self.deleteBlankPercentage = int(edit.text())
-
-    # 设置参数为用户上次输入的值
-    def DeleteBlankSetDefaultParameters(self, parameters):
-        self.deleteBlankIntensity = parameters[0]
-        self.deleteBlankPPM = parameters[1]
-        self.deleteBlankPercentage = parameters[2]
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCDeleteBlank(self, parameters, isOK):
@@ -283,6 +299,25 @@ class SetupInterface():
                    self.GDB_MNegative]
         return retList
 
+    # 设置参数为用户上次输入的值
+    def GDBSetDefaultParameters(self, parameters):
+        # 设置参数
+        self.GDBClass = parameters[0]  # 数据库生成(参数)：Class类型
+        # 1~100（整数）
+        self.GDBCarbonRangeLow = parameters[1]  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+        self.GDBCarbonRangeHigh = parameters[2]  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
+        # 1~30（整数）
+        self.GDBDBERageLow = parameters[3]  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
+        self.GDBDBERageHigh = parameters[4]  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+        # 50~1500(整数)
+        self.GDBM_ZRageLow = parameters[5]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageHigh = parameters[6]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        # 离子类型
+        self.GDB_MHPostive = parameters[7]  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = parameters[8]  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = parameters[9]  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = parameters[10]  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+
     # GDBEdit1~GDBEdit7文字改变会进入该函数
     def HandleTextChangedGDB(self, GDBType, edit):
         if edit.text() != "":
@@ -331,25 +366,6 @@ class SetupInterface():
             self.GDB_MPostive = cb2.isChecked()  # 数据库生成(参数)：正离子，是否选择M+，True为选中
             self.GDB_MHNegative = cb3.isChecked()  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
             self.GDB_MNegative = cb4.isChecked()  # 数据库生成(参数)：负离子，是否选择M-，True为选中
-
-    # 设置参数为用户上次输入的值
-    def GDBSetDefaultParameters(self, parameters):
-        # 设置参数
-        self.GDBClass = parameters[0]  # 数据库生成(参数)：Class类型
-        # 1~100（整数）
-        self.GDBCarbonRangeLow = parameters[1]  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
-        self.GDBCarbonRangeHigh = parameters[2]  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
-        # 1~30（整数）
-        self.GDBDBERageLow = parameters[3]  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
-        self.GDBDBERageHigh = parameters[4]  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
-        # 50~1500(整数)
-        self.GDBM_ZRageLow = parameters[5]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
-        self.GDBM_ZRageHigh = parameters[6]  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
-        # 离子类型
-        self.GDB_MHPostive = parameters[7]  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
-        self.GDB_MPostive = parameters[8]  # 数据库生成(参数)：正离子，是否选择M+，True为选中
-        self.GDB_MHNegative = parameters[9]  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
-        self.GDB_MNegative = parameters[10]  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCGDB(self, parameters, isOK):
@@ -401,9 +417,141 @@ class SetupInterface():
             return 5
         # 合法
         return 1
+
     #############################################################
+    def DeleteIsotopeSetup(self, parameters):
+        # 扣同位素设置对话框
+        # 设置默认参数
+        self.DeleteIsotopeSetDefaultParameters(parameters)
 
+        # 创建QDialog
+        self.deleteIsotopeDialog = QDialog()
+        self.deleteIsotopeDialog.setWindowTitle("扣同位素参数设置")
+        self.deleteIsotopeDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.deleteIsotopeDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
 
+        # IntensityX对话框
+        deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
+        deleteIsotopeEdit1.textChanged.connect(lambda: self.HandleTextChangedDeleteIsotope("IntensityX", deleteIsotopeEdit1))
+        # 13C2RelativeIntensity对话框
+        deleteIsotopeEdit2 = self.IntQLineEdit(ConstValues.PsDelIso_13C2RelativeIntensityMin, ConstValues.PsDelIso_13C2RelativeIntensityMax, str(self.DelIso_13C2RelativeIntensity))
+        deleteIsotopeEdit2.textChanged.connect(lambda: self.HandleTextChangedDeleteIsotope("13C2RelativeIntensity", deleteIsotopeEdit2))
+        # Mass Deviation对话框
+        deleteIsotopeEdit3 = self.DoubleQLineEdit(int(ConstValues.PsDelIsoMassDeviationMin), int(ConstValues.PsDelIsoMassDeviationMax), 2, str(self.DelIsoMassDeviation))
+        deleteIsotopeEdit3.textChanged.connect(lambda: self.HandleTextChangedDeleteIsotope("Mass Deviation", deleteIsotopeEdit3))
+        # Isotope Mass Deviation对话框
+        deleteIsotopeEdit4 = self.DoubleQLineEdit(int(ConstValues.PsDelIsoIsotopeMassDeviationMin), int(ConstValues.PsDelIsoIsotopeMassDeviationMax), 2, str(self.DelIsoIsotopeMassDeviation))
+        deleteIsotopeEdit4.textChanged.connect(lambda: self.HandleTextChangedDeleteIsotope("Isotope Mass Deviation", deleteIsotopeEdit4))
+        # Isotope Intensity Deviation对话框
+        deleteIsotopeEdit5 = self.IntQLineEdit(ConstValues.PsDelIsoIsotopeIntensityDeviationMin, ConstValues.PsDelIsoIsotopeIntensityDeviationMax, str(self.DelIsoIsotopeIntensityDeviation))
+        deleteIsotopeEdit5.textChanged.connect(lambda: self.HandleTextChangedDeleteIsotope("Isotope Intensity Deviation", deleteIsotopeEdit5))
 
+        # 创建按钮
+        deleteIsotopeButton1 = QPushButton("确定")
+        deleteIsotopeButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        deleteIsotopeButton1.clicked.connect(lambda: self.HBCDeleteIsotope(parameters, True))
+        deleteIsotopeButton2 = QPushButton("退出")
+        deleteIsotopeButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        deleteIsotopeButton2.clicked.connect(lambda: self.HBCDeleteIsotope(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.deleteIsotopeDialog)
+        # 第一行内容，IntensityX
+        layout.addWidget(self.GetQLabel("IntensityX(" + str(ConstValues.PsDelIsoIntensityXMin) + "~" + ConstValues.PsDelIsoIntensityXMaxStr + ") :"), 0, 0, 1, 4)
+        layout.addWidget(deleteIsotopeEdit1, 0, 2, 1, 2)
+        # 第二行内容，13C2RelativeIntensity
+        layout.addWidget(self.GetQLabel("13C2RelativeIntensity(" + str(ConstValues.PsDelIso_13C2RelativeIntensityMin) + "~" + str(ConstValues.PsDelIso_13C2RelativeIntensityMax) + "):"), 1, 0, 1, 4)
+        layout.addWidget(deleteIsotopeEdit2, 1, 2, 1, 2)
+        # 第三行内容，Mass Deviation
+        layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsDelIsoMassDeviationMin) + "~" + str(ConstValues.PsDelIsoMassDeviationMax) + ") :"), 2, 0, 1, 4)
+        layout.addWidget(deleteIsotopeEdit3, 2, 2, 1, 2)
+        # 第三行内容，Isotope Mass Deviation
+        layout.addWidget(self.GetQLabel("Isotope Mass Deviation(" + str(ConstValues.PsDelIsoIsotopeMassDeviationMin) + "~" + str(ConstValues.PsDelIsoIsotopeMassDeviationMax) + ") :"), 3, 0, 1, 4)
+        layout.addWidget(deleteIsotopeEdit4, 3, 2, 1, 2)
+        # 第三行内容，Isotope Intensity Deviation
+        layout.addWidget(self.GetQLabel("Isotope Intensity Deviation(" + str(ConstValues.PsDelIsoIsotopeIntensityDeviationMin) + "~" + str(ConstValues.PsDelIsoIsotopeIntensityDeviationMax) + ") :"), 4, 0, 1, 4)
+        layout.addWidget(deleteIsotopeEdit5, 4, 2, 1, 2)
+        # 最后一行内容，按钮行
+        layout.addWidget(deleteIsotopeButton1, 5, 2)
+        layout.addWidget(deleteIsotopeButton2, 5, 3)
+
+        self.deleteIsotopeDialog.exec()
+        # 返回值类型：list
+        retList = [self.DelIsoIntensityX,  # 格式：整数
+                   self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                   self.DelIsoMassDeviation,  # 格式：浮点数
+                   self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                   self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                  ]
+        return retList
+
+    # 设置参数为用户上次输入的值
+    def DeleteIsotopeSetDefaultParameters(self, parameters):
+        # 设置参数
+        # 0~正无穷（整数）
+        self.DelIsoIntensityX = parameters[0]
+        # 0~100（整数）
+        self.DelIso_13C2RelativeIntensity = parameters[1]
+        # 0.00~20.00（浮点数）
+        self.DelIsoMassDeviation = parameters[2]
+        # 0.00~20.00（浮点数）
+        self.DelIsoIsotopeMassDeviation = parameters[3]
+        # 0~100（整数）
+        self.DelIsoIsotopeIntensityDeviation = parameters[4]
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedDeleteIsotope(self, DBType, edit):
+        if edit.text() != "":
+            if DBType == "IntensityX":
+                self.DelIsoIntensityX = int(edit.text())
+            elif DBType == "13C2RelativeIntensity":
+                self.DelIso_13C2RelativeIntensity = int(edit.text())
+            elif DBType == "Mass Deviation":
+                self.DelIsoMassDeviation = float(edit.text())
+            elif DBType == "Isotope Mass Deviation":
+                self.DelIsoIsotopeMassDeviation = float(edit.text())
+            elif DBType == "Isotope Intensity Deviation":
+                self.DelIsoIsotopeIntensityDeviation = int(edit.text())
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCDeleteIsotope(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.DeleteIsotopeSetDefaultParameters(parameters)
+            self.deleteIsotopeDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.DeleteIsotopeIsParameterValidate()
+            if inputState == 1:
+                self.deleteIsotopeDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("IntensityX输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("13C2RelativeIntensity输入不合法！")
+            elif inputState == 4:
+                PromptBox().warningMessage("Mass Deviation输入不合法！")
+            elif inputState == 5:
+                PromptBox().warningMessage("Isotope Mass Deviation输入不合法！")
+            elif inputState == 6:
+                PromptBox().warningMessage("Isotope Intensity Deviation输入不合法！")
+
+    # 参数合法性检查
+    def DeleteIsotopeIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.DelIsoIntensityX是否合法，对应代码2
+        if not (ConstValues.PsDelIsoIntensityXMin <= self.DelIsoIntensityX <= ConstValues.PsDelIsoIntensityXMax):
+            return 2
+        # 判断self.DelIso_13C2RelativeIntensity是否合法，对应代码3
+        if not (ConstValues.PsDelIso_13C2RelativeIntensityMin <= self.DelIso_13C2RelativeIntensity <= ConstValues.PsDelIso_13C2RelativeIntensityMax):
+            return 3
+        # 判断self.DelIsoMassDeviation是否合法，对应代码4
+        if not (ConstValues.PsDelIsoMassDeviationMin <= self.DelIsoMassDeviation <= ConstValues.PsDelIsoMassDeviationMax):
+            return 4
+        # 判断self.DelIsoIsotopeMassDeviation是否合法，对应代码5
+        if not (ConstValues.PsDelIsoIsotopeMassDeviationMin <= self.DelIsoIsotopeMassDeviation <= ConstValues.PsDelIsoIsotopeMassDeviationMax):
+            return 5
+        # 判断self.DelIsoIsotopeIntensityDeviation是否合法，对应代码6
+        if not (ConstValues.PsDelIsoIsotopeIntensityDeviationMin <= self.DelIsoIsotopeIntensityDeviation <= ConstValues.PsDelIsoIsotopeIntensityDeviationMax):
+            return 6
+        # 合法
+        return 1
 
 

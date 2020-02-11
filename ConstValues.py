@@ -9,6 +9,8 @@ class ConstValues():
 
     # 用于打开调试
     PsIsDebug = True
+    # 用于是否可以单独运行
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -23,7 +25,7 @@ class ConstValues():
     PsMainWindowStyle = "Macintosh"
     # 运行提示框弹出时间 1000 -> 1s
     PsBeforeRunningPromptBoxTime = 1000
-    PsAfterRunningPromptBoxTime = 2000
+    PsAfterRunningPromptBoxTime = 1000
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件和空白文件!"
     # 扣同位素错误提示信息
@@ -39,8 +41,8 @@ class ConstValues():
     # 扣空白设置默认参数
     # 1~9999（整数）
     PsDeleteBlankIntensity = 1000
-    PsDeleteBlankIntensityMin = 1
-    PsDeleteBlankIntensityMax = 9999
+    PsDeleteBlankIntensityMin = 0
+    PsDeleteBlankIntensityMax = 10000
     # 0.0~100.0（浮点数）
     PsDeleteBlankPPM = 1.0  # 单位ppm
     PsDeleteBlankPPMMin = 0.0
@@ -53,13 +55,13 @@ class ConstValues():
     # 数据库生成设置默认参数
     PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
     # 1~100（整数）
-    PsGDBCarbonRangeLow = 10  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
-    PsGDBCarbonRangeHigh = 14  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
+    PsGDBCarbonRangeLow = 1  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+    PsGDBCarbonRangeHigh = 100  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
     PsGDBCarbonRangeMin = 1
     PsGDBCarbonRangeMax = 1000
     # 1~30（整数）
     PsGDBDBERageLow = 1  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
-    PsGDBDBERageHigh = 3  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+    PsGDBDBERageHigh = 30  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
     PsGDBDBERageMin = 0
     PsGDBDBERageMax = 50
     # 50~1500(整数)
@@ -69,16 +71,32 @@ class ConstValues():
     PsGDBM_ZRageMax = 5000
     # 离子类型
     PsGDB_MHPostive = True  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
-    PsGDB_MPostive = True  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+    PsGDB_MPostive = False  # 数据库生成(参数)：正离子，是否选择M+，True为选中
     PsGDB_MHNegative = False  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
     PsGDB_MNegative = False  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
     # 扣同位素设置默认参数
+    # 0~正无穷（整数）
     PsDelIsoIntensityX = 100000
+    PsDelIsoIntensityXMin = 0
+    PsDelIsoIntensityXMax = 200000000
+    PsDelIsoIntensityXMaxStr = "2e8"  # 方便设置界面显示
+    # 0~100（整数）
     PsDelIso_13C2RelativeIntensity = 20  # 20%
-    PsDelIsoMassDeviation = 2  # 单位ppm
-    PsDelIsoIsotopeMassDeviation = 2  # 单位ppm
-    PsDelIsoIsotopeIntensityDeviation = 30  # 30%
+    PsDelIso_13C2RelativeIntensityMin = 0
+    PsDelIso_13C2RelativeIntensityMax = 100
+    # 0.00~20.00（浮点数）
+    PsDelIsoMassDeviation = 2.0  # 单位ppm
+    PsDelIsoMassDeviationMin = 0.0  # 单位ppm
+    PsDelIsoMassDeviationMax = 20.0  # 单位ppm
+    # 0.00~20.00（浮点数）
+    PsDelIsoIsotopeMassDeviation = 2.0  # 单位ppm
+    PsDelIsoIsotopeMassDeviationMin = 0.0
+    PsDelIsoIsotopeMassDeviationMax = 20.0
+    # 0~100（整数）
+    PsDelIsoIsotopeIntensityDeviation = 10  # 30%
+    PsDelIsoIsotopeIntensityDeviationMin = 0
+    PsDelIsoIsotopeIntensityDeviationMax = 100
 
 
 

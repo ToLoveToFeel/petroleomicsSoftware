@@ -51,7 +51,7 @@ class ClassDeleteBlank():
         :param percentage: 0 < abs((in1 - in2)  * 100.0 / in1) < percentage%，则认为intensity相近，这个percentage也需要可以设置，条件2
         :return: 处理后的数据(格式：list二维数组)
         """
-        header = ["Mass", "Intensity"]
+        header = [["Mass", "Intensity"]]
         m1 = self.sampleData["Mass"].values            # 样本中的mass，类型为numpy中的ndarray
         in1 = self.sampleData["Intensity"].values     # 样本中的intensity
         m2 = self.blankData["Mass"].values             # 空白中的mass
@@ -71,7 +71,7 @@ class ClassDeleteBlank():
             j = 0
             while j < m1.size:
                 if abs((m1[j] - m2[i]) * 1000000.0 / m1[j]) < self.deleteBlankPPM:
-                    if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < self.deleteBlankPercentage:
+                    if abs((in1[j] - in2[i]) * 100.0 / in1[j])< self.deleteBlankPercentage:
                         deleteList.append(j)
                         breakFlag = True
                 elif breakFlag or m1[j] > m2[i]:
@@ -88,7 +88,7 @@ class ClassDeleteBlank():
 
         reslut = np.delete(reslut, deleteList, axis=0)  # 删除索引在deleteList中的向量
         reslut = reslut.tolist()
-        reslut.insert(0, header)
+        reslut = header + reslut
 
         if ConstValues.PsIsDebug:
             print(len(deleteList))

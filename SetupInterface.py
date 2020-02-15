@@ -51,8 +51,13 @@ class SetupInterface():
         # 1~100（整数）
         self.DelIsoIsotopeIntensityDeviation = None
 
+        # 扣同位素所需要返回的数据，数据初值无所谓
+        # 0~10000（整数）
+        self.PeakDisContinuityNum = None
+        # 0.00~100.00（浮点数）
+        self.PeakDisMassDeviation = None
 
-        # 设置有int校验器的QLineEdit
+    # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
         # 设置校验器
         intValidator = QIntValidator()
@@ -554,4 +559,93 @@ class SetupInterface():
         # 合法
         return 1
 
+    #############################################################
+    def PeakDistinguishSetup(self, parameters):
+        # 峰识别设置对话框
+        # 设置默认参数
+        self.PeakDistinguishDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.peakDistinguishDialog = QDialog()
+        self.peakDistinguishDialog.setWindowTitle("峰识别参数设置")
+        self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 30, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+
+        # PeakDisContinuityNum对话框
+        peakDistinguishEdit1 = self.IntQLineEdit(ConstValues.PsPeakDisContinuityNumMin, ConstValues.PsPeakDisContinuityNumMax, str(self.PeakDisContinuityNum))
+        peakDistinguishEdit1.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("Continuity Num", peakDistinguishEdit1))
+        # Mass Deviation对话框
+        peakDistinguishEdit2 = self.DoubleQLineEdit(int(ConstValues.PsPeakDisMassDeviationMin), int(ConstValues.PsPeakDisMassDeviationMax), 2, str(self.PeakDisMassDeviation))
+        peakDistinguishEdit2.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("Mass Deviation", peakDistinguishEdit2))
+
+
+        # 创建按钮
+        peakDistinguishButton1 = QPushButton("确定")
+        peakDistinguishButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        peakDistinguishButton1.clicked.connect(lambda: self.HBCPeakDistinguish(parameters, True))
+        peakDistinguishButton2 = QPushButton("退出")
+        peakDistinguishButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        peakDistinguishButton2.clicked.connect(lambda: self.HBCPeakDistinguish(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.peakDistinguishDialog)
+        # 第一行内容，Continuity Num
+        layout.addWidget(self.GetQLabel("Continuity Num(" + str(ConstValues.PsPeakDisContinuityNumMin) + "~" + str(ConstValues.PsPeakDisContinuityNumMax) + ") :"), 0, 0, 1, 4)
+        layout.addWidget(peakDistinguishEdit1, 0, 2, 1, 2)
+        # 第二行内容，Mass Deviation
+        layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsPeakDisMassDeviationMin) + "~" + str(ConstValues.PsPeakDisMassDeviationMax) + "):"), 1, 0, 1, 4)
+        layout.addWidget(peakDistinguishEdit2, 1, 2, 1, 2)
+
+        # 最后一行内容，按钮行
+        layout.addWidget(peakDistinguishButton1, 2, 2)
+        layout.addWidget(peakDistinguishButton2, 2, 3)
+
+        self.peakDistinguishDialog.exec()
+        # 返回值类型：list
+        retList = [self.PeakDisContinuityNum,  # 格式：整数
+                   self.PeakDisMassDeviation  # 格式：浮点数
+                  ]
+        return retList
+
+    # 设置参数为用户上次输入的值
+    def PeakDistinguishDefaultParameters(self, parameters):
+        # 设置参数
+        # 0~10000（整数）
+        self.PeakDisContinuityNum = parameters[0]
+        # 0.00~100.00（浮点数）
+        self.PeakDisMassDeviation = parameters[1]
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedPeakDistinguish(self, DBType, edit):
+        if edit.text() != "":
+            if DBType == "Continuity Num":
+                self.PeakDisContinuityNum = int(edit.text())
+            elif DBType == "Mass Deviation":
+                self.PeakDisMassDeviation = float(edit.text())
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCPeakDistinguish(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.PeakDistinguishDefaultParameters(parameters)
+            self.peakDistinguishDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.PeakDistinguishIsParameterValidate()
+            if inputState == 1:
+                self.peakDistinguishDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("Continuity Num输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("Mass Deviation输入不合法！")
+
+    # 参数合法性检查
+    def PeakDistinguishIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.PeakDisContinuityNum是否合法，对应代码2
+        if not (ConstValues.PsPeakDisContinuityNumMin <= self.PeakDisContinuityNum <= ConstValues.PsPeakDisContinuityNumMax):
+            return 2
+        # 判断self.PeakDisMassDeviation是否合法，对应代码3
+        if not (ConstValues.PsPeakDisMassDeviationMin <= self.PeakDisMassDeviation <= ConstValues.PsPeakDisMassDeviationMax):
+            return 3
+        # 合法
+        return 1
 

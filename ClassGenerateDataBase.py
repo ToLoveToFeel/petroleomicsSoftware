@@ -1,9 +1,6 @@
 # coding=utf-8
 # 此文件负责定义：生成数据库
-import numpy as np
-import pandas as pd
-import xlsxwriter
-from ConstValues import ConstValues
+from Utils import *
 
 
 class ClassGenerateDataBase():
@@ -60,7 +57,7 @@ class ClassGenerateDataBase():
             if self.GDBM_ZRageLow <= item[3] <= self.GDBM_ZRageHigh:
                 reslut.append(item)
 
-        self.WriteDataToExcel(reslut, "./intermediateFiles/_2_generateDataBase/GDB.xlsx")
+        WriteDataToExcel(reslut, "./intermediateFiles/_2_generateDataBase/GDB.xlsx")
 
         GDBIsFinished = True  # 该过程已经完成
 
@@ -137,23 +134,3 @@ class ClassGenerateDataBase():
             item.append(ion)  # 字符串
 
         return item
-
-    # 负责将数据写入xlsx文件
-    def WriteDataToExcel(self, data, filename):
-        """
-        :param data: 每一行是一组数据，第一行是表头
-        :return:
-        """
-        # 新建excel表
-        workbook = xlsxwriter.Workbook(filename)
-        # 创建sheet，默认名称sheet1
-        worksheet = workbook.add_worksheet()
-        # 数据写入excel
-        for i in range(len(data)):
-            worksheet.write_row("A{}".format(i+1), data[i])
-        # 将excel文件保存关闭，如果没有这一行运行代码会报错
-        workbook.close()
-
-
-
-

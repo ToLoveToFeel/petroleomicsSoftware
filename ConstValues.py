@@ -10,7 +10,7 @@ class ConstValues():
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -27,9 +27,12 @@ class ConstValues():
     PsBeforeRunningPromptBoxTime = 1000
     PsAfterRunningPromptBoxTime = 1000
     # 扣空白错误提示信息
-    PsDeleteBlankErrorMessage = "请选择需要处理的样本文件和空白文件!"
+    PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
     # 扣同位素错误提示信息
     PsDeleteIsotopeErrorMessage = "请先扣空白和生成数据库!"
+    # 峰识别错误提示信息
+    PsPeakDistinguishErrorMessage1 = "请选择需要处理的总离子流图文件!"
+    PsPeakDistinguishErrorMessage2 = "请先扣同位素!"
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
@@ -97,6 +100,16 @@ class ConstValues():
     PsDelIsoIsotopeIntensityDeviation = 10  # 30%
     PsDelIsoIsotopeIntensityDeviationMin = 0
     PsDelIsoIsotopeIntensityDeviationMax = 100
+
+    # 峰识别设置默认参数
+    # 0~10000（整数）
+    PsPeakDisContinuityNum = 30
+    PsPeakDisContinuityNumMin = 0
+    PsPeakDisContinuityNumMax = 10000
+    # 0.00~100.00（浮点数）
+    PsPeakDisMassDeviation = 2.0
+    PsPeakDisMassDeviationMin = 0.0
+    PsPeakDisMassDeviationMax = 100.0
 
 
 

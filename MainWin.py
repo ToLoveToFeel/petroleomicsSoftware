@@ -1,15 +1,14 @@
 # coding=utf-8
-import sys
-import numpy as np
-import pandas as pd
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
+from Utils import *
 from ClassDeleteBlank import ClassDeleteBlank
 from ClassGenerateDataBase import ClassGenerateDataBase
 from ClassDeleteIsotope import ClassDeleteIsotope
+from ClassPeakDistinguish import ClassPeakDistinguish
 from SetupInterface import SetupInterface
 
 
@@ -61,7 +60,7 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
-        textList = ["扣空白状态：", "数据库生成状态：", "扣同位素状态：", "扣空白状态：", "扣空白状态："]
+        textList = ["扣空白状态：", "数据库生成状态：", "扣同位素状态：", "峰识别状态：", "扣空白状态："]
         for i in range(len(textList)):
             self.TextLabel(textList[i], 20, (i + 1) * 120)
 
@@ -191,7 +190,18 @@ class MainWin(QMainWindow):
                            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
         self.DelIsoIsFinished = False   # 扣同位素：记录扣同位素过程是否完成
-        self.DelIsoResult = None        # 扣同位素：最终返回的结果（格式：）
+        self.DelIsoResult = None        # 扣同位素：最终返回的结果（格式：list二维数组，有表头）
+
+        # 峰识别全过程所需要的数据
+        self.TICFilePath = ""  # 总离子流图路径
+        self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
+        self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
+        self.PeakDisList = [self.DelIsoResult,
+                            self.PeakDisContinuityNum,
+                            self.PeakDisMassDeviation
+                            ]
+        self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
+        self.PeakDisResult = None  # 峰识别：最终返回的结果（格式：list二维数组，有表头）
 
     # 使窗口居中
     def center(self):
@@ -258,6 +268,10 @@ class MainWin(QMainWindow):
         tb1.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
+        TICBlankFile = QAction(QIcon('./images/open.png'), "TIC", self)
+        tb1.addAction(TICBlankFile)
+        TICBlankFile.triggered.connect(self.ImportTICFile)
+
         exitProgram = QAction(QIcon('./images/close.ico'), "exit", self)
         tb1.addAction(exitProgram)
         exitProgram.triggered.connect(self.QuitApplication)
@@ -316,13 +330,21 @@ class MainWin(QMainWindow):
         if ConstValues.PsIsDebug == True:
             print(self.sampleFilePath)
 
-    # 导入空白文件，文件路径存在BlankFileName中
+    # 导入空白文件，文件路径存在blankFileName中
     def ImportBlankFile(self):
         # 导入文件，并得到文件名称
         openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', '', 'Excel files(*.xlsx , *.xls)')
         self.blankFilePath = openfile_name[0]
         if ConstValues.PsIsDebug == True:
             print(self.blankFilePath)
+
+    # 导入总离子流图文件，文件路径存在TICFilePath中
+    def ImportTICFile(self):
+        # 导入文件，并得到文件名称
+        openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', '', 'Txt files(*.txt)')
+        self.TICFilePath = openfile_name[0]
+        if ConstValues.PsIsDebug == True:
+            print(self.TICFilePath)
 
     # 重置软件，参数重置
     def ResetProgram(self):
@@ -337,6 +359,8 @@ class MainWin(QMainWindow):
         self.messageLabel1.setText("未运行")  # 扣空白
         self.messageLabel2.setText("未运行")  # 数据库生成
         self.messageLabel3.setText("未运行")  # 扣同位素
+        self.messageLabel4.setText("未运行")  # 峰识别
+        self.messageLabel5.setText("未运行")  # 扣同位素
 
     # 退出程序
     def QuitApplication(self):
@@ -371,7 +395,12 @@ class MainWin(QMainWindow):
 
     # 峰识别参数设置
     def PeakDistinguishSetup(self):
-        pass
+        # 重新设置参数
+        self.PeakDisList[1:] = SetupInterface().PeakDistinguishSetup(self.PeakDisList[1:])
+        # self.PeakDisList = [self.DelIsoResult] + self.PeakDisList
+
+        if ConstValues.PsIsDebug:
+            print(self.PeakDisList[1:])
 
     # 干扰排除参数设置
     def DisturbRemoveSetup(self):
@@ -412,11 +441,9 @@ class MainWin(QMainWindow):
         # 单独运行，调试使用
         if ConstValues.PsIsSingleRun:
             self.deleteBlankIsFinished = True
-            self.deleteBlankResult = [["Mass", "Intensity"]] + \
-                                     np.array(pd.read_excel(io="./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")).tolist()
+            self.deleteBlankResult = ReadExcelToList(["Mass", "Intensity"], "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx", False)
             self.GDBIsFinished = True
-            self.GDBResult = [["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]] + \
-                             np.array(pd.read_excel(io="./intermediateFiles/_2_generateDataBase/GDB.xlsx")).tolist()
+            self.GDBResult = ReadExcelToList(["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"], "./intermediateFiles/_2_generateDataBase/GDB.xlsx", False)
 
         # 扣同位素前需要扣空白，数据库生成
         if (not self.deleteBlankIsFinished) or (not self.GDBIsFinished):
@@ -445,7 +472,33 @@ class MainWin(QMainWindow):
 
     # 峰识别
     def PeakDistinguish(self):
-        pass
+        # 扣空白前需要先读入数据
+        if self.TICFilePath == "":
+            PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage1)  # 弹出错误提示
+            return
+        # 单独运行，调试使用
+        if ConstValues.PsIsSingleRun:
+            self.DelIsoIsFinished = True
+            self.DelIsoResult = ReadExcelToList(["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"],
+                                                "./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx")
+        # 峰识别前需要扣同位素
+        if not self.DelIsoIsFinished:
+            PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
+            return
+        # 因为有self.DelIsoResult，所以需要更新self.PeakDisList（最开始第一项为空）
+        self.PeakDisList = [self.DelIsoResult,
+                            self.PeakDisContinuityNum,
+                            self.PeakDisMassDeviation
+                            ]
+        # 弹出提示框
+        self.messageLabel4.setText("正在处理，请稍后...")  # 文字可以正常显示
+        PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
+        # 峰识别
+        cpd = ClassPeakDistinguish(self.TICFilePath, self.PeakDisList)
+        self.PeakDisIsFinished, self.PeakDisResult = cpd.PeakDistinguish()
+        # 显示完成提示
+        self.messageLabel4.setText("处理完毕!")
+        PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
 
     # 干扰排除
     def DisturbRemove(self):
@@ -453,19 +506,14 @@ class MainWin(QMainWindow):
 
     # 全部开始
     def StartAll(self):
-        if self.sampleFilePath == "" or self.blankFilePath == "":
+        if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
             PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
             return
         self.DeleteBlank()
         self.GenerateDataBase()
         self.DeleteIsotope()
+        self.PeakDistinguish()
 
 
-if __name__ == '__main__':
-    # 创建QApplication类的实例
-    app = QApplication(sys.argv)
-    # 创建一个窗口
-    main = MainWin()
-    # 进入程序的主循环、并通过exit_()函数确保主循环安全结束
-    sys.exit(app.exec_())
+
 

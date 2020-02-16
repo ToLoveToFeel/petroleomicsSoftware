@@ -4,17 +4,35 @@ import time
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from ConstValues import ConstValues
 
 
 class PromptBox():
     def __init__(self):
         pass
-        # # 显示图像对话框
-        # self.imageDialog = None
-        # # 显示图像对话框
-        # self.gifDialog = None
 
-    # 警告对话框
+    """
+    1.关于对话框
+    2.错误对话框
+    3.警告对话框
+    4.提问对话框
+    5.消息对话框
+    """
+    # 1.关于对话框
+    def aboutMessage(self, message):
+        # 创建对话框
+        dialog = QDialog()
+        QMessageBox.about(dialog, '关于', message)
+
+    # 2.错误对话框
+    def errorMessage(self, message):
+        # 创建对话框
+        dialog = QDialog()
+        reply = QMessageBox.critical(dialog, '错误', message, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        # reply = QMessageBox.critical(dialog, '警告', message, QMessageBox.Yes)
+        return reply == QMessageBox.Yes
+
+    # 3.警告对话框
     def warningMessage(self, message):
         # 创建对话框
         dialog = QDialog()
@@ -22,7 +40,15 @@ class PromptBox():
         # reply = QMessageBox.warning(dialog, '警告', message, QMessageBox.Yes)
         return reply == QMessageBox.Yes
 
-    # 消息对话框
+    # 4.提问对话框
+    def questionMessage(self, message):
+        # 创建对话框
+        dialog = QDialog()
+        reply = QMessageBox.question(dialog, '疑问', message, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        # reply = QMessageBox.question(dialog, '警告', message, QMessageBox.Yes)
+        return reply == QMessageBox.Yes
+
+    # 5.消息对话框
     def informationMessage(self, message):
         # 创建对话框
         dialog = QDialog()
@@ -30,13 +56,18 @@ class PromptBox():
         return reply == QMessageBox.Yes
 
     # 一定时间后自动关闭消息对话框
-    def informationMessageAutoClose(self, message, milliSecond):
+    def informationMessageAutoClose(self, message, second):
+        """
+        :param message: 显示的信息
+        :param second: 秒数
+        :return:
+        """
         infoBox = QMessageBox()  # Message Box that doesn't run
         infoBox.setIcon(QMessageBox.Information)
         infoBox.setText(message)
         infoBox.setWindowTitle("Information")
         infoBox.setStandardButtons(QMessageBox.Ok)
-        infoBox.button(QMessageBox.Ok).animateClick(milliSecond)  # 3秒自动关闭
+        infoBox.button(QMessageBox.Ok).animateClick(second * 1000)  # second秒自动关闭
         infoBox.exec_()
 
     # 显示图片
@@ -50,6 +81,8 @@ class PromptBox():
         self.imageDialog = QDialog()
         # 设置对话框名称
         self.imageDialog.setWindowTitle(title)
+        # 设置对话框图标
+        self.imageDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
         # 设置对话框弹出后后面的界面不可用
         self.imageDialog.setWindowModality(Qt.ApplicationModal)
         # 创建image标签
@@ -72,6 +105,8 @@ class PromptBox():
         """
         # 创建对话框
         self.gifDialog = QDialog()
+        # 设置对话框图标
+        self.gifDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
         # 设置窗口状态
         # self.gifDialog.setWindowFlags(Qt.WindowCloseButtonHint)  # 只显示叉号
         self.gifDialog.setWindowFlags(Qt.WindowMaximizeButtonHint| Qt.MSWindowsFixedSizeDialogHint)  # 禁止使用叉号
@@ -92,5 +127,8 @@ class PromptBox():
         # 保证提示框一直出现
         self.gifDialog.exec()
 
+    # 关闭gif
+    def closeGif(self):
+        self.gifDialog.close()
 
 

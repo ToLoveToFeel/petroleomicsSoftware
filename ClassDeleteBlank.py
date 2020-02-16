@@ -7,24 +7,27 @@ from ConstValues import ConstValues
 
 
 class ClassDeleteBlank():
-    def __init__(self, samplePath, blankPath, parameterList):
+    def __init__(self,parameterList):
         """
-        :param samplePath: 样本文件路径
-        :param blankPath: 空白文件路径
+
         :param parameterList: 程序运行所需要的参数列表
         """
-        self.sampleData = pd.read_excel(io=samplePath, header=ConstValues.PsHeaderLine)
-        self.sampleData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
-        self.blankData = pd.read_excel(io=blankPath, header=ConstValues.PsHeaderLine)
-        self.blankData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
-        # 可调参数
-        assert len(parameterList) == 3, "ClassDeleteBlank参数不对"
+        assert len(parameterList) == 5, "ClassDeleteBlank参数不对"
+        # 样本文件路径
+        self.samplePath = parameterList[0]
+        # 空白文件路径
+        self.blankPath = parameterList[1]
         # 1~9999（整数）
-        self.deleteBlankIntensity = parameterList[0]
+        self.deleteBlankIntensity = parameterList[2]
         # 0.01~99.99（浮点数）
-        self.deleteBlankPPM = parameterList[1]
+        self.deleteBlankPPM = parameterList[3]
         # 1~100（整数）
-        self.deleteBlankPercentage = parameterList[2]
+        self.deleteBlankPercentage = parameterList[4]
+        # 数据预处理
+        self.sampleData = pd.read_excel(io=self.samplePath, header=ConstValues.PsHeaderLine)
+        self.sampleData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
+        self.blankData = pd.read_excel(io=self.blankPath, header=ConstValues.PsHeaderLine)
+        self.blankData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
 
     # 负责扣空白
     def DeleteBlank(self):

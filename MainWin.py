@@ -5,11 +5,8 @@ from PyQt5.QtCore import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 from Utils import *
-from ClassDeleteBlank import ClassDeleteBlank
-from ClassGenerateDataBase import ClassGenerateDataBase
-from ClassDeleteIsotope import ClassDeleteIsotope
-from ClassPeakDistinguish import ClassPeakDistinguish
 from SetupInterface import SetupInterface
+from MultiThread import MultiThread
 
 
 class MainWin(QMainWindow):
@@ -118,11 +115,13 @@ class MainWin(QMainWindow):
 
     # 全局数据初始化
     def dataInit(self):
+        # StartAll函数运行所需要的参数，全部参数
+        self.AllData = None
         # 文件路径
-        self.sampleFilePath = ""  # 样本文件路径
-        self.blankFilePath = ""  # 空白文件路径
         # self.sampleFilePath = "./inputData/test/180-onescan-external.xlsx"
         # self.blankFilePath = "./inputData/test/blank-3.xlsx"
+        self.sampleFilePath = ""  # 样本文件路径
+        self.blankFilePath = ""  # 空白文件路径
 
         # 扣空白全过程需要的数据
         # 0~10000（整数）
@@ -131,12 +130,14 @@ class MainWin(QMainWindow):
         self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM                  # 扣空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
         # 0~100（整数）
         self.deleteBlankPercentage = ConstValues.PsDeleteBlankPercentage    # 扣空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
-        self.deleteBlankList = [self.deleteBlankIntensity,  # 格式：整数
+        self.deleteBlankList = [self.sampleFilePath,  # 格式：字符串
+                                self.blankFilePath,  # 格式：字符串
+                                self.deleteBlankIntensity,  # 格式：整数
                                 self.deleteBlankPPM,  # 格式：浮点数
                                 self.deleteBlankPercentage  # 格式：整数
                                 ]
+        self.deleteBlankResult = None  # 扣空白：最终返回的结果（格式：list二维数组，有表头）
         self.deleteBlankIsFinished = False   # 扣空白：记录扣空白过程是否完成
-        self.deleteBlankResult = None        # 扣空白：最终返回的结果（格式：list二维数组，有表头）
 
         # 数据库生成全过程需要的数据
         self.GDBClass = ["N1", "N1O1", "N1S1", "CH"]        # 数据库生成(参数)：Class类型
@@ -166,8 +167,8 @@ class MainWin(QMainWindow):
                         self.GDB_MHNegative,  # 格式：bool
                         self.GDB_MNegative  # 格式：bool
                         ]
+        self.GDBResult = None  # 数据库生成：最终返回的结果（格式：list二维数组，有表头）
         self.GDBIsFinished = False  # 数据库生成：记录数据库生成过程是否完成
-        self.GDBResult = None       # 数据库生成：最终返回的结果（格式：list二维数组，有表头）
 
         # 扣同位素全过程需要的数据，另外还需要 扣空白的self.deleteBlankResult 和 数据库生成self.GDBResult
         # 0~正无穷（整数）
@@ -189,19 +190,20 @@ class MainWin(QMainWindow):
                            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
                            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
+        self.DelIsoResult = None  # 扣同位素：最终返回的结果（格式：list二维数组，有表头）
         self.DelIsoIsFinished = False   # 扣同位素：记录扣同位素过程是否完成
-        self.DelIsoResult = None        # 扣同位素：最终返回的结果（格式：list二维数组，有表头）
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
         self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
-        self.PeakDisList = [self.DelIsoResult,
+        self.PeakDisList = [self.TICFilePath,
+                            self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation
                             ]
-        self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
         self.PeakDisResult = None  # 峰识别：最终返回的结果（格式：list二维数组，有表头）
+        self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
 
     # 使窗口居中
     def center(self):
@@ -371,10 +373,10 @@ class MainWin(QMainWindow):
     # 扣空白参数设置  #######################################
     def DeleteBlankSetup(self):
         # 重新设置参数
-        self.deleteBlankList = SetupInterface().DeleteBlankSetup(self.deleteBlankList)
+        self.deleteBlankList[2:] = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
 
         if ConstValues.PsIsDebug:
-            print(self.deleteBlankList)
+            print(self.deleteBlankList[2:])
 
     # 数据库生成参数设置
     def GenerateDataBaseSetup(self):
@@ -396,11 +398,11 @@ class MainWin(QMainWindow):
     # 峰识别参数设置
     def PeakDistinguishSetup(self):
         # 重新设置参数
-        self.PeakDisList[1:] = SetupInterface().PeakDistinguishSetup(self.PeakDisList[1:])
-        # self.PeakDisList = [self.DelIsoResult] + self.PeakDisList
+        self.PeakDisList[2:] = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
+        # self.PeakDisList = [self.TICFilePath, self.DelIsoResult] + self.PeakDisList
 
         if ConstValues.PsIsDebug:
-            print(self.PeakDisList[1:])
+            print(self.PeakDisList[2:])
 
     # 干扰排除参数设置
     def DisturbRemoveSetup(self):
@@ -413,28 +415,41 @@ class MainWin(QMainWindow):
             PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
             return
 
+        # 因为有self.sampleFilePath，self.blankFilePath，所以需要更新self.sampleFilePath,self.blankFilePath（最开始前两项为空字符串）
+        self.deleteBlankList = [self.sampleFilePath,  # 格式：字符串
+                                self.blankFilePath,  # 格式：字符串
+                                self.deleteBlankIntensity,  # 格式：整数
+                                self.deleteBlankPPM,  # 格式：浮点数
+                                self.deleteBlankPercentage  # 格式：整数
+                                ]
+        # 处理扣空白，另起一个线程运行扣空白代码，主界面可以操作
+        self.deleteBlankMt = MultiThread("ClassDeleteBlank", self.deleteBlankList)
+        self.deleteBlankMt.signal.connect(self.HandleData)
+        self.deleteBlankMt.start()
+
+        # 界面显示的提示信息
+        # gifQMovie = QMovie("./images/ajax-loading.gif")  # 方式1
+        # self.messageLabel1.setMovie(gifQMovie)
+        # gifQMovie.start()
+        self.messageLabel1.setText("正在处理，请稍后...")  # 方式2
         # 弹出提示框
-        # self.messageLabel1.setPixmap(QPixmap("./images/load.png"))  # 图像可以正常显示
-        self.messageLabel1.setText("正在处理，请稍后...")  # 文字可以正常显示
-        PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
-        # 处理扣空白
-        cdb = ClassDeleteBlank(self.sampleFilePath, self.blankFilePath, self.deleteBlankList)
-        self.deleteBlankResult, self.deleteBlankIsFinished = cdb.DeleteBlank()
-        # 显示完成提示
-        self.messageLabel1.setText("处理完毕!")
-        PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+        # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
+        self.deleteBlankPromptBox = PromptBox()
+        self.deleteBlankPromptBox.showGif("正在处理扣空白，请稍后", "./images/ajax-loading.gif")
 
     # 数据库生成
     def GenerateDataBase(self):
-        # 弹出提示框
-        self.messageLabel2.setText("正在处理，请稍后...")  # 文字可以正常显示
-        PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
         # 生成数据库
-        cgdb = ClassGenerateDataBase(self.GDBList)
-        self.GDBResult, self.GDBIsFinished = cgdb.GenerateData()
-        # 显示完成提示
-        self.messageLabel2.setText("处理完毕!")
-        PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+        self.GDBMt = MultiThread("ClassGenerateDataBase", self.GDBList)
+        self.GDBMt.signal.connect(self.HandleData)
+        self.GDBMt.start()
+
+        # 界面显示的提示信息
+        self.messageLabel2.setText("正在处理，请稍后...")  # 文字可以正常显示
+        # 弹出提示框
+        # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
+        self.GDBPromptBox = PromptBox()
+        self.GDBPromptBox.showGif("正在生成数据库，请稍后", "./images/ajax-loading.gif")
 
     # 扣同位素
     def DeleteIsotope(self):
@@ -460,15 +475,17 @@ class MainWin(QMainWindow):
                            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
                            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
-        # 弹出提示框
-        self.messageLabel3.setText("正在处理，请稍后...")  # 文字可以正常显示
-        PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
         # 扣同位素
-        cdi = ClassDeleteIsotope(self.DelIsoList)
-        self.DelIsoResult, self.DelIsoIsFinished = cdi.DeleteIsotope()
-        # 显示完成提示
-        self.messageLabel3.setText("处理完毕!")
-        PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+        self.DelIsoMt = MultiThread("ClassDeleteIsotope", self.DelIsoList)
+        self.DelIsoMt.signal.connect(self.HandleData)
+        self.DelIsoMt.start()
+
+        # 界面显示的提示信息
+        self.messageLabel3.setText("正在处理，请稍后...")
+        # 弹出提示框
+        # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
+        self.DelIsoPromptBox = PromptBox()
+        self.DelIsoPromptBox.showGif("正在处理扣同位素，请稍后", "./images/ajax-loading.gif")
 
     # 峰识别
     def PeakDistinguish(self):
@@ -485,20 +502,23 @@ class MainWin(QMainWindow):
         if not self.DelIsoIsFinished:
             PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
             return
-        # 因为有self.DelIsoResult，所以需要更新self.PeakDisList（最开始第一项为空）
-        self.PeakDisList = [self.DelIsoResult,
+        # 因为有self.TICFilePath，self.DelIsoResult，所以需要更新self.TICFilePath，self.PeakDisList（最开始第一项为空字符串，第二项为空）
+        self.PeakDisList = [self.TICFilePath,
+                            self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation
                             ]
-        # 弹出提示框
-        self.messageLabel4.setText("正在处理，请稍后...")  # 文字可以正常显示
-        PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
         # 峰识别
-        cpd = ClassPeakDistinguish(self.TICFilePath, self.PeakDisList)
-        self.PeakDisIsFinished, self.PeakDisResult = cpd.PeakDistinguish()
-        # 显示完成提示
-        self.messageLabel4.setText("处理完毕!")
-        PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+        self.PeakDisMt = MultiThread("ClassDeleteIsotope", self.PeakDisList)
+        self.PeakDisMt.signal.connect(self.HandleData)
+        self.PeakDisMt.start()
+
+        # 界面显示的提示信息
+        self.messageLabel4.setText("正在处理，请稍后...")
+        # 弹出提示框
+        # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
+        self.PeakDisPromptBox = PromptBox()
+        self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后", "./images/ajax-loading.gif")
 
     # 干扰排除
     def DisturbRemove(self):
@@ -509,11 +529,108 @@ class MainWin(QMainWindow):
         if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
             PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
             return
-        self.DeleteBlank()
-        self.GenerateDataBase()
-        self.DeleteIsotope()
-        self.PeakDistinguish()
+        self.AllData = [
+            [
+                # 扣空白
+                self.sampleFilePath,  # 格式：字符串
+                self.blankFilePath,  # 格式：字符串
+                self.deleteBlankIntensity,  # 格式：整数
+                self.deleteBlankPPM,  # 格式：浮点数
+                self.deleteBlankPercentage  # 格式：整数
+            ],
+            [
+                # 数据库生成
+                self.GDBClass,  # 格式：列表，列表中均为字符串
+                self.GDBCarbonRangeLow,  # 格式：整数
+                self.GDBCarbonRangeHigh,  # 格式：整数
+                self.GDBDBERageLow,  # 格式：整数
+                self.GDBDBERageHigh,  # 格式：整数
+                self.GDBM_ZRageLow,  # 格式：整数
+                self.GDBM_ZRageHigh,  # 格式：整数
+                self.GDB_MHPostive,  # 格式：bool
+                self.GDB_MPostive,  # 格式：bool
+                self.GDB_MHNegative,  # 格式：bool
+                self.GDB_MNegative  # 格式：bool
+            ],
+            [
+                # 扣同位素
+                self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                self.deleteBlankIntensity,
+                self.DelIsoIntensityX,  # 格式：整数
+                self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                self.DelIsoMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+            ],
+            [
+                # 峰识别
+                self.TICFilePath,
+                self.DelIsoResult,
+                self.PeakDisContinuityNum,
+                self.PeakDisMassDeviation
+            ],
 
+        ]
+        self.StartAllMt = MultiThread("StartAll", self.AllData)
+        self.StartAllMt.signal.connect(self.HandleData)
+        self.StartAllMt.start()
+        # 界面显示的提示信息
+        self.messageLabel1.setText("正在处理，请稍后...")
+        self.messageLabel2.setText("正在处理，请稍后...")
+        self.messageLabel3.setText("正在处理，请稍后...")
+        self.messageLabel4.setText("正在处理，请稍后...")
+        # 弹出提示框
+        self.StartAllPromptBox = PromptBox()
+        self.StartAllPromptBox.showGif("正在处理中，请稍后...", "./images/ajax-loading.gif")
 
+    # 多进程数据返回接收
+    def HandleData(self, retList):
+        if retList[0] == "ClassDeleteBlank":
+            self.deleteBlankResult = retList[1]
+            self.deleteBlankIsFinished = retList[2]
+            # 显示完成提示
+            self.messageLabel1.setText("处理完毕!")
+            # PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+            self.deleteBlankPromptBox.closeGif()
+        elif retList[0] == "ClassGenerateDataBase":
+            self.GDBResult = retList[1]
+            self.GDBIsFinished = retList[2]
+            # 显示完成提示
+            self.messageLabel2.setText("处理完毕!")
+            self.GDBPromptBox.closeGif()
+        elif retList[0] == "ClassDeleteIsotope":
+            self.DelIsoResult = retList[1]
+            self.DelIsoIsFinished = retList[2]
+            # 显示完成提示
+            self.messageLabel3.setText("处理完毕!")
+            self.DelIsoPromptBox.closeGif()
+        elif retList[0] == "ClassPeakDistinguish":
+            self.PeakDisResult = retList[1]
+            self.PeakDisIsFinished = retList[2]
+            # 显示完成提示
+            self.messageLabel4.setText("处理完毕!")
+            self.PeakDisPromptBox.closeGif()
+        elif retList[0] == "StartAll":
+            # 更新结果
+            self.deleteBlankResult = retList[1]
+            self.deleteBlankIsFinished = retList[2]
+            self.GDBResult = retList[3]
+            self.GDBIsFinished = retList[4]
+            self.DelIsoResult = retList[5]
+            self.DelIsoIsFinished = retList[6]
+            self.PeakDisResult = retList[7]
+            self.PeakDisIsFinished = retList[8]
+            # 关闭弹出的程序运行指示对话框
+            self.StartAllPromptBox.closeGif()
+        elif retList[0] == "deleteBlankFinished":
+            # 显示完成提示
+            self.messageLabel1.setText("处理完毕!")
+        elif retList[0] == "GDBFinished":
+            self.messageLabel2.setText("处理完毕!")
+        elif retList[0] == "DelIsoFinished":
+            self.messageLabel3.setText("处理完毕!")
+        elif retList[0] == "PeakDisFinished":
+            self.messageLabel4.setText("处理完毕!")
 
 

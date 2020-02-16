@@ -9,13 +9,14 @@ from PromptBox import PromptBox
 
 
 class ClassPeakDistinguish():
-    def __init__(self, TICPath, parameterList):
-        self.TICFilePath = TICPath  # 总离子流图路径
+    def __init__(self, parameterList):
+        assert len(parameterList) == 4, "ClassPeakDistinguish参数个数不对!"
+        self.TICFilePath = parameterList[0]  # 总离子流图路径
+        self.DelIsoResult = parameterList[1]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
+        self.PeakDisContinuityNum = parameterList[2]  # 连续出现的扫描点个数，格式：整数
+        self.PeakDisMassDeviation = parameterList[3]  # 质量偏差，格式：浮点数
+        # 读取总离子流图
         self.TICData = self.ReadTIC()
-        assert len(parameterList) == 3, "ClassPeakDistinguish参数个数不对!"
-        self.DelIsoResult = parameterList[0]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
-        self.PeakDisContinuityNum = parameterList[1]  # 连续出现的扫描点个数，格式：整数
-        self.PeakDisMassDeviation = parameterList[2]  # 质量偏差，格式：浮点数
         # 去掉表头
         self.DelIsoResult = self.DelIsoResult[1:]
 

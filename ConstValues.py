@@ -23,9 +23,9 @@ class ConstValues():
     PsMainWindowStatusMessage = "欢迎使用！"
     # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
     PsMainWindowStyle = "Macintosh"
-    # 运行提示框弹出时间 1000 -> 1s
-    PsBeforeRunningPromptBoxTime = 1000
-    PsAfterRunningPromptBoxTime = 1000
+    # 运行提示框弹出时间 1 -> 1s
+    PsBeforeRunningPromptBoxTime = 1
+    PsAfterRunningPromptBoxTime = 1
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
     # 扣同位素错误提示信息

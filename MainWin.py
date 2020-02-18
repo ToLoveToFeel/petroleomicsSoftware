@@ -140,7 +140,7 @@ class MainWin(QMainWindow):
         self.deleteBlankIsFinished = False   # 扣空白：记录扣空白过程是否完成
 
         # 数据库生成全过程需要的数据
-        self.GDBClass = ["N1", "N1O1", "N1S1", "CH"]        # 数据库生成(参数)：Class类型
+        self.GDBClass = ConstValues.PsGDBClass        # 数据库生成(参数)：Class类型
         # 1~100（整数）
         self.GDBCarbonRangeLow = ConstValues.PsGDBCarbonRangeLow    # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
         self.GDBCarbonRangeHigh = ConstValues.PsGDBCarbonRangeHigh  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
@@ -194,13 +194,19 @@ class MainWin(QMainWindow):
         self.DelIsoIsFinished = False   # 扣同位素：记录扣同位素过程是否完成
 
         # 峰识别全过程所需要的数据
-        self.TICFilePath = ""  # 总离子流图路径
+        self.TICFilePath = ""  # 总离子流图路径，第一部分
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
         self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
+        self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed  # 第二部分，峰检测
+        self.PeakDisClass = ConstValues.PsPeakDisClass
+        self.PeakDisScanPoints = ConstValues.PsPeakDisScanPoints
         self.PeakDisList = [self.TICFilePath,
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
-                            self.PeakDisMassDeviation
+                            self.PeakDisMassDeviation,
+                            self.PeakDisClassIsNeed,
+                            self.PeakDisClass,
+                            self.PeakDisScanPoints
                             ]
         self.PeakDisResult = None  # 峰识别：最终返回的结果（格式：list二维数组，有表头）
         self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
@@ -345,13 +351,20 @@ class MainWin(QMainWindow):
         # 导入文件，并得到文件名称
         openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', '', 'Txt files(*.txt)')
         self.TICFilePath = openfile_name[0]
-        if ConstValues.PsIsDebug == True:
+        # # 文件合法性检查
+        # f = open(self.TICFilePath, "r")
+        # content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
+        # # 去除表头
+        # content = content[3:]
+        # if len(content) / 3 != int(len(content) / 3):
+        #     PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
+        #     self.TICFilePath = ""
+        if ConstValues.PsIsDebug:
             print(self.TICFilePath)
 
     # 重置软件，参数重置
     def ResetProgram(self):
-        reply = PromptBox().informationMessage("是否重置?")
-        if reply == True:
+        if PromptBox().informationMessage("是否重置?"):
             self.dataInit()
             self.ResetAssembly()
             PromptBox().informationMessage("已重置.")
@@ -506,7 +519,10 @@ class MainWin(QMainWindow):
         self.PeakDisList = [self.TICFilePath,
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
-                            self.PeakDisMassDeviation
+                            self.PeakDisMassDeviation,
+                            self.PeakDisClassIsNeed,
+                            self.PeakDisClass,
+                            self.PeakDisScanPoints
                             ]
         # 峰识别
         self.PeakDisMt = MultiThread("ClassDeleteIsotope", self.PeakDisList)
@@ -568,9 +584,11 @@ class MainWin(QMainWindow):
                 self.TICFilePath,
                 self.DelIsoResult,
                 self.PeakDisContinuityNum,
-                self.PeakDisMassDeviation
+                self.PeakDisMassDeviation,
+                self.PeakDisClassIsNeed,
+                self.PeakDisClass,
+                self.PeakDisScanPoints
             ],
-
         ]
         self.StartAllMt = MultiThread("StartAll", self.AllData)
         self.StartAllMt.signal.connect(self.HandleData)

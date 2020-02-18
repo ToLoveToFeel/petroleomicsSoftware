@@ -8,28 +8,33 @@ from ConstValues import ConstValues
 from PromptBox import PromptBox
 
 
-class ClassPeakDistinguish():
+class ClassPeakDistinguish:
     def __init__(self, parameterList):
-        assert len(parameterList) == 4, "ClassPeakDistinguish参数个数不对!"
-        self.TICFilePath = parameterList[0]  # 总离子流图路径
+        assert len(parameterList) == 7, "ClassPeakDistinguish参数个数不对!"
+        self.TICFilePath = parameterList[0]  # 总离子流图路径，第一部分
         self.DelIsoResult = parameterList[1]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
         self.PeakDisContinuityNum = parameterList[2]  # 连续出现的扫描点个数，格式：整数
         self.PeakDisMassDeviation = parameterList[3]  # 质量偏差，格式：浮点数
+        self.PeakDisClassIsNeed = parameterList[4]
+        self.PeakDisClass = parameterList[5]  # 第二部分，峰检测
+        self.PeakDisScanPoints = parameterList[6]  # 判断峰值的扫描点个数
         # 读取总离子流图
         self.TICData = self.ReadTIC()
         # 去掉表头
         self.DelIsoResult = self.DelIsoResult[1:]
 
-
     # 负责峰识别
     def PeakDistinguish(self):
         # 说明读取的文件存在问题
-        if self.TICData == None:
+        if self.TICData is None:
             return [], False
-        result = []
-        header = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        result.append(header)
+        resultPart1 = []  # 第一部分，识别连续的扫描点
+        headerPart1 = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+        resultPart1.append(headerPart1)
 
+        resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
+        headerPart2 = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+        resultPart2.append(headerPart2)
 
         try:
             for sampleItem in self.DelIsoResult:
@@ -41,21 +46,25 @@ class ClassPeakDistinguish():
                 if len(sampleItem) == 8:
                     ret = self.PeakDisHandleItem(sampleItem)
                     for item in ret:
-                        result.append(item)
+                        resultPart1.append(item)
         except Exception as e:
             print("Error : ", e)
 
         # 将结果写入excel文件
-        WriteDataToExcel(result, "./intermediateFiles/_4_peakDistinguish/PeakDistinguish.xlsx")
+        WriteDataToExcel(resultPart1, "./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1.xlsx")
 
         PeakDisIsFinished = True
 
-        return result, PeakDisIsFinished
+        return resultPart1, PeakDisIsFinished
 
     # 负责判断某个扣同位素后的样本是否能成功在总离子流图文件(txt)查到符合条件的记录集合
     def PeakDisHandleItem(self, sampleItem):
         # 获取样本中的Mass（Mass0）
         sampleMass = sampleItem[0]
+        # # 获取样本的类型，判断是否需要进行第二部分
+        # needDetectPeak = False
+        # if (sampleItem[2] in self.PeakDisClass) and self.PeakDisClassIsNeed:
+        #     needDetectPeak = True
         # 获取字典的长度
         scanNum = len(self.TICData)
         # 将字典的键转化为列表
@@ -66,7 +75,7 @@ class ClassPeakDistinguish():
         while k < scanNum:
             firstRT = None
             continuityItems = []  # 存储连续的符合要求的记录，为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-            while k < scanNum and firstRT == None:
+            while k < scanNum and firstRT is None:
                 firstRT = self.PeakDisHasCorrespondInTIC(keysList, sampleMass, k)
                 k += 1
             if k >= scanNum:
@@ -76,7 +85,7 @@ class ClassPeakDistinguish():
             continuityItems.append(firstRT)
             # 寻找连续的符合要求的记录
             nextRT = self.PeakDisHasCorrespondInTIC(keysList, sampleMass, k)
-            while k <scanNum and nextRT != None:
+            while k <scanNum and nextRT is not None:
                 continuityItems.append(nextRT)
                 k += 1
                 if k >= scanNum:

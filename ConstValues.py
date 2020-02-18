@@ -103,13 +103,20 @@ class ConstValues():
 
     # 峰识别设置默认参数
     # 0~10000（整数）
-    PsPeakDisContinuityNum = 30
+    PsPeakDisContinuityNum = 30  # 第一部分参数
     PsPeakDisContinuityNumMin = 0
     PsPeakDisContinuityNumMax = 10000
     # 0.00~100.00（浮点数）
     PsPeakDisMassDeviation = 2.0
     PsPeakDisMassDeviationMin = 0.0
     PsPeakDisMassDeviationMax = 100.0
+    # 输入字符串
+    PsPeakDisClassIsNeed = False  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
+    PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
+    # 3~10（整数）
+    PsPeakDisScanPoints = 5
+    PsPeakDisScanPointsMin = 3
+    PsPeakDisScanPointsMax = 10
 
 
 

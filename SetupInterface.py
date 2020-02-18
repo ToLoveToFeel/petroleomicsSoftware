@@ -53,9 +53,14 @@ class SetupInterface():
 
         # 扣同位素所需要返回的数据，数据初值无所谓
         # 0~10000（整数）
-        self.PeakDisContinuityNum = None
+        self.PeakDisContinuityNum = None  # 第一部分
         # 0.00~100.00（浮点数）
+        self.PeakDisClassIsNeed = None
         self.PeakDisMassDeviation = None
+        # str类型
+        self.PeakDisClass = None  # 第二部分，峰检测
+        # 3~10（整数）
+        self.PeakDisScanPoints = None
 
     # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
@@ -215,7 +220,7 @@ class SetupInterface():
         self.GDBDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
 
         # Class
-        GDBEdit1 = self.RegExpQLineEdit("([a-zA-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
+        GDBEdit1 = self.RegExpQLineEdit("([A-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
         GDBEdit1.textChanged.connect(lambda : self.HandleTextChangedGDB("Class", GDBEdit1))
         # carbon rage(碳数范围)：1~100（整数）
         GDBEdit2 = self.IntQLineEdit(ConstValues.PsGDBCarbonRangeMin, ConstValues.PsGDBCarbonRangeMax, str(self.GDBCarbonRangeLow))
@@ -568,7 +573,7 @@ class SetupInterface():
         # 创建QDialog
         self.peakDistinguishDialog = QDialog()
         self.peakDistinguishDialog.setWindowTitle("峰识别参数设置")
-        self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 30, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
         self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
 
         # PeakDisContinuityNum对话框
@@ -577,7 +582,20 @@ class SetupInterface():
         # Mass Deviation对话框
         peakDistinguishEdit2 = self.DoubleQLineEdit(int(ConstValues.PsPeakDisMassDeviationMin), int(ConstValues.PsPeakDisMassDeviationMax), 2, str(self.PeakDisMassDeviation))
         peakDistinguishEdit2.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("Mass Deviation", peakDistinguishEdit2))
-
+        # 创建单选按钮，以确定第二部分是否运行，即下面两个按钮是否有效
+        peakDistinguishQRadioButton = QRadioButton("使能")
+        peakDistinguishQRadioButton.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        if self.PeakDisClassIsNeed:
+            peakDistinguishQRadioButton.setChecked(True)
+        else:
+            peakDistinguishQRadioButton.setChecked(False)
+        peakDistinguishQRadioButton.toggled.connect(lambda: self.peakDistinguishQRadioButton(peakDistinguishQRadioButton))
+        # Class
+        self.peakDistinguishEdit3 = self.RegExpQLineEdit("([A-Z0-9]|,)+$", ",".join(self.PeakDisClass))  # 注意：list需要转为str
+        self.peakDistinguishEdit3.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("Class", self.peakDistinguishEdit3))
+        # ScanPoints对话框
+        self.peakDistinguishEdit4 = self.IntQLineEdit(ConstValues.PsPeakDisScanPointsMin, ConstValues.PsPeakDisScanPointsMax, str(self.PeakDisScanPoints))
+        self.peakDistinguishEdit4.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("ScanPoints", self.peakDistinguishEdit4))
 
         # 创建按钮
         peakDistinguishButton1 = QPushButton("确定")
@@ -589,21 +607,37 @@ class SetupInterface():
 
         # 创建栅格布局
         layout = QGridLayout(self.peakDistinguishDialog)
+        layout.setContentsMargins(10, 10, 10, 10)
         # 第一行内容，Continuity Num
-        layout.addWidget(self.GetQLabel("Continuity Num(" + str(ConstValues.PsPeakDisContinuityNumMin) + "~" + str(ConstValues.PsPeakDisContinuityNumMax) + ") :"), 0, 0, 1, 4)
-        layout.addWidget(peakDistinguishEdit1, 0, 2, 1, 2)
+        layout.addWidget(self.GetQLabel("Continuity Num(" + str(ConstValues.PsPeakDisContinuityNumMin) + "~" + str(ConstValues.PsPeakDisContinuityNumMax) + ") :"), 0, 0, 1, 3)
+        layout.addWidget(peakDistinguishEdit1, 0, 3, 1, 3)
         # 第二行内容，Mass Deviation
-        layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsPeakDisMassDeviationMin) + "~" + str(ConstValues.PsPeakDisMassDeviationMax) + "):"), 1, 0, 1, 4)
-        layout.addWidget(peakDistinguishEdit2, 1, 2, 1, 2)
+        layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsPeakDisMassDeviationMin) + "~" + str(ConstValues.PsPeakDisMassDeviationMax) + "):"), 1, 0, 1, 3)
+        layout.addWidget(peakDistinguishEdit2, 1, 3, 1, 3)
+        # 第三行内容，单选按钮
+        layout.addWidget(self.GetQLabel("峰检测 ： "), 2, 0, 1, 3)
+        layout.addWidget(peakDistinguishQRadioButton, 2, 3, 1, 3)
+        # 第四行内容，Class
+        layout.addWidget(self.GetQLabel("Class(需要峰检测的类型) : "), 3, 0, 1, 2)
+        layout.addWidget(self.peakDistinguishEdit3, 3, 2, 1, 4)
+        # 第五行内容，ScanPoints
+        layout.addWidget(self.GetQLabel("ScanPoints(" + str(ConstValues.PsPeakDisScanPointsMin) + "~" + str(ConstValues.PsPeakDisScanPointsMax) + "):"), 4, 0, 1, 3)
+        layout.addWidget(self.peakDistinguishEdit4, 4, 3, 1, 3)
+        if not self.PeakDisClassIsNeed:
+            self.peakDistinguishEdit3.setEnabled(False)
+            self.peakDistinguishEdit4.setEnabled(False)
 
         # 最后一行内容，按钮行
-        layout.addWidget(peakDistinguishButton1, 2, 2)
-        layout.addWidget(peakDistinguishButton2, 2, 3)
+        layout.addWidget(peakDistinguishButton1, 5, 2)
+        layout.addWidget(peakDistinguishButton2, 5, 3)
 
         self.peakDistinguishDialog.exec()
         # 返回值类型：list
         retList = [self.PeakDisContinuityNum,  # 格式：整数
-                   self.PeakDisMassDeviation  # 格式：浮点数
+                   self.PeakDisMassDeviation,  # 格式：浮点数
+                   self.PeakDisClassIsNeed,
+                   self.PeakDisClass,
+                   self.PeakDisScanPoints
                   ]
         return retList
 
@@ -614,6 +648,11 @@ class SetupInterface():
         self.PeakDisContinuityNum = parameters[0]
         # 0.00~100.00（浮点数）
         self.PeakDisMassDeviation = parameters[1]
+        # str类型
+        self.PeakDisClassIsNeed = parameters[2]  # 第二部分，峰检测
+        self.PeakDisClass = parameters[3]
+        # 3~10（整数）
+        self.PeakDisScanPoints = parameters[4]
 
     # 用户输入文本后，会进入这个函数处理
     def HandleTextChangedPeakDistinguish(self, DBType, edit):
@@ -622,6 +661,10 @@ class SetupInterface():
                 self.PeakDisContinuityNum = int(edit.text())
             elif DBType == "Mass Deviation":
                 self.PeakDisMassDeviation = float(edit.text())
+            elif DBType == "Class":
+                self.PeakDisClass = edit.text().split(",")  # 转为list
+            elif DBType == "ScanPoints":
+                self.PeakDisScanPoints = int(edit.text())
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCPeakDistinguish(self, parameters, isOK):
@@ -636,6 +679,21 @@ class SetupInterface():
                 PromptBox().warningMessage("Continuity Num输入不合法！")
             elif inputState == 3:
                 PromptBox().warningMessage("Mass Deviation输入不合法！")
+            elif inputState == 4:
+                PromptBox().warningMessage("Class输入不合法！")
+            elif inputState == 5:
+                PromptBox().warningMessage("ScanPoints输入不合法！")
+
+    # 单选按钮
+    def peakDistinguishQRadioButton(self, radioButton):
+        if radioButton.isChecked():
+            self.PeakDisClassIsNeed = True
+            self.peakDistinguishEdit3.setEnabled(True)
+            self.peakDistinguishEdit4.setEnabled(True)
+        else:
+            self.PeakDisClassIsNeed = False
+            self.peakDistinguishEdit3.setEnabled(False)
+            self.peakDistinguishEdit4.setEnabled(False)
 
     # 参数合法性检查
     def PeakDistinguishIsParameterValidate(self):
@@ -646,6 +704,20 @@ class SetupInterface():
         # 判断self.PeakDisMassDeviation是否合法，对应代码3
         if not (ConstValues.PsPeakDisMassDeviationMin <= self.PeakDisMassDeviation <= ConstValues.PsPeakDisMassDeviationMax):
             return 3
+        # 判断self.PeakDisClass是否合法，对应代码4
+        for item in self.PeakDisClass:
+            if item == "CH":
+                continue
+            for i in range(len(item)):
+                if i % 2 == 0:  # 应该是字母
+                    if not ("A" <= item[i] <= "Z"):
+                        return 4
+                else:  # 应该是数字字符
+                    if not ("0" <= item[i] <= "9"):
+                        return 4
+        # 判断self.PeakDisScanPoints是否合法，对应代码5
+        if not (ConstValues.PsPeakDisScanPointsMin <= self.PeakDisScanPoints <= ConstValues.PsPeakDisScanPointsMax):
+            return 5
         # 合法
         return 1
 

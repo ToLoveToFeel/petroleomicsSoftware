@@ -10,7 +10,7 @@ class ConstValues():
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -110,8 +110,12 @@ class ConstValues():
     PsPeakDisMassDeviation = 2.0
     PsPeakDisMassDeviationMin = 0.0
     PsPeakDisMassDeviationMax = 100.0
+    # 0~30(整数)
+    PsPeakDisDiscontinuityPointNum = 2
+    PsPeakDisDiscontinuityPointNumMin = 0
+    PsPeakDisDiscontinuityPointNumMax = 30
     # 输入字符串
-    PsPeakDisClassIsNeed = False  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
+    PsPeakDisClassIsNeed = True  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
     PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
     # 3~10（整数）
     PsPeakDisScanPoints = 5

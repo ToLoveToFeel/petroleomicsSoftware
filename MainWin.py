@@ -197,6 +197,7 @@ class MainWin(QMainWindow):
         self.TICFilePath = ""  # 总离子流图路径，第一部分
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
         self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
+        self.PeakDisDiscontinuityPointNum = ConstValues.PsPeakDisDiscontinuityPointNum
         self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed  # 第二部分，峰检测
         self.PeakDisClass = ConstValues.PsPeakDisClass
         self.PeakDisScanPoints = ConstValues.PsPeakDisScanPoints
@@ -204,7 +205,8 @@ class MainWin(QMainWindow):
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation,
-                            self.PeakDisClassIsNeed,
+                            self.PeakDisDiscontinuityPointNum,
+                            self.PeakDisClassIsNeed,  # 第二部分
                             self.PeakDisClass,
                             self.PeakDisScanPoints
                             ]
@@ -520,12 +522,13 @@ class MainWin(QMainWindow):
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation,
-                            self.PeakDisClassIsNeed,
+                            self.PeakDisDiscontinuityPointNum,
+                            self.PeakDisClassIsNeed,  # 第二部分
                             self.PeakDisClass,
                             self.PeakDisScanPoints
                             ]
         # 峰识别
-        self.PeakDisMt = MultiThread("ClassDeleteIsotope", self.PeakDisList)
+        self.PeakDisMt = MultiThread("ClassPeakDistinguish", self.PeakDisList)
         self.PeakDisMt.signal.connect(self.HandleData)
         self.PeakDisMt.start()
 
@@ -585,7 +588,8 @@ class MainWin(QMainWindow):
                 self.DelIsoResult,
                 self.PeakDisContinuityNum,
                 self.PeakDisMassDeviation,
-                self.PeakDisClassIsNeed,
+                self.PeakDisDiscontinuityPointNum,
+                self.PeakDisClassIsNeed,  # 第二部分
                 self.PeakDisClass,
                 self.PeakDisScanPoints
             ],

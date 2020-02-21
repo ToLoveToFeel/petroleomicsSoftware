@@ -1,11 +1,12 @@
 # coding=utf-8
-# 此文件负责定义：扣同位素
+# 此文件负责定义：去同位素
+import os
 from Utils import *
 from ConstValues import ConstValues
 
 
 class ClassDeleteIsotope():
-    def __init__(self, parameterList):
+    def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 8, "ClassDeleteIsotope参数个数不对"
         self.deleteBlankResult = parameterList[0]  # 删空白的结果（格式：list二维数组，有表头）
         self.GDBResult = parameterList[1]  # 数据库生成的结果（格式：list二维数组，有表头）
@@ -18,8 +19,10 @@ class ClassDeleteIsotope():
         # 去掉表头
         self.deleteBlankResult = self.deleteBlankResult[1:]
         self.GDBResult = self.GDBResult[1:]
+        # 用户选择的文件的生成位置
+        self.outputFilesPath = outputFilesPath
 
-    # 负责扣同位素
+    # 负责去同位素
     def DeleteIsotope(self):
         result = []
         header = ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
@@ -33,8 +36,20 @@ class ClassDeleteIsotope():
         except Exception as e:
             print("Error : ", e)
 
-        # 将结果写入excel文件
-        WriteDataToExcel(result, "./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx")
+        # 数据写入excel文件中
+        if self.outputFilesPath == "":
+            if not os.path.exists('./intermediateFiles/_3_deleteIsotope'):
+                os.makedirs('./intermediateFiles/_3_deleteIsotope')
+                if ConstValues.PsIsDebug:
+                    print('文件夹 ./intermediateFiles/_3_deleteIsotope 不存在，创建成功......')
+            WriteDataToExcel(result, "./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx")
+        else:
+            if not os.path.exists(self.outputFilesPath + "/_3_deleteIsotope"):
+                os.makedirs(self.outputFilesPath + "/_3_deleteIsotope")
+                if ConstValues.PsIsDebug:
+                    print("文件夹 " + self.outputFilesPath + "/_3_deleteIsotope 不存在，创建成功......")
+            WriteDataToExcel(result, self.outputFilesPath + "/_3_deleteIsotope/DeleteIsotope.xlsx")
+
 
         DelIsoIsFinished = True
 

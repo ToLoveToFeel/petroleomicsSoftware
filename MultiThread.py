@@ -11,38 +11,40 @@ from ConstValues import ConstValues
 class MultiThread(QThread):
     signal = pyqtSignal(list)
 
-    def __init__(self, function=None, parameters=None):
+    def __init__(self, function=None, parameters=None, outputFilesPath=""):
         super(MultiThread, self).__init__()
         self.__function = function
         self.__parameters = parameters
+        self.outputFilesPath = outputFilesPath
 
     def run(self):
         startTime = time.time()
 
         if self.__function == "ClassDeleteBlank":
             retList = ["ClassDeleteBlank"]
-            cdb = ClassDeleteBlank(self.__parameters)
+            cdb = ClassDeleteBlank(self.__parameters, self.outputFilesPath)
             deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
             retList.append(deleteBlankResult)
             retList.append(deleteBlankIsFinished)
             self.signal.emit(retList)
         elif self.__function == "ClassGenerateDataBase":
             retList = ["ClassGenerateDataBase"]
-            cgdb = ClassGenerateDataBase(self.__parameters)
+            cgdb = ClassGenerateDataBase(self.__parameters, self.outputFilesPath)
             GDBResult, GDBIsFinished = cgdb.GenerateData()
             retList.append(GDBResult)
             retList.append(GDBIsFinished)
             self.signal.emit(retList)
         elif self.__function == "ClassDeleteIsotope":
             retList = ["ClassDeleteIsotope"]
-            cdi = ClassDeleteIsotope(self.__parameters)
+            cdi = ClassDeleteIsotope(self.__parameters, self.outputFilesPath)
             DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
             retList.append(DelIsoResult)
             retList.append(DelIsoIsFinished)
             self.signal.emit(retList)
         elif self.__function == "ClassPeakDistinguish":
             retList = ["ClassPeakDistinguish"]
-            cpd = ClassPeakDistinguish(self.__parameters)
+            cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
+            # cpd.PeakDisPlotPeak()
             PeakDisIsFinished, PeakDisResult = cpd.PeakDistinguish()
             retList.append(PeakDisIsFinished)
             retList.append(PeakDisResult)
@@ -55,7 +57,7 @@ class MultiThread(QThread):
             DelIsoParameterList = self.__parameters[2]  # 扣同位素
             PeakDisParameterList = self.__parameters[3]  # 峰识别
             # 扣空白
-            cdb = ClassDeleteBlank(DeleteBlankParameterList)
+            cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
             deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
             retList.append(deleteBlankResult)
             retList.append(deleteBlankIsFinished)
@@ -63,7 +65,7 @@ class MultiThread(QThread):
             if ConstValues.PsIsDebug:
                 print("扣空白完成！")
             # 数据库生成
-            cgdb = ClassGenerateDataBase(GDBParameterList)
+            cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
             GDBResult, GDBIsFinished = cgdb.GenerateData()
             retList.append(GDBResult)
             retList.append(GDBIsFinished)
@@ -73,7 +75,7 @@ class MultiThread(QThread):
             # 扣同位素
             DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
             DelIsoParameterList[1] = GDBResult
-            cdi = ClassDeleteIsotope(DelIsoParameterList)
+            cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
             DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
             retList.append(DelIsoResult)
             retList.append(DelIsoIsFinished)
@@ -82,7 +84,7 @@ class MultiThread(QThread):
                 print("扣同位素完成！")
             # 峰识别
             PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
-            cpd = ClassPeakDistinguish(PeakDisParameterList)
+            cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
             PeakDisIsFinished, PeakDisResult = cpd.PeakDistinguish()
             retList.append(PeakDisIsFinished)
             retList.append(PeakDisResult)

@@ -57,7 +57,7 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
-        textList = ["扣空白状态：", "数据库生成状态：", "扣同位素状态：", "峰识别状态：", "扣空白状态："]
+        textList = ["扣空白状态：", "数据库生成状态：", "去同位素状态：", "峰识别状态：", "去假阳性状态："]
         for i in range(len(textList)):
             self.TextLabel(textList[i], 20, (i + 1) * 120)
 
@@ -73,7 +73,7 @@ class MainWin(QMainWindow):
         self.messageLabel2.resize(180, 50)
         self.messageLabel2.setFont(QFont("Arial", 15))
         self.messageLabel2.move(180, 240)
-        # 扣同位素message
+        # 去同位素message
         self.messageLabel3 = QLabel(self)
         self.messageLabel3.setText("未运行")
         self.messageLabel3.resize(180, 50)
@@ -122,6 +122,7 @@ class MainWin(QMainWindow):
         # self.blankFilePath = "./inputData/test/blank-3.xlsx"
         self.sampleFilePath = ""  # 样本文件路径
         self.blankFilePath = ""  # 空白文件路径
+        self.outputFilesPath = ""  # 输出文件路径
 
         # 扣空白全过程需要的数据
         # 0~10000（整数）
@@ -170,7 +171,7 @@ class MainWin(QMainWindow):
         self.GDBResult = None  # 数据库生成：最终返回的结果（格式：list二维数组，有表头）
         self.GDBIsFinished = False  # 数据库生成：记录数据库生成过程是否完成
 
-        # 扣同位素全过程需要的数据，另外还需要 扣空白的self.deleteBlankResult 和 数据库生成self.GDBResult
+        # 去同位素全过程需要的数据，另外还需要 扣空白的self.deleteBlankResult 和 数据库生成self.GDBResult
         # 0~正无穷（整数）
         self.DelIsoIntensityX = ConstValues.PsDelIsoIntensityX
         # 0~100（整数）
@@ -190,26 +191,47 @@ class MainWin(QMainWindow):
                            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
                            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
-        self.DelIsoResult = None  # 扣同位素：最终返回的结果（格式：list二维数组，有表头）
-        self.DelIsoIsFinished = False   # 扣同位素：记录扣同位素过程是否完成
+        self.DelIsoResult = None  # 去同位素：最终返回的结果（格式：list二维数组，有表头）
+        self.DelIsoIsFinished = False   # 去同位素：记录去同位素过程是否完成
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径，第一部分
+        # 0~10000（整数）
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
+        # 0.00~100.00（浮点数）
         self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
+        # 0~30(整数)
+        self.PeakDisDiscontinuityPointNum = ConstValues.PsPeakDisDiscontinuityPointNum
         self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed  # 第二部分，峰检测
         self.PeakDisClass = ConstValues.PsPeakDisClass
+        # 3~10（整数）
         self.PeakDisScanPoints = ConstValues.PsPeakDisScanPoints
         self.PeakDisList = [self.TICFilePath,
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation,
-                            self.PeakDisClassIsNeed,
+                            self.PeakDisDiscontinuityPointNum,
+                            self.PeakDisClassIsNeed,  # 第二部分
                             self.PeakDisClass,
                             self.PeakDisScanPoints
                             ]
         self.PeakDisResult = None  # 峰识别：最终返回的结果（格式：list二维数组，有表头）
         self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
+
+        # 去假阳性全过程所需要的数据
+        self.RemoveFPId = ConstValues.PsRemoveFPId  # 1：去同位素之后的内容，2：峰识别之后的内容
+        # 0~100（整数）
+        self.RemoveFPContinue_CNum = ConstValues.PsRemoveFPContinue_CNum  # 连续碳数
+        # 0~100（整数）
+        self.RemoveFPContinue_DBENum = ConstValues.PsRemoveFPContinue_DBENum  # 连续DBE数
+        self.RemoveFPList = [self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                             self.DelIsoResult,
+                             self.PeakDisResult,
+                             self.RemoveFPContinue_CNum,
+                             self.RemoveFPContinue_DBENum
+                             ]
+        self.RemoveFPResult = None
+        self.RemoveFPIsFinished = False
 
     # 使窗口居中
     def center(self):
@@ -250,7 +272,7 @@ class MainWin(QMainWindow):
         set.addAction(DBSearch)
         DBSearch.triggered.connect(self.GenerateDataBaseSetup)
 
-        deleteIsotope = QAction("扣同位素", self)  # 添加二级菜单
+        deleteIsotope = QAction("去同位素", self)  # 添加二级菜单
         set.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotopeSetup)
 
@@ -258,9 +280,9 @@ class MainWin(QMainWindow):
         set.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguishSetup)
 
-        disturbRemove = QAction("干扰排除", self)  # 添加二级菜单
+        disturbRemove = QAction("去假阳性", self)  # 添加二级菜单
         set.addAction(disturbRemove)
-        disturbRemove.triggered.connect(self.DisturbRemoveSetup)
+        disturbRemove.triggered.connect(self.RemoveFalsePositiveSetup)
 
     # 设置工具栏
     def toolbar(self):
@@ -276,9 +298,13 @@ class MainWin(QMainWindow):
         tb1.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICBlankFile = QAction(QIcon('./images/open.png'), "TIC", self)
-        tb1.addAction(TICBlankFile)
-        TICBlankFile.triggered.connect(self.ImportTICFile)
+        TICFile = QAction(QIcon('./images/open.png'), "TIC", self)
+        tb1.addAction(TICFile)
+        TICFile.triggered.connect(self.ImportTICFile)
+
+        OutFilesPath = QAction(QIcon('./images/open.png'), "OUT", self)
+        tb1.addAction(OutFilesPath)
+        OutFilesPath.triggered.connect(self.GetOutputFilesPath)
 
         exitProgram = QAction(QIcon('./images/close.ico'), "exit", self)
         tb1.addAction(exitProgram)
@@ -298,7 +324,7 @@ class MainWin(QMainWindow):
         tb2.addAction(DBSearch)
         DBSearch.triggered.connect(self.GenerateDataBase)
 
-        deleteIsotope = QAction(QIcon('./images/work/j3.png'), "扣同位素", self)
+        deleteIsotope = QAction(QIcon('./images/work/j3.png'), "去同位素", self)
         tb2.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotope)
 
@@ -306,9 +332,9 @@ class MainWin(QMainWindow):
         tb2.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguish)
 
-        disturbRemove = QAction(QIcon('./images/work/j5.png'), "干扰排除", self)
+        disturbRemove = QAction(QIcon('./images/work/j5.png'), "去假阳性", self)
         tb2.addAction(disturbRemove)
-        disturbRemove.triggered.connect(self.DisturbRemove)
+        disturbRemove.triggered.connect(self.RemoveFalsePositive)
 
 
         # 添加第三个工具栏
@@ -362,6 +388,13 @@ class MainWin(QMainWindow):
         if ConstValues.PsIsDebug:
             print(self.TICFilePath)
 
+    # 选择输入的文件存放的文件夹
+    def GetOutputFilesPath(self):
+        # 导入文件，并得到文件名称
+        self.outputFilesPath = QFileDialog.getExistingDirectory(self, '打开文件夹', './')
+        if ConstValues.PsIsDebug == True:
+            print(self.outputFilesPath)
+
     # 重置软件，参数重置
     def ResetProgram(self):
         if PromptBox().informationMessage("是否重置?"):
@@ -373,9 +406,9 @@ class MainWin(QMainWindow):
     def ResetAssembly(self):
         self.messageLabel1.setText("未运行")  # 扣空白
         self.messageLabel2.setText("未运行")  # 数据库生成
-        self.messageLabel3.setText("未运行")  # 扣同位素
+        self.messageLabel3.setText("未运行")  # 去同位素
         self.messageLabel4.setText("未运行")  # 峰识别
-        self.messageLabel5.setText("未运行")  # 扣同位素
+        self.messageLabel5.setText("未运行")  # 去同位素
 
     # 退出程序
     def QuitApplication(self):
@@ -386,7 +419,18 @@ class MainWin(QMainWindow):
     # 扣空白参数设置  #######################################
     def DeleteBlankSetup(self):
         # 重新设置参数
-        self.deleteBlankList[2:] = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
+        newParameters = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
+
+        # 更新数据
+        self.deleteBlankIntensity = newParameters[0]
+        self.deleteBlankPPM = newParameters[1]
+        self.deleteBlankPercentage = newParameters[2]
+        self.deleteBlankList = [self.sampleFilePath,  # 格式：字符串
+                                self.blankFilePath,  # 格式：字符串
+                                self.deleteBlankIntensity,  # 格式：整数
+                                self.deleteBlankPPM,  # 格式：浮点数
+                                self.deleteBlankPercentage  # 格式：整数
+                                ]
 
         if ConstValues.PsIsDebug:
             print(self.deleteBlankList[2:])
@@ -394,16 +438,56 @@ class MainWin(QMainWindow):
     # 数据库生成参数设置
     def GenerateDataBaseSetup(self):
         # 重新设置参数
-        self.GDBList = SetupInterface().GenerateDataBaseSetup(self.GDBList)
+        newParameters = SetupInterface().GenerateDataBaseSetup(self.GDBList)
+
+        # 更新数据
+        self.GDBClass = newParameters[0]
+        self.GDBCarbonRangeLow = newParameters[1]
+        self.GDBCarbonRangeHigh = newParameters[2]
+        self.GDBDBERageLow = newParameters[3]
+        self.GDBDBERageHigh = newParameters[4]
+        self.GDBM_ZRageLow = newParameters[5]
+        self.GDBM_ZRageHigh = newParameters[6]
+        self.GDB_MHPostive = newParameters[7]
+        self.GDB_MPostive = newParameters[8]
+        self.GDB_MHNegative = newParameters[9]
+        self.GDB_MNegative = newParameters[10]
+        self.GDBList = [self.GDBClass,  # 格式：列表，列表中均为字符串
+                        self.GDBCarbonRangeLow,  # 格式：整数
+                        self.GDBCarbonRangeHigh,  # 格式：整数
+                        self.GDBDBERageLow,  # 格式：整数
+                        self.GDBDBERageHigh,  # 格式：整数
+                        self.GDBM_ZRageLow,  # 格式：整数
+                        self.GDBM_ZRageHigh,  # 格式：整数
+                        self.GDB_MHPostive,  # 格式：bool
+                        self.GDB_MPostive,  # 格式：bool
+                        self.GDB_MHNegative,  # 格式：bool
+                        self.GDB_MNegative  # 格式：bool
+                        ]
 
         if ConstValues.PsIsDebug:
             print(self.GDBList)
 
-    # 扣同位素参数设置
+    # 去同位素参数设置
     def DeleteIsotopeSetup(self):
         # 重新设置参数
-        self.DelIsoList[3:] = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
-        # self.DelIsoList = [self.deleteBlankResult, self.GDBResult] + self.DelIsoList
+        newParameters = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
+
+        # 更新数据
+        self.DelIsoIntensityX = newParameters[0]
+        self.DelIso_13C2RelativeIntensity = newParameters[1]
+        self.DelIsoMassDeviation = newParameters[2]
+        self.DelIsoIsotopeMassDeviation = newParameters[3]
+        self.DelIsoIsotopeIntensityDeviation = newParameters[4]
+        self.DelIsoList = [self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                           self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                           self.deleteBlankIntensity,
+                           self.DelIsoIntensityX,  # 格式：整数
+                           self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                           self.DelIsoMassDeviation,  # 格式：浮点数
+                           self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                           self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                           ]
 
         if ConstValues.PsIsDebug:
             print(self.DelIsoList[3:])
@@ -411,14 +495,30 @@ class MainWin(QMainWindow):
     # 峰识别参数设置
     def PeakDistinguishSetup(self):
         # 重新设置参数
-        self.PeakDisList[2:] = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
-        # self.PeakDisList = [self.TICFilePath, self.DelIsoResult] + self.PeakDisList
+        newParameters = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
+
+        # 更新数据
+        self.PeakDisContinuityNum = newParameters[0]
+        self.PeakDisMassDeviation = newParameters[1]
+        self.PeakDisDiscontinuityPointNum = newParameters[2]
+        self.PeakDisClassIsNeed = newParameters[3]
+        self.PeakDisClass = newParameters[4]
+        self.PeakDisScanPoints = newParameters[5]
+        self.PeakDisList = [self.TICFilePath,
+                            self.DelIsoResult,
+                            self.PeakDisContinuityNum,
+                            self.PeakDisMassDeviation,
+                            self.PeakDisDiscontinuityPointNum,
+                            self.PeakDisClassIsNeed,  # 第二部分
+                            self.PeakDisClass,
+                            self.PeakDisScanPoints
+                            ]
 
         if ConstValues.PsIsDebug:
             print(self.PeakDisList[2:])
 
     # 干扰排除参数设置
-    def DisturbRemoveSetup(self):
+    def RemoveFalsePositiveSetup(self):
         pass
 
     # 扣空白 #######################################
@@ -436,7 +536,7 @@ class MainWin(QMainWindow):
                                 self.deleteBlankPercentage  # 格式：整数
                                 ]
         # 处理扣空白，另起一个线程运行扣空白代码，主界面可以操作
-        self.deleteBlankMt = MultiThread("ClassDeleteBlank", self.deleteBlankList)
+        self.deleteBlankMt = MultiThread("ClassDeleteBlank", self.deleteBlankList, self.outputFilesPath)
         self.deleteBlankMt.signal.connect(self.HandleData)
         self.deleteBlankMt.start()
 
@@ -453,7 +553,7 @@ class MainWin(QMainWindow):
     # 数据库生成
     def GenerateDataBase(self):
         # 生成数据库
-        self.GDBMt = MultiThread("ClassGenerateDataBase", self.GDBList)
+        self.GDBMt = MultiThread("ClassGenerateDataBase", self.GDBList, self.outputFilesPath)
         self.GDBMt.signal.connect(self.HandleData)
         self.GDBMt.start()
 
@@ -464,16 +564,16 @@ class MainWin(QMainWindow):
         self.GDBPromptBox = PromptBox()
         self.GDBPromptBox.showGif("正在生成数据库，请稍后", "./images/ajax-loading.gif")
 
-    # 扣同位素
+    # 去同位素
     def DeleteIsotope(self):
         # 单独运行，调试使用
         if ConstValues.PsIsSingleRun:
             self.deleteBlankIsFinished = True
-            self.deleteBlankResult = ReadExcelToList(["Mass", "Intensity"], "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx", False)
+            self.deleteBlankResult = ReadExcelToList(header=["Mass", "Intensity"], filepath="./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx", hasNan=False)
             self.GDBIsFinished = True
-            self.GDBResult = ReadExcelToList(["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"], "./intermediateFiles/_2_generateDataBase/GDB.xlsx", False)
+            self.GDBResult = ReadExcelToList(header=["Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"], filepath="./intermediateFiles/_2_generateDataBase/GDB.xlsx", hasNan=False)
 
-        # 扣同位素前需要扣空白，数据库生成
+        # 去同位素前需要扣空白，数据库生成
         if (not self.deleteBlankIsFinished) or (not self.GDBIsFinished):
             PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
             return
@@ -488,8 +588,8 @@ class MainWin(QMainWindow):
                            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
                            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
-        # 扣同位素
-        self.DelIsoMt = MultiThread("ClassDeleteIsotope", self.DelIsoList)
+        # 去同位素
+        self.DelIsoMt = MultiThread("ClassDeleteIsotope", self.DelIsoList, self.outputFilesPath)
         self.DelIsoMt.signal.connect(self.HandleData)
         self.DelIsoMt.start()
 
@@ -498,7 +598,7 @@ class MainWin(QMainWindow):
         # 弹出提示框
         # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
         self.DelIsoPromptBox = PromptBox()
-        self.DelIsoPromptBox.showGif("正在处理扣同位素，请稍后", "./images/ajax-loading.gif")
+        self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后", "./images/ajax-loading.gif")
 
     # 峰识别
     def PeakDistinguish(self):
@@ -509,9 +609,9 @@ class MainWin(QMainWindow):
         # 单独运行，调试使用
         if ConstValues.PsIsSingleRun:
             self.DelIsoIsFinished = True
-            self.DelIsoResult = ReadExcelToList(["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"],
-                                                "./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx")
-        # 峰识别前需要扣同位素
+            self.DelIsoResult = ReadExcelToList(header=["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"],
+                                                filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx", hasNan=True)
+        # 峰识别前需要去同位素
         if not self.DelIsoIsFinished:
             PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
             return
@@ -520,12 +620,13 @@ class MainWin(QMainWindow):
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation,
-                            self.PeakDisClassIsNeed,
+                            self.PeakDisDiscontinuityPointNum,
+                            self.PeakDisClassIsNeed,  # 第二部分
                             self.PeakDisClass,
                             self.PeakDisScanPoints
                             ]
         # 峰识别
-        self.PeakDisMt = MultiThread("ClassDeleteIsotope", self.PeakDisList)
+        self.PeakDisMt = MultiThread("ClassPeakDistinguish", self.PeakDisList, self.outputFilesPath)
         self.PeakDisMt.signal.connect(self.HandleData)
         self.PeakDisMt.start()
 
@@ -537,7 +638,7 @@ class MainWin(QMainWindow):
         self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后", "./images/ajax-loading.gif")
 
     # 干扰排除
-    def DisturbRemove(self):
+    def RemoveFalsePositive(self):
         pass
 
     # 全部开始
@@ -569,7 +670,7 @@ class MainWin(QMainWindow):
                 self.GDB_MNegative  # 格式：bool
             ],
             [
-                # 扣同位素
+                # 去同位素
                 self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
                 self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
                 self.deleteBlankIntensity,
@@ -585,12 +686,13 @@ class MainWin(QMainWindow):
                 self.DelIsoResult,
                 self.PeakDisContinuityNum,
                 self.PeakDisMassDeviation,
-                self.PeakDisClassIsNeed,
+                self.PeakDisDiscontinuityPointNum,
+                self.PeakDisClassIsNeed,  # 第二部分
                 self.PeakDisClass,
                 self.PeakDisScanPoints
             ],
         ]
-        self.StartAllMt = MultiThread("StartAll", self.AllData)
+        self.StartAllMt = MultiThread("StartAll", self.AllData, self.outputFilesPath)
         self.StartAllMt.signal.connect(self.HandleData)
         self.StartAllMt.start()
         # 界面显示的提示信息

@@ -1,10 +1,12 @@
 # coding=utf-8
 # 此文件负责定义：生成数据库
+import os
 from Utils import *
+from ConstValues import ConstValues
 
 
 class ClassGenerateDataBase():
-    def __init__(self, parameterList):
+    def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 11, "ClassGenerateDataBase参数不对"
         self.GDBClass = parameterList[0]  # 数据库生成(参数)：Class类型
         # 1~100（整数）
@@ -21,6 +23,8 @@ class ClassGenerateDataBase():
         self.GDB_MPostive = parameterList[8]  # 数据库生成(参数)：正离子，是否选择M+，True为选中
         self.GDB_MHNegative = parameterList[9]  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
         self.GDB_MNegative = parameterList[10]  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        # 用户选择的文件的生成位置
+        self.outputFilesPath = outputFilesPath
 
     # 负责生成数据库
     def GenerateData(self):
@@ -51,17 +55,30 @@ class ClassGenerateDataBase():
             else:  # 说明选择的是一个负离子M-
                 data = self._GenerateData([4])
 
-        reslut = [header]  # 根据m/z筛选符合条件的item
-        # reslut.append(header)
+        result = [header]  # 根据m/z筛选符合条件的item
+        # result.append(header)
         for item in data:
             if self.GDBM_ZRageLow <= item[3] <= self.GDBM_ZRageHigh:
-                reslut.append(item)
+                result.append(item)
 
-        WriteDataToExcel(reslut, "./intermediateFiles/_2_generateDataBase/GDB.xlsx")
+        # 数据写入excel文件中
+        if self.outputFilesPath == "":
+            if not os.path.exists('./intermediateFiles/_2_generateDataBase'):
+                os.makedirs('./intermediateFiles/_2_generateDataBase')
+                if ConstValues.PsIsDebug:
+                    print('文件夹 ./intermediateFiles/_2_generateDataBase 不存在，创建成功......')
+            WriteDataToExcel(result, "./intermediateFiles/_2_generateDataBase/GDB.xlsx")
+        else:
+            if not os.path.exists(self.outputFilesPath + "/_2_generateDataBase"):
+                os.makedirs(self.outputFilesPath + "/_2_generateDataBase")
+                if ConstValues.PsIsDebug:
+                    print("文件夹 " + self.outputFilesPath + "/_2_generateDataBase 不存在，创建成功......")
+            WriteDataToExcel(result, self.outputFilesPath + "/_2_generateDataBase/GDB.xlsx")
+
 
         GDBIsFinished = True  # 该过程已经完成
 
-        return reslut, GDBIsFinished
+        return result, GDBIsFinished
 
     # 根据类型生成数据
     def _GenerateData(self, typeList):

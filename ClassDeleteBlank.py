@@ -1,13 +1,13 @@
 # coding=utf-8
 # 此文件负责定义：扣空白
 import numpy as np
-import pandas as pd
+import os
 from Utils import *
 from ConstValues import ConstValues
 
 
 class ClassDeleteBlank():
-    def __init__(self,parameterList):
+    def __init__(self, parameterList, outputFilesPath):
         """
 
         :param parameterList: 程序运行所需要的参数列表
@@ -28,6 +28,8 @@ class ClassDeleteBlank():
         self.sampleData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
         self.blankData = pd.read_excel(io=self.blankPath, header=ConstValues.PsHeaderLine)
         self.blankData.columns = ["Mass", "Intensity"]  # 强制改变列名，方便后面使用
+        # 用户选择的文件的生成位置
+        self.outputFilesPath = outputFilesPath
 
     # 负责扣空白
     def DeleteBlank(self):
@@ -59,10 +61,10 @@ class ClassDeleteBlank():
         in1 = self.sampleData["Intensity"].values     # 样本中的intensity
         m2 = self.blankData["Mass"].values             # 空白中的mass
         in2 = self.blankData["Intensity"].values      # 空白中的intensity
-        reslut = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
+        result = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
         if ConstValues.PsIsDebug:
-            print(type(reslut))
-            print(reslut[:6, :])
+            print(type(result))
+            print(result[:6, :])
 
         # 核心处理逻辑
         deleteList = []  # 记录需要删除的索引
@@ -89,20 +91,31 @@ class ClassDeleteBlank():
         #             if abs((in1[j] - in2[i]) * 100.0 / in1[j]) * 100 < percentage:
         #                 deleteList.append(j)
 
-        reslut = np.delete(reslut, deleteList, axis=0)  # 删除索引在deleteList中的向量
-        reslut = reslut.tolist()
-        reslut = header + reslut
+        result = np.delete(result, deleteList, axis=0)  # 删除索引在deleteList中的向量
+        result = result.tolist()
+        result = header + result
 
         if ConstValues.PsIsDebug:
             print(len(deleteList))
-            print(len(reslut))
-            print(type(reslut))
-            print(reslut[:6])
+            print(len(result))
+            print(type(result))
+            print(result[:6])
 
         # 数据写入excel文件中
-        WriteDataToExcel(reslut, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
+        if self.outputFilesPath == "":
+            if not os.path.exists('./intermediateFiles/_1_deleteBlank'):
+                os.makedirs('./intermediateFiles/_1_deleteBlank')
+                if ConstValues.PsIsDebug:
+                    print('文件夹 ./intermediateFiles/_1_deleteBlank 不存在，创建成功......')
+            WriteDataToExcel(result, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
+        else:
+            if not os.path.exists(self.outputFilesPath + "/_1_deleteBlank"):
+                os.makedirs(self.outputFilesPath + "/_1_deleteBlank")
+                if ConstValues.PsIsDebug:
+                    print("文件夹 " + self.outputFilesPath + "/_1_deleteBlank 不存在，创建成功......")
+            WriteDataToExcel(result, self.outputFilesPath + "/_1_deleteBlank/DeleteBlank.xlsx")
 
         deleteBlankIsFinished = True  # 该过程已经完成
 
-        return reslut, deleteBlankIsFinished
+        return result, deleteBlankIsFinished
 

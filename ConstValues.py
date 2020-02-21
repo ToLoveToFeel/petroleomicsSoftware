@@ -28,11 +28,11 @@ class ConstValues():
     PsAfterRunningPromptBoxTime = 1
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
-    # 扣同位素错误提示信息
+    # 去同位素错误提示信息
     PsDeleteIsotopeErrorMessage = "请先扣空白和生成数据库!"
     # 峰识别错误提示信息
     PsPeakDistinguishErrorMessage1 = "请选择需要处理的总离子流图文件!"
-    PsPeakDistinguishErrorMessage2 = "请先扣同位素!"
+    PsPeakDistinguishErrorMessage2 = "请先去同位素!"
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
@@ -78,7 +78,7 @@ class ConstValues():
     PsGDB_MHNegative = False  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
     PsGDB_MNegative = False  # 数据库生成(参数)：负离子，是否选择M-，True为选中
 
-    # 扣同位素设置默认参数
+    # 去同位素设置默认参数
     # 0~正无穷（整数）
     PsDelIsoIntensityX = 100000
     PsDelIsoIntensityXMin = 0
@@ -97,26 +97,41 @@ class ConstValues():
     PsDelIsoIsotopeMassDeviationMin = 0.0
     PsDelIsoIsotopeMassDeviationMax = 20.0
     # 0~100（整数）
-    PsDelIsoIsotopeIntensityDeviation = 10  # 30%
+    PsDelIsoIsotopeIntensityDeviation = 30  # 30%
     PsDelIsoIsotopeIntensityDeviationMin = 0
     PsDelIsoIsotopeIntensityDeviationMax = 100
 
     # 峰识别设置默认参数
     # 0~10000（整数）
-    PsPeakDisContinuityNum = 30  # 第一部分参数
+    PsPeakDisContinuityNum = 60  # 第一部分参数
     PsPeakDisContinuityNumMin = 0
     PsPeakDisContinuityNumMax = 10000
     # 0.00~100.00（浮点数）
     PsPeakDisMassDeviation = 2.0
     PsPeakDisMassDeviationMin = 0.0
     PsPeakDisMassDeviationMax = 100.0
+    # 0~30(整数)
+    PsPeakDisDiscontinuityPointNum = 5
+    PsPeakDisDiscontinuityPointNumMin = 0
+    PsPeakDisDiscontinuityPointNumMax = 30
     # 输入字符串
-    PsPeakDisClassIsNeed = False  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
+    PsPeakDisClassIsNeed = True  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
     PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
     # 3~10（整数）
     PsPeakDisScanPoints = 5
     PsPeakDisScanPointsMin = 3
     PsPeakDisScanPointsMax = 10
+
+    # 去假阳性设置默认参数
+    PsRemoveFPId = 1  # 默认处理的内容
+    # 1~100（整数）
+    PsRemoveFPContinue_CNum = 3
+    PsRemoveFPContinue_CNumMin = 1
+    PsRemoveFPContinue_CNumMax = 100
+    # 1~100（整数）
+    PsRemoveFPContinue_DBENum = 2
+    PsRemoveFPContinue_DBENumMin = 1
+    PsRemoveFPContinue_DBENumMax = 100
 
 
 

@@ -228,7 +228,7 @@ class ClassPeakDistinguish:
 
 
     def PeakDisPlotPeak(self):
-        # data = pd.read_excel(io="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", header=None).values.tolist()
+        # data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=False).values.tolist()
         data = self.resultPart1Detail
         lengthList = [i for i in range(len(data[0][9:]))]
         # 创建对应的文件夹

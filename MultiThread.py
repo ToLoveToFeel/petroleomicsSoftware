@@ -5,6 +5,7 @@ from ClassDeleteBlank import ClassDeleteBlank
 from ClassGenerateDataBase import ClassGenerateDataBase
 from ClassDeleteIsotope import ClassDeleteIsotope
 from ClassPeakDistinguish import ClassPeakDistinguish
+from ClassRemoveFalsePositive import ClassRemoveFalsePositive
 from ConstValues import ConstValues
 
 
@@ -46,17 +47,25 @@ class MultiThread(QThread):
             cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
             # cpd.PeakDisPlotPeak()
             PeakDisIsFinished, PeakDisResult = cpd.PeakDistinguish()
-            retList.append(PeakDisIsFinished)
             retList.append(PeakDisResult)
+            retList.append(PeakDisIsFinished)
+            self.signal.emit(retList)
+        elif self.__function == "ClassRemoveFalsePositive":
+            retList = ["ClassRemoveFalsePositive"]
+            crfp = ClassRemoveFalsePositive(self.__parameters, self.outputFilesPath)
+            # cpd.PeakDisPlotPeak()
+            RemoveFPIsFinished, RemoveFPResult = crfp.RemoveFalsePositive()
+            retList.append(RemoveFPResult)
+            retList.append(RemoveFPIsFinished)
             self.signal.emit(retList)
         elif self.__function == "StartAll":
             retList = ["StartAll"]
             # 提取参数
-            DeleteBlankParameterList = self.__parameters[0]  # 扣空白
+            DeleteBlankParameterList = self.__parameters[0]  # 去空白
             GDBParameterList = self.__parameters[1]  # 数据库生成
             DelIsoParameterList = self.__parameters[2]  # 扣同位素
             PeakDisParameterList = self.__parameters[3]  # 峰识别
-            # 扣空白
+            # 去空白
             cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
             deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
             retList.append(deleteBlankResult)
@@ -86,8 +95,8 @@ class MultiThread(QThread):
             PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
             cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
             PeakDisIsFinished, PeakDisResult = cpd.PeakDistinguish()
-            retList.append(PeakDisIsFinished)
             retList.append(PeakDisResult)
+            retList.append(PeakDisIsFinished)
             self.signal.emit(["PeakDisFinished"])
             if ConstValues.PsIsDebug:
                 print("峰识别完成！")

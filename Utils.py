@@ -5,18 +5,15 @@ import xlsxwriter
 
 
 # 将excel文件读入到list中
-def ReadExcelToList(header=None, filepath="", hasNan=True):
+def ReadExcelToList(filepath="", hasNan=True):
     if not hasNan:
         result = []
-        if header is not None:
-            result.append(header)
-        result += pd.read_excel(io=filepath).values.tolist()
+        result += pd.read_excel(io=filepath, header=None).values.tolist()
     else:  # 每一行的数据长度不一致，且nan在正常数据最后
-        dataFrame = pd.read_excel(io=filepath)
-        result = []
-        if header is not None:
-            result.append(header)
-        for item in dataFrame.values:
+        dataFrame = pd.read_excel(io=filepath, header=None)
+        result = [dataFrame.values[0].tolist()]
+        data = dataFrame.values[1:]
+        for item in data:
             # 全部是nan
             if math.isnan(item[0]):
                 result.append([])
@@ -35,6 +32,7 @@ def ReadExcelToList(header=None, filepath="", hasNan=True):
                 result.append(item.tolist())
 
     return result
+
 
 # 负责将数据写入xlsx文件
 def WriteDataToExcel(data, filename):

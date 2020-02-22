@@ -64,6 +64,13 @@ class SetupInterface():
         # 3~10（整数）
         self.PeakDisScanPoints = None
 
+        # 去同位素所需要返回的数据，数据初值无所谓
+        self.RemoveFPId = None  # 1：去同位素之后的内容，2：峰识别之后的内容
+        # 0~100（整数）
+        self.RemoveFPContinue_CNum = None  # 连续碳数
+        # 0~100（整数）
+        self.RemoveFPContinue_DBENum = None
+
     # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
         # 设置校验器
@@ -738,4 +745,126 @@ class SetupInterface():
             return 6
         # 合法
         return 1
+
+    #############################################################
+    def RemoveFalsePositiveSetup(self, parameters):
+        # 去假阳性设置对话框
+        # 设置默认参数
+        self.RemoveFalsePositiveDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.RemoveFPDialog = QDialog()
+        self.RemoveFPDialog.setWindowTitle("去假阳性参数设置")
+        self.RemoveFPDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
+        self.RemoveFPDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+
+        # PsRemoveFPId二选一按钮
+        RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
+        RemoveFPQRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        RemoveFPQRadioButton1.toggled.connect(lambda: self.RemoveFalsePositiveQRadioButton(RemoveFPQRadioButton1))
+        RemoveFPQRadioButton2 = QRadioButton("峰识别后的文件")
+        RemoveFPQRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        RemoveFPQRadioButton2.toggled.connect(lambda: self.RemoveFalsePositiveQRadioButton(RemoveFPQRadioButton2))
+        if self.RemoveFPId == 1:
+            RemoveFPQRadioButton1.setChecked(True)
+            RemoveFPQRadioButton2.setChecked(False)
+        elif self.RemoveFPId == 2:
+            RemoveFPQRadioButton1.setChecked(False)
+            RemoveFPQRadioButton2.setChecked(True)
+        # RemoveFPContinue_CNum对话框
+        RemoveFPEdit1 = self.IntQLineEdit(ConstValues.PsRemoveFPContinue_CNumMin, ConstValues.PsRemoveFPContinue_CNumMax, str(self.RemoveFPContinue_CNum))
+        RemoveFPEdit1.textChanged.connect(lambda: self.HandleTextChangedRemoveFalsePositive("Continuity C Num", RemoveFPEdit1))
+        # RemoveFPContinue_DBENum对话框
+        RemoveFPEdit2 = self.IntQLineEdit(ConstValues.PsRemoveFPContinue_DBENumMin, ConstValues.PsRemoveFPContinue_DBENumMax, str(self.RemoveFPContinue_DBENum))
+        RemoveFPEdit2.textChanged.connect(lambda: self.HandleTextChangedRemoveFalsePositive("Continuity DBE Num", RemoveFPEdit2))
+
+        # 创建按钮
+        peakDistinguishButton1 = QPushButton("确定")
+        peakDistinguishButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        peakDistinguishButton1.clicked.connect(lambda: self.HBCRemoveFalsePositive(parameters, True))
+        peakDistinguishButton2 = QPushButton("退出")
+        peakDistinguishButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        peakDistinguishButton2.clicked.connect(lambda: self.HBCRemoveFalsePositive(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.RemoveFPDialog)
+        # 第一行内容，PsRemoveFPId二选一按钮
+        layout.addWidget(self.GetQLabel("去假阳性文件 ： "), 0, 0, 1, 2)
+        layout.addWidget(RemoveFPQRadioButton1, 0, 2, 1, 2)
+        layout.addWidget(RemoveFPQRadioButton2, 0, 4, 1, 2)
+        # 第二行内容，Continuity C Num
+        layout.addWidget(self.GetQLabel("Continuity C Num(" + str(ConstValues.PsRemoveFPContinue_CNumMin) + "~" + str(ConstValues.PsRemoveFPContinue_CNumMax) + "):"), 1, 0, 1, 3)
+        layout.addWidget(RemoveFPEdit1, 1, 3, 1, 3)
+        # 第三行内容，Continuity DBE Num
+        layout.addWidget(self.GetQLabel("Continuity DBE Num(" + str(ConstValues.PsRemoveFPContinue_DBENumMin) + "~" + str(ConstValues.PsRemoveFPContinue_DBENumMax) + ") :"), 2, 0, 1, 3)
+        layout.addWidget(RemoveFPEdit2, 2, 3, 1, 3)
+        # 最后一行内容，按钮行
+        layout.addWidget(peakDistinguishButton1, 3, 4)
+        layout.addWidget(peakDistinguishButton2, 3, 5)
+
+        self.RemoveFPDialog.exec()
+        # 返回值类型：list
+        retList = [self.RemoveFPId,  # 决定选择哪一个文件 1：self.DelIsoResult 或者 2：self.PeakDisResult
+                   self.RemoveFPContinue_CNum,
+                   self.RemoveFPContinue_DBENum
+                  ]
+        return retList
+
+    # 设置参数为用户上次输入的值
+    def RemoveFalsePositiveDefaultParameters(self, parameters):
+        # 设置参数
+        # [1,2]
+        self.RemoveFPId = parameters[0]
+        # 1~100(整数)
+        self.RemoveFPContinue_CNum = parameters[1]
+        # 1~100(整数)
+        self.RemoveFPContinue_DBENum = parameters[2]
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedRemoveFalsePositive(self, DBType, edit):
+        if edit.text() != "":
+            if DBType == "Continuity C Num":
+                self.RemoveFPContinue_CNum = int(edit.text())
+            elif DBType == "Continuity DBE Num":
+                self.RemoveFPContinue_DBENum = int(edit.text())
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCRemoveFalsePositive(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.RemoveFalsePositiveDefaultParameters(parameters)
+            self.RemoveFPDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.RemoveFalsePositiveIsParameterValidate()
+            if inputState == 1:
+                self.RemoveFPDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("Continuity C Num输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("Continuity DBE Num输入不合法！")
+
+    # 单选按钮
+    def RemoveFalsePositiveQRadioButton(self, radioButton):
+        if radioButton.text() == "去同位素后的文件":
+            if radioButton.isChecked():
+                self.RemoveFPId = 1
+            else:
+                self.RemoveFPId = 2
+        else:
+            if radioButton.isChecked():
+                self.RemoveFPId = 2
+            else:
+                self.RemoveFPId = 1
+
+    # 参数合法性检查
+    def RemoveFalsePositiveIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.RemoveFPContinue_CNum 是否合法，对应代码2
+        if not (ConstValues.PsRemoveFPContinue_CNumMin <= self.RemoveFPContinue_CNum <= ConstValues.PsRemoveFPContinue_CNumMax):
+            return 2
+        # 判断self.RemoveFPContinue_DBENum 是否合法，对应代码3
+        if not (ConstValues.PsRemoveFPContinue_DBENumMin <= self.RemoveFPContinue_DBENum <= ConstValues.PsRemoveFPContinue_DBENumMax):
+            return 3
+        # 合法
+        return 1
+
 

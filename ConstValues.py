@@ -33,6 +33,9 @@ class ConstValues():
     # 峰识别错误提示信息
     PsPeakDistinguishErrorMessage1 = "请选择需要处理的总离子流图文件!"
     PsPeakDistinguishErrorMessage2 = "请先去同位素!"
+    # 去假阳性提示信息
+    PsRemoveFPErrorMessage1 = "请先去同位素!"
+    PsRemoveFPErrorMessage2 = "请先峰识别!"
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7

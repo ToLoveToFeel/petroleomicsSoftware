@@ -1,6 +1,7 @@
 # coding=utf-8
 # 此文件负责定义：去假阳性
 import os
+import matplotlib.pyplot as plt
 from Utils import *
 from ConstValues import ConstValues
 
@@ -36,6 +37,10 @@ class ClassRemoveFalsePositive:
         elif self.RemoveFPId == 2:
             result = self.RemoveFPFromPeakDis()
             WriteDataToExcel(result, "./intermediateFiles/_5_removeFalsePositive/PeakDisResultAfterRemoveFP.xlsx")
+
+        # 去假阳性后峰识别的峰
+        if self.RemoveFPId == 2:
+            self.PlotAfterRemoveFP(result)
 
         RemoveFPIsFinished = True
         return result, RemoveFPIsFinished
@@ -236,4 +241,44 @@ class ClassRemoveFalsePositive:
                         afterDel_DBEDirectory[key] = continueList
 
         return afterDel_DBEDirectory
+
+    # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形
+    def PlotAfterRemoveFP(self, result):
+        data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=False)
+        massSet = set()
+        newData = []
+        for item in result:
+            if len(item) != 0:
+                massSet.add(item[0])
+        for item in data:
+            if item[0] in massSet:
+                newData.append(item)
+
+        data = newData
+        lengthList = [i for i in range(len(data[0][9:]))]
+        # 创建对应的文件夹
+        if self.outputFilesPath == "":
+            if not os.path.exists('./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP'):
+                os.makedirs('./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP')
+                if ConstValues.PsIsDebug:
+                    print('文件夹 ./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP 不存在，创建成功......')
+        else:
+            if not os.path.exists(self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP"):
+                os.makedirs(self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP")
+                if ConstValues.PsIsDebug:
+                    print("文件夹 " + self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP 不存在，创建成功......")
+        try:
+            for i in range(len(data)):
+                item = data[i]
+                Class = item[2]  # 化合物类型
+                plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='blue')
+                plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
+                plt.title("Mass:" + str(item[0]) + "  formula:" + item[4], fontproperties='SimHei', fontsize=15,
+                          color='red')
+                plt.vlines(x=lengthList, ymin=0, ymax=item[9:])
+                plt.savefig(fname="./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP/" + Class + "_" + str(i), dpi=300)
+                plt.close()
+        except Exception as e:
+            print("PeakDisPlotPeak Error : ", e)
+
 

@@ -10,7 +10,7 @@ class ConstValues():
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -126,7 +126,7 @@ class ConstValues():
     PsPeakDisScanPointsMax = 10
 
     # 去假阳性设置默认参数
-    PsRemoveFPId = 1  # 默认处理的内容
+    PsRemoveFPId = 2  # 默认处理的内容
     # 1~100（整数）
     PsRemoveFPContinue_CNum = 3
     PsRemoveFPContinue_CNumMin = 1

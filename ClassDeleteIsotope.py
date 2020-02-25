@@ -36,24 +36,14 @@ class ClassDeleteIsotope():
         except Exception as e:
             print("Error : ", e)
 
+        # 去同位素按照Formula（主键），C（次主键）从小到大顺序排序
+        result = self.DelIsoSort(result)
+
         # 数据写入excel文件中
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_3_deleteIsotope'):
-                os.makedirs('./intermediateFiles/_3_deleteIsotope')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_3_deleteIsotope 不存在，创建成功......')
-            WriteDataToExcel(result, "./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx")
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_3_deleteIsotope"):
-                os.makedirs(self.outputFilesPath + "/_3_deleteIsotope")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_3_deleteIsotope 不存在，创建成功......")
-            WriteDataToExcel(result, self.outputFilesPath + "/_3_deleteIsotope/DeleteIsotope.xlsx")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_3_deleteIsotope")
+        WriteDataToExcel(result, newDirectory + "/DeleteIsotope.xlsx")
 
-
-        DelIsoIsFinished = True
-
-        return result, DelIsoIsFinished
+        return result, True
 
     # 负责判断某个删空白样本是否能匹配成功 数据库
     def DelIsoHandleItem(self, sampleItem):
@@ -145,4 +135,60 @@ class ClassDeleteIsotope():
             print("ClassDeleteIsotope 中的函数 DelIsoHasCorrespondInSample(self, parameterList)参数错误！")
 
         return False
+
+    # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
+    def DelIsoSort(self, result):
+        # self.DelIsoResult种每个元素均为列表，有多种类型：
+        # 类型一：["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+        # 类型二：["SampleMass", "SampleIntensity"]
+        # 类型三：[DBItem_13C1, DBItem_13C1Intensity, "iostope"] 或者 [DBItem_13C2, DBItem_13C2Intensity, "iostope"]
+        # 类型四：[]
+
+        # {key:[ [[...], ..., [...]] , ..., [...]], ..., key:[...]}，[[...], ..., [...]]对应某个分子式，长度为1,2或3
+        dataDirectory = {}  # 记录所有符合要求的数据
+        # {key:[ [...] , ..., [...] ], ..., key:[ [...] , ..., [...] ]}，[...]对应某个分子式，长度为8
+        dataOneDirectory = {}  # 某个分子式对应多条记录，只记录第一条，长度为3，最后一个数据记录其位置
+
+        # 以类别为键，将数据整理为字典
+        i = 1  # 跳过表头
+        length = len(result)
+        while i < length:
+            firstItem = result[i]
+            if len(firstItem) != 8:
+                i += 1
+                continue
+            # 此时找到第一个符合条件的记录，查找其紧随的下面是否有 类型三
+            item = [firstItem]  # 是一个二维列表，对应一种物质
+            i += 1
+            nextItem = result[i]
+            while len(nextItem) != 0:
+                item.append(nextItem)
+                i += 1
+                nextItem = result[i]
+
+            key = firstItem[2]  # "Class"作为键
+            if key in dataDirectory.keys():
+                dataDirectory[key].append(item)
+                dataOneDirectory[key].append([firstItem[3]] + [firstItem[6]] + [len(dataOneDirectory[key])])
+            else:
+                dataDirectory[key] = [item]
+                dataOneDirectory[key] = [[firstItem[3]] + [firstItem[6]] + [0]]
+            # 查看下一条数据
+            i += 1
+
+        # 对dataOneDirectory中的各项进行排序
+        for key in dataOneDirectory.keys():
+            dataOneDirectory[key] = sorted(dataOneDirectory[key], key=(lambda x: [x[0], x[1]]), reverse=False)
+
+        # 重新整理结果
+        ret = [["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]]
+        for key in dataOneDirectory.keys():
+            data = dataOneDirectory[key]
+            for item1 in data:
+                for item2 in dataDirectory[key][item1[2]]:
+                    ret.append(item2)
+                ret.append([])
+
+        return ret
+
 

@@ -20,30 +20,20 @@ class ClassRemoveFalsePositive:
     def RemoveFalsePositive(self):
         result = []
         # 创建文件夹
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_5_removeFalsePositive'):
-                os.makedirs('./intermediateFiles/_5_removeFalsePositive')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_5_removeFalsePositive 不存在，创建成功......')
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_5_removeFalsePositive"):
-                os.makedirs(self.outputFilesPath + "/_5_removeFalsePositive")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_5_removeFalsePositive 不存在，创建成功......")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive")
         # 运行主逻辑
         if self.RemoveFPId == 1:
             result = self.RemoveFPFromDelIso()
-            WriteDataToExcel(result, "./intermediateFiles/_5_removeFalsePositive/DelIsoResultAfterRemoveFP.xlsx")
+            WriteDataToExcel(result, newDirectory + "/DelIsoResultAfterRemoveFP.xlsx")
         elif self.RemoveFPId == 2:
             result = self.RemoveFPFromPeakDis()
-            WriteDataToExcel(result, "./intermediateFiles/_5_removeFalsePositive/PeakDisResultAfterRemoveFP.xlsx")
+            WriteDataToExcel(result, newDirectory + "/PeakDisResultAfterRemoveFP.xlsx")
 
         # 去假阳性后峰识别的峰
         if self.RemoveFPId == 2:
             self.PlotAfterRemoveFP(result)
 
-        RemoveFPIsFinished = True
-        return result, RemoveFPIsFinished
+        return result, True
 
     # 从去同位素后的文件里去假阳性
     def RemoveFPFromDelIso(self):
@@ -69,11 +59,14 @@ class ClassRemoveFalsePositive:
             # 此时找到第一个符合条件的记录，查找其紧随的下面是否有 类型三
             item = [firstItem]  # 是一个二维列表，对应一种物质
             i += 1
-            nextItem = self.DelIsoResult[i]
-            while len(nextItem) != 0:
-                item.append(nextItem)
-                i += 1
+            if i < length:
                 nextItem = self.DelIsoResult[i]
+                while len(nextItem) != 0:
+                    item.append(nextItem)
+                    i += 1
+                    if i >= length:
+                        break
+                    nextItem = self.DelIsoResult[i]
 
             key = firstItem[2]  # "Class"作为键
             if key in dataDirectory.keys():
@@ -85,15 +78,15 @@ class ClassRemoveFalsePositive:
             # 查看下一条数据
             i += 1
 
-        # 对dataOneDirectory中的各项进行排序
-        for key in dataOneDirectory.keys():
-            dataOneDirectory[key] = sorted(dataOneDirectory[key], key=(lambda x: [x[0], x[1]]), reverse=False)
+        # # 对dataOneDirectory中的各项进行排序，因为修改去同位素的生成文件的顺序，所以这里不需要再次排序
+        # for key in dataOneDirectory.keys():
+        #     dataOneDirectory[key] = sorted(dataOneDirectory[key], key=(lambda x: [x[0], x[1]]), reverse=False)
 
         # 删除不符合的数据
         afterDel_DBEDirectory = self.RemoveFPHandleContinue(dataOneDirectory)
 
         # 重新整理结果
-        ret = []
+        ret = [["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]]
         for key in afterDel_DBEDirectory.keys():
             data = afterDel_DBEDirectory[key]
             for item1 in data:
@@ -107,7 +100,7 @@ class ClassRemoveFalsePositive:
     def RemoveFPFromPeakDis(self):
         # self.PeakDisResult
         # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        # {key:[ [[...], ..., [...]] , ..., [[...], ..., [...]]], ..., key:[...]}，[[...], ..., [...]]对应某个分子式，[...]长度为13
+        # {key:[ [...], ..., [...]] , ..., [[...], ..., [...]]], ..., key:[...]}，[[...], ..., [...]]对应某个分子式，[...]长度为13
         dataDirectory = {}  # 记录所有符合要求的数据
         # {key:[ [...] , ..., [...] ], ..., key:[ [...] , ..., [...] ]}，[...]对应某个分子式，长度为8
         dataOneDirectory = {}  # 某个分子式对应多条记录，只记录第一条，长度为3，最后一个数据记录其位置
@@ -146,7 +139,7 @@ class ClassRemoveFalsePositive:
         afterDel_DBEDirectory = self.RemoveFPHandleContinue(dataOneDirectory)
 
         # 重新整理结果
-        ret = []
+        ret = [["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]]
         for key in afterDel_DBEDirectory.keys():
             data = afterDel_DBEDirectory[key]
             for item1 in data:
@@ -244,6 +237,7 @@ class ClassRemoveFalsePositive:
 
     # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形
     def PlotAfterRemoveFP(self, result):
+        # ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
         data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=False)
         massSet = set()
         newData = []
@@ -257,28 +251,18 @@ class ClassRemoveFalsePositive:
         data = newData
         lengthList = [i for i in range(len(data[0][9:]))]
         # 创建对应的文件夹
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP'):
-                os.makedirs('./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP 不存在，创建成功......')
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP"):
-                os.makedirs(self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_5_removeFalsePositive/peakImagesAfterRemoveFP 不存在，创建成功......")
-        try:
-            for i in range(len(data)):
-                item = data[i]
-                Class = item[2]  # 化合物类型
-                plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='blue')
-                plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
-                plt.title("Mass:" + str(item[0]) + "  formula:" + item[4], fontproperties='SimHei', fontsize=15,
-                          color='red')
-                plt.vlines(x=lengthList, ymin=0, ymax=item[9:])
-                plt.savefig(fname="./intermediateFiles/_5_removeFalsePositive/peakImagesAfterRemoveFP/" + Class + "_" + str(i), dpi=300)
-                plt.close()
-        except Exception as e:
-            print("PeakDisPlotPeak Error : ", e)
-
-
+        CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive/peakImagesAfterRemoveFP")
+        for i in range(len(data)):
+            item = data[i]
+            Class = item[2]  # 化合物类型
+            DBE = item[3]  # 不饱和度数目
+            plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='blue')
+            plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
+            plt.title("Mass:" + str(item[0]) + "  DBE:" + str(DBE) + "  formula:" + item[4], fontproperties='SimHei', fontsize=12, color='red')
+            plt.vlines(x=lengthList, ymin=0, ymax=item[9:])
+            newDirectory = CreateDirectory(self.outputFilesPath,
+                                           "./intermediateFiles",
+                                           "/_5_removeFalsePositive/peakImagesAfterRemoveFP/"+Class+"_DBE"+str(DBE)
+                                           )
+            plt.savefig(fname=newDirectory+"/"+Class+"_DBE"+str(DBE)+"_C"+str(item[6]), dpi=300)
+            plt.close()

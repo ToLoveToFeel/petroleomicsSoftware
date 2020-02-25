@@ -66,28 +66,19 @@ class ClassPeakDistinguish:
         except Exception as e:
             print("Error : ", e)
 
+        # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
+        self.resultPart1 = self.PeakDisSort()
+        self.resultPart1Detail = self.PeakDisSortDetail()
+
         # 数据写入excel文件中
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_4_peakDistinguish'):
-                os.makedirs('./intermediateFiles/_4_peakDistinguish')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_4_peakDistinguish 不存在，创建成功......')
-            WriteDataToExcel(self.resultPart1, "./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1.xlsx")
-            WriteDataToExcel(self.resultPart1Detail, "./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx")
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_4_peakDistinguish"):
-                os.makedirs(self.outputFilesPath + "/_4_peakDistinguish")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_4_peakDistinguish 不存在，创建成功......")
-            WriteDataToExcel(self.resultPart1, self.outputFilesPath + "/_4_peakDistinguish/PeakDistinguishPart1.xlsx")
-            WriteDataToExcel(self.resultPart1Detail, self.outputFilesPath + "/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish")
+        WriteDataToExcel(self.resultPart1, newDirectory + "/PeakDistinguishPart1.xlsx")
+        WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDistinguishPart1Detail.xlsx")
 
-        PeakDisIsFinished = True
+        # # 第二部分需要处理的数据，将图像输出到文件中
+        # self.PeakDisPlotPeak()
 
-        # 第二部分需要处理的数据，将图像输出到文件中
-        self.PeakDisPlotPeak()
-
-        return self.resultPart1, PeakDisIsFinished
+        return self.resultPart1, True
 
     # 负责判断某个扣同位素后的样本是否能成功在总离子流图文件(txt)查到符合条件的记录集合
     def PeakDisHandleItem(self, sampleItem):
@@ -108,6 +99,7 @@ class ClassPeakDistinguish:
         while k < scanNum:
             firstRT = None
             continuityItems = []  # 存储连续的符合要求的记录，为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
+            continuityItems2 = []
             while k < scanNum and firstRT is None:
                 firstRT = self.PeakDisHasCorrespondInTIC(keysList, sampleMass, k)
                 if needDetectPeak:
@@ -120,7 +112,8 @@ class ClassPeakDistinguish:
                 break
             # 此时保证在self.TICData找到第一个符合要求的记录
             startRT = k - 1
-            continuityItems.append(firstRT)
+            continuityItems.append(firstRT)  # 不严格连续，同时不连续的条目记为[0,0]
+            continuityItems2.append(firstRT)  # 不严格连续，不记录不连续的条目，为了计算中位数
             # 寻找连续的符合要求的记录
             DiscontinuityPointNum = 0
             nextRT = self.PeakDisHasCorrespondInTIC(keysList, sampleMass, k)
@@ -135,6 +128,7 @@ class ClassPeakDistinguish:
                 else:
                     DiscontinuityPointNum = 0
                     continuityItems.append(nextRT)
+                    continuityItems2.append(nextRT)
                     if needDetectPeak:
                         retDetail.append(nextRT[1])
                 k += 1
@@ -146,14 +140,15 @@ class ClassPeakDistinguish:
             # 到这里连续的记录已经结束
             if len(continuityItems) >= self.PeakDisContinuityNum:  # 说明连续的扫描点数目符合要求
                 continuityItems = np.array(continuityItems)
-                continuityMasses = continuityItems[:, 0]
+                continuityItems2 = np.array(continuityItems2)
+                continuityMasses2 = continuityItems2[:, 0]
                 continuityIntensities = continuityItems[:, 1]
 
                 Area = np.sum(continuityIntensities)  # 求面积
                 startRTValue = keysList[startRT]  # 开始的扫描点的值
                 endRT = startRT + len(continuityItems) - 1  # 结束的扫描点在TIC中属于第几个扫描点
                 endRTValue = keysList[endRT]  # 结束的扫描点的值
-                MassMedian = np.median(continuityMasses)  # TIC中所有符合条件的连续的记录的
+                MassMedian = np.median(continuityMasses2)  # TIC中所有符合条件的连续的记录的
 
                 ret.append([sampleMass, Area, startRT, startRTValue, endRT, endRTValue, MassMedian] + sampleItem[2:])
             elif needDetectPeak:  # 需要将连续的但扫描点数目不符合要求的数据值清零
@@ -165,7 +160,6 @@ class ClassPeakDistinguish:
                 else:  # 说明最后的数据都符合要求，但是连续的扫描点数目不符合要求
                     for i in range(length1 - length2, length1):
                         retDetail[i] = 0
-
             # 本次连续的考察完毕，进行之后没有考虑的扫描点考察
             k += 1
         if len(ret) != 0:
@@ -219,29 +213,119 @@ class ClassPeakDistinguish:
             print("读入和处理文件费时： ",endTime - startTime, " s")
         return res
 
+    # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
+    def PeakDisSort(self):
+        # self.PeakDisResult
+        # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+        # {key:[ [...], ..., [...]] , ..., [[...], ..., [...]]], ..., key:[...]}，[[...], ..., [...]]对应某个分子式，[...]长度为13
+        dataDirectory = {}  # 记录所有符合要求的数据
+        # {key:[ [...] , ..., [...] ], ..., key:[ [...] , ..., [...] ]}，[...]对应某个分子式，长度为8
+        dataOneDirectory = {}  # 某个分子式对应多条记录，只记录第一条，长度为3，最后一个数据记录其位置
+
+        # 以类别为键，将数据整理为字典
+        i = 1  # 跳过表头
+        length = len(self.resultPart1)
+        while i < length:
+            firstItem = self.resultPart1[i]
+            item = [firstItem]  # 是一个二维列表，对应一种物质
+            i += 1
+            if i < length:
+                nextItem = self.resultPart1[i]
+                while len(nextItem) != 0:
+                    item.append(nextItem)
+                    i += 1
+                    if i >= length:
+                        break
+                    nextItem = self.resultPart1[i]
+
+            key = firstItem[7]  # "Class"作为键
+            if key in dataDirectory.keys():
+                dataDirectory[key].append(item)
+                dataOneDirectory[key].append([firstItem[8]] + [firstItem[11]] + [len(dataOneDirectory[key])])
+            else:
+                dataDirectory[key] = [item]
+                dataOneDirectory[key] = [[firstItem[8]] + [firstItem[11]] + [0]]
+            # 查看下一条数据
+            i += 1
+
+        # 对dataOneDirectory中的各项进行排序
+        for key in dataOneDirectory.keys():
+            dataOneDirectory[key] = sorted(dataOneDirectory[key], key=(lambda x: [x[0], x[1]]), reverse=False)
+
+        # 重新整理结果
+        ret = [["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class",
+                "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]]
+        for key in dataOneDirectory.keys():
+            data = dataOneDirectory[key]
+            for item1 in data:
+                for item2 in dataDirectory[key][item1[2]]:
+                    ret.append(item2)
+                ret.append([])
+        return ret
+
+    # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
+    def PeakDisSortDetail(self):
+        # self.PeakDisResult
+        # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+        # {key:[ [...], ..., [...]] , ..., [[...], ..., [...]]], ..., key:[...]}，[[...], ..., [...]]对应某个分子式，[...]长度为13
+        dataDirectory = {}  # 记录所有符合要求的数据
+        # {key:[ [...] , ..., [...] ], ..., key:[ [...] , ..., [...] ]}，[...]对应某个分子式，长度为8
+        dataOneDirectory = {}  # 某个分子式对应多条记录，只记录第一条，长度为3，最后一个数据记录其位置
+
+        # 以类别为键，将数据整理为字典
+        i = 1  # 跳过表头
+        length = len(self.resultPart1Detail)
+        while i < length:
+            firstItem = self.resultPart1Detail[i]
+            item = [firstItem]  # 是一个二维列表，对应一种物质
+            i += 1
+            if i < length:
+                nextItem = self.resultPart1Detail[i]
+                while len(nextItem) != 0:
+                    item.append(nextItem)
+                    i += 1
+                    if i >= length:
+                        break
+                    nextItem = self.resultPart1Detail[i]
+
+            key = firstItem[7]  # "Class"作为键
+            if key in dataDirectory.keys():
+                dataDirectory[key].append(item)
+                dataOneDirectory[key].append([firstItem[3]] + [firstItem[6]] + [len(dataOneDirectory[key])])
+            else:
+                dataDirectory[key] = [item]
+                dataOneDirectory[key] = [[firstItem[3]] + [firstItem[6]] + [0]]
+            # 查看下一条数据
+            i += 1
+
+        # 对dataOneDirectory中的各项进行排序
+        for key in dataOneDirectory.keys():
+            dataOneDirectory[key] = sorted(dataOneDirectory[key], key=(lambda x: [x[0], x[1]]), reverse=False)
+
+        # 重新整理结果
+        ret = []
+        # ret = [["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]]
+        for key in dataOneDirectory.keys():
+            data = dataOneDirectory[key]
+            for item1 in data:
+                for item2 in dataDirectory[key][item1[2]]:
+                    ret.append(item2)
+        return ret
+
+    ######################################################################
     # 第二部分，峰检测分割
     def PeakDisDetection(self):
         resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
         headerPart2 = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
         resultPart2.append(headerPart2)
 
-
-
+    # 目前这个函数用不到，因为需要去假阳性后才生成图片
     def PeakDisPlotPeak(self):
         # data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=True)
         data = self.resultPart1Detail
         lengthList = [i for i in range(len(data[0][9:]))]
         # 创建对应的文件夹
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_4_peakDistinguish/peakImages'):
-                os.makedirs('./intermediateFiles/_4_peakDistinguish/peakImages')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_4_peakDistinguish/peakImages 不存在，创建成功......')
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_4_peakDistinguish/peakImages"):
-                os.makedirs(self.outputFilesPath + "/_4_peakDistinguish/peakImages")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_4_peakDistinguish/peakImages 不存在，创建成功......")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish/peakImages")
         try:
             for i in range(len(data)):
                 item = data[i]
@@ -250,7 +334,7 @@ class ClassPeakDistinguish:
                 plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
                 plt.title("Mass:" + str(item[0]) + "  formula:" + item[4], fontproperties='SimHei', fontsize=15, color='red')
                 plt.vlines(x=lengthList, ymin=0, ymax=item[9:])
-                plt.savefig(fname="./intermediateFiles/_4_peakDistinguish/peakImages/" + Class + "_" + str(i), dpi=300)
+                plt.savefig(fname=newDirectory + Class + "_" + str(i), dpi=300)
                 plt.close()
         except Exception as e:
             print("PeakDisPlotPeak Error : ", e)

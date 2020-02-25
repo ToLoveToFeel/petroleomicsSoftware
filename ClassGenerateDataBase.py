@@ -62,23 +62,10 @@ class ClassGenerateDataBase():
                 result.append(item)
 
         # 数据写入excel文件中
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_2_generateDataBase'):
-                os.makedirs('./intermediateFiles/_2_generateDataBase')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_2_generateDataBase 不存在，创建成功......')
-            WriteDataToExcel(result, "./intermediateFiles/_2_generateDataBase/GDB.xlsx")
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_2_generateDataBase"):
-                os.makedirs(self.outputFilesPath + "/_2_generateDataBase")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_2_generateDataBase 不存在，创建成功......")
-            WriteDataToExcel(result, self.outputFilesPath + "/_2_generateDataBase/GDB.xlsx")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_2_generateDataBase")
+        WriteDataToExcel(result, newDirectory + "/GDB.xlsx")
 
-
-        GDBIsFinished = True  # 该过程已经完成
-
-        return result, GDBIsFinished
+        return result, True
 
     # 根据类型生成数据
     def _GenerateData(self, typeList):

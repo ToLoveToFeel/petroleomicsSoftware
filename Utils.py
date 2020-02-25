@@ -2,6 +2,8 @@
 import math
 import pandas as pd
 import xlsxwriter
+import os
+from ConstValues import ConstValues
 
 
 # 将excel文件读入到list中
@@ -11,7 +13,7 @@ def ReadExcelToList(filepath="", hasNan=True):
         result += pd.read_excel(io=filepath, header=None).values.tolist()
     else:  # 每一行的数据长度不一致，且nan在正常数据最后
         dataFrame = pd.read_excel(io=filepath, header=None)
-        result = [dataFrame.values[0].tolist()]
+        result = [dataFrame.values[0].tolist()]  # 处理表头
         data = dataFrame.values[1:]
         for item in data:
             # 全部是nan
@@ -49,5 +51,26 @@ def WriteDataToExcel(data, filename):
         worksheet.write_row("A{}".format(i + 1), data[i])
     # 将excel文件保存关闭，如果没有这一行运行代码会报错
     workbook.close()
+
+
+# 负责创建文件夹，要求此文件必须和其他的py文件目录同级
+def CreateDirectory(outputFilesPath="", directoryPath = "", subDirectory=""):
+    if outputFilesPath == "" and directoryPath == "":
+        return
+
+    # 默认的文件输出路径
+    if outputFilesPath == "":
+        if not os.path.exists(directoryPath + subDirectory):
+            os.makedirs(directoryPath + subDirectory)
+            if ConstValues.PsIsDebug:
+                print("文件夹 " + directoryPath + subDirectory + " 不存在，创建成功......")
+        return directoryPath + subDirectory
+    else:  # 用户选择的文件输出路径
+        if not os.path.exists(outputFilesPath + subDirectory):
+            os.makedirs(outputFilesPath + subDirectory)
+            if ConstValues.PsIsDebug:
+                print("文件夹 " + outputFilesPath + subDirectory + "不存在，创建成功......")
+        return outputFilesPath + subDirectory
+
 
 

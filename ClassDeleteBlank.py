@@ -1,7 +1,6 @@
 # coding=utf-8
 # 此文件负责定义：扣空白
 import numpy as np
-import os
 from Utils import *
 from ConstValues import ConstValues
 
@@ -9,7 +8,6 @@ from ConstValues import ConstValues
 class ClassDeleteBlank():
     def __init__(self, parameterList, outputFilesPath):
         """
-
         :param parameterList: 程序运行所需要的参数列表
         """
         assert len(parameterList) == 5, "ClassDeleteBlank参数不对"
@@ -102,20 +100,8 @@ class ClassDeleteBlank():
             print(result[:6])
 
         # 数据写入excel文件中
-        if self.outputFilesPath == "":
-            if not os.path.exists('./intermediateFiles/_1_deleteBlank'):
-                os.makedirs('./intermediateFiles/_1_deleteBlank')
-                if ConstValues.PsIsDebug:
-                    print('文件夹 ./intermediateFiles/_1_deleteBlank 不存在，创建成功......')
-            WriteDataToExcel(result, "./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx")
-        else:
-            if not os.path.exists(self.outputFilesPath + "/_1_deleteBlank"):
-                os.makedirs(self.outputFilesPath + "/_1_deleteBlank")
-                if ConstValues.PsIsDebug:
-                    print("文件夹 " + self.outputFilesPath + "/_1_deleteBlank 不存在，创建成功......")
-            WriteDataToExcel(result, self.outputFilesPath + "/_1_deleteBlank/DeleteBlank.xlsx")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_1_deleteBlank")
+        WriteDataToExcel(result, newDirectory + "/DeleteBlank.xlsx")
 
-        deleteBlankIsFinished = True  # 该过程已经完成
-
-        return result, deleteBlankIsFinished
+        return result, True
 

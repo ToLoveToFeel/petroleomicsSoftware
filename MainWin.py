@@ -2,7 +2,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from ConstValues import ConstValues
 from PromptBox import PromptBox
 from Utils import *
 from SetupInterface import SetupInterface
@@ -118,14 +117,15 @@ class MainWin(QMainWindow):
         # StartAll函数运行所需要的参数，全部参数
         self.AllData = None
         # 文件路径
-        # self.sampleFilePath = "./inputData/test/180-onescan-external.xlsx"
-        # self.blankFilePath = "./inputData/test/blank-3.xlsx"
+
         self.sampleFilePath = ""  # 样本文件路径
         self.blankFilePath = ""  # 空白文件路径
         self.outputFilesPath = ""  # 输出文件路径
+        if ConstValues.PsIsDebug:
+            self.sampleFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.xlsx"
+            self.blankFilePath = "./inputData/test/blank-54.xlsx"
 
-        # 扣空白全过程需要的数据
-        # 0~10000（整数）
+        # 扣空白全过程需要的数据  0~10000（整数）
         self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 去空白(参数)：删除Intensity小于deleteBlankIntensity的行
         # 0.00~100.00（浮点数）
         self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM                  # 去空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
@@ -172,8 +172,7 @@ class MainWin(QMainWindow):
         self.GDBIsFinished = False  # 数据库生成：记录数据库生成过程是否完成
 
         # 去同位素全过程需要的数据，另外还需要 扣空白的self.deleteBlankResult 和 数据库生成self.GDBResult
-        # 0~正无穷（整数）
-        self.DelIsoIntensityX = ConstValues.PsDelIsoIntensityX
+        self.DelIsoIntensityX = ConstValues.PsDelIsoIntensityX  # 0~正无穷（整数）
         # 0~100（整数）
         self.DelIso_13C2RelativeIntensity = ConstValues.PsDelIso_13C2RelativeIntensity
         # 0.00~20.00（浮点数）
@@ -196,6 +195,8 @@ class MainWin(QMainWindow):
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径，第一部分
+        if ConstValues.PsIsDebug:
+            self.TICFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.txt"
         # 0~10000（整数）
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
         # 0.00~100.00（浮点数）
@@ -361,7 +362,7 @@ class MainWin(QMainWindow):
         # 导入文件，并得到文件名称
         openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', '', 'Excel files(*.xlsx , *.xls)')
         self.sampleFilePath = openfile_name[0]
-        if ConstValues.PsIsDebug == True:
+        if ConstValues.PsIsDebug:
             print(self.sampleFilePath)
 
     # 导入空白文件，文件路径存在blankFileName中
@@ -369,7 +370,7 @@ class MainWin(QMainWindow):
         # 导入文件，并得到文件名称
         openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', '', 'Excel files(*.xlsx , *.xls)')
         self.blankFilePath = openfile_name[0]
-        if ConstValues.PsIsDebug == True:
+        if ConstValues.PsIsDebug:
             print(self.blankFilePath)
 
     # 导入总离子流图文件，文件路径存在TICFilePath中
@@ -392,7 +393,7 @@ class MainWin(QMainWindow):
     def GetOutputFilesPath(self):
         # 导入文件，并得到文件名称
         self.outputFilesPath = QFileDialog.getExistingDirectory(self, '打开文件夹', './')
-        if ConstValues.PsIsDebug == True:
+        if ConstValues.PsIsDebug:
             print(self.outputFilesPath)
 
     # 重置软件，参数重置
@@ -411,6 +412,7 @@ class MainWin(QMainWindow):
         self.messageLabel5.setText("未运行")  # 去同位素
 
     # 退出程序
+    @staticmethod
     def QuitApplication(self):
         app = QApplication.instance()
         # 退出应用程序
@@ -498,10 +500,8 @@ class MainWin(QMainWindow):
         # 程序开始运行后收尾工作
         self.AfterRunning("RemoveFalsePositive")
 
-    #######################################
-    # 辅助函数
-    # 全部开始
-    def StartAll(self):
+    # 辅助函数 #######################################
+    def StartAll(self):  # 全部开始
         # 程序运行前准备工作
         if not self.BeforeRunning("StartAll"):
             return
@@ -553,17 +553,44 @@ class MainWin(QMainWindow):
             self.DelIsoIsFinished = retList[6]
             self.PeakDisResult = retList[7]
             self.PeakDisIsFinished = retList[8]
+            self.RemoveFPResult = retList[9]
+            self.RemoveFPIsFinished = retList[10]
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
         elif retList[0] == "deleteBlankFinished":
             # 显示完成提示
             self.messageLabel1.setText("处理完毕!")
         elif retList[0] == "GDBFinished":
+            # 显示完成提示
             self.messageLabel2.setText("处理完毕!")
         elif retList[0] == "DelIsoFinished":
+            # 显示完成提示
             self.messageLabel3.setText("处理完毕!")
         elif retList[0] == "PeakDisFinished":
+            # 显示完成提示
             self.messageLabel4.setText("处理完毕!")
+        elif retList[0] == "RemoveFPFinished":
+            # 显示完成提示
+            self.messageLabel5.setText("处理完毕!")
+        elif retList[0] == "ClassDeleteBlank Error":
+            self.deleteBlankPromptBox.closeGif()
+            PromptBox().errorMessage("去空白出现错误!")
+        elif retList[0] == "ClassGenerateDataBase Error":
+            self.GDBPromptBox.closeGif()
+            PromptBox().errorMessage("数据库生成出现错误!")
+        elif retList[0] == "ClassDeleteIsotope Error":
+            self.DelIsoPromptBox.closeGif()
+            PromptBox().errorMessage("去同位素出现错误!")
+        elif retList[0] == "ClassPeakDistinguish Error":
+            self.PeakDisPromptBox.closeGif()
+            PromptBox().errorMessage("峰识别出现错误!")
+        elif retList[0] == "ClassRemoveFalsePositive Error":
+            self.RemoveFPPromptBox.closeGif()
+            PromptBox().errorMessage("去假阳性出现错误!")
+        elif retList[0] == "StartAll Error":
+            # 关闭弹出的程序运行指示对话框
+            self.StartAllPromptBox.closeGif()
+            PromptBox().errorMessage("程序运行出现错误!")
 
     # 设置：数据更新
     def UpdateData(self, Type, newParameters):
@@ -799,6 +826,13 @@ class MainWin(QMainWindow):
                     self.PeakDisClass,
                     self.PeakDisScanPoints
                 ],
+                [
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                 ],
             ]
 
         return True
@@ -875,6 +909,7 @@ class MainWin(QMainWindow):
             self.messageLabel2.setText("正在处理，请稍后...")
             self.messageLabel3.setText("正在处理，请稍后...")
             self.messageLabel4.setText("正在处理，请稍后...")
+            self.messageLabel5.setText("正在处理，请稍后...")
             # 弹出提示框
             self.StartAllPromptBox = PromptBox()
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", "./images/ajax-loading.gif")

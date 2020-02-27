@@ -1,5 +1,5 @@
 # coding=utf-8
-# 此文件负责定义：峰识别
+# 此文件负责定义：峰识别第一阶段，峰识别
 import matplotlib.pyplot as plt
 import time
 import os
@@ -62,7 +62,6 @@ class ClassPeakDistinguish:
                             print("------------The length of retDetail : ", len(retDetail))
                             flag = 0
                         self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
-
         except Exception as e:
             print("Error : ", e)
 
@@ -72,8 +71,8 @@ class ClassPeakDistinguish:
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish")
-        WriteDataToExcel(self.resultPart1, newDirectory + "/PeakDistinguishPart1.xlsx")
-        WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDistinguishPart1Detail.xlsx")
+        WriteDataToExcel(self.resultPart1, newDirectory + "/PeakDisPart1.xlsx")
+        WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDisPart1DetailPlot.xlsx")
 
         # # 第二部分需要处理的数据，将图像输出到文件中
         # self.PeakDisPlotPeak()
@@ -311,33 +310,5 @@ class ClassPeakDistinguish:
                 for item2 in dataDirectory[key][item1[2]]:
                     ret.append(item2)
         return ret
-
-    ######################################################################
-    # 第二部分，峰检测分割
-    def PeakDisDetection(self):
-        resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
-        headerPart2 = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        resultPart2.append(headerPart2)
-
-    # 目前这个函数用不到，因为需要去假阳性后才生成图片
-    def PeakDisPlotPeak(self):
-        # data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=True)
-        data = self.resultPart1Detail
-        lengthList = [i for i in range(len(data[0][9:]))]
-        # 创建对应的文件夹
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish/peakImages")
-        try:
-            for i in range(len(data)):
-                item = data[i]
-                Class = item[2]  # 化合物类型
-                plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='blue')
-                plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
-                plt.title("Mass:" + str(item[0]) + "  formula:" + item[4], fontproperties='SimHei', fontsize=15, color='red')
-                plt.vlines(x=lengthList, ymin=0, ymax=item[9:])
-                plt.savefig(fname=newDirectory + Class + "_" + str(i), dpi=300)
-                plt.close()
-        except Exception as e:
-            print("PeakDisPlotPeak Error : ", e)
-
 
 

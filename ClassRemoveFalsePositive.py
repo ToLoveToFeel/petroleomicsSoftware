@@ -30,10 +30,12 @@ class ClassRemoveFalsePositive:
             WriteDataToExcel(result, newDirectory + "/PeakDisResultAfterRemoveFP.xlsx")
 
         # 去假阳性后峰识别的峰
+        newData = []
         if self.RemoveFPId == 2:
-            self.PlotAfterRemoveFP(result)
+            newData = self.RemoveFPFromPeakDisPlot(result)  # 从读取PeakDisPart1DetailPlot.xlsx去假阳性
+            # self.PlotAfterRemoveFP(newData)
 
-        return result, True
+        return [result, newData], True
 
     # 从去同位素后的文件里去假阳性
     def RemoveFPFromDelIso(self):
@@ -235,20 +237,24 @@ class ClassRemoveFalsePositive:
 
         return afterDel_DBEDirectory
 
-    # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形
-    def PlotAfterRemoveFP(self, result):
+    # 读取PeakDisPart1DetailPlot.xlsx文件的内容，并进行去假阳性
+    def RemoveFPFromPeakDisPlot(self, result):
         # ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1Detail.xlsx", hasNan=False)
+        data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
         massSet = set()
-        newData = []
+        newData = []  # 存储需要画出图形的经过去假阳性后的数据
         for item in result:
             if len(item) != 0:
                 massSet.add(item[0])
         for item in data:
             if item[0] in massSet:
                 newData.append(item)
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive")
+        WriteDataToExcel(newData, newDirectory + "/PeakDisPart1DetailPlotAfterRFP.xlsx")
+        return newData
 
-        data = newData
+    # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形
+    def PlotAfterRemoveFP(self, data):
         lengthList = [i for i in range(len(data[0][9:]))]
         # 创建对应的文件夹
         CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive/peakImagesAfterRemoveFP")

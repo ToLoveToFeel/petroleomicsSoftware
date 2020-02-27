@@ -36,6 +36,8 @@ class ConstValues():
     # 去假阳性提示信息
     PsRemoveFPErrorMessage1 = "请先去同位素!"
     PsRemoveFPErrorMessage2 = "请先峰识别!"
+    # 峰检测提示信息
+    PsPeakDivErrorMessage = "请先去假阳性!"
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
@@ -136,6 +138,16 @@ class ConstValues():
     PsRemoveFPContinue_DBENumMin = 1
     PsRemoveFPContinue_DBENumMax = 100
 
-
-
+    # 峰检测全过程所需要的数据
+    # 0~1000000(整数)
+    PsPeakDivNoiseThreshold = 15000  # 噪音阈值
+    PsPeakDivNoiseThresholdMin = 0
+    PsPeakDivNoiseThresholdMax = 1000000
+    PsPeakDivNoiseThresholdMaxStr = "1e6"  # 方便设置界面显示
+    # 0.0~100.0(浮点数)
+    PsPeakDivRelIntensity = 2  # 相对强度阈值，去每张图中，相对强度小于最高峰的0.1%的那些信号
+    PsPeakDivRelIntensityMin = 0.0
+    PsPeakDivRelIntensityMax = 100.0
+    # TODO:未定参数
+    PsPeakDivMinimalPeakWidth = 10
 

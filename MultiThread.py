@@ -6,6 +6,7 @@ from ClassGenerateDataBase import ClassGenerateDataBase
 from ClassDeleteIsotope import ClassDeleteIsotope
 from ClassPeakDistinguish import ClassPeakDistinguish
 from ClassRemoveFalsePositive import ClassRemoveFalsePositive
+from ClassPeakDivision import ClassPeakDivision
 from ConstValues import ConstValues
 
 
@@ -74,8 +75,7 @@ class MultiThread(QThread):
             try:
                 retList = ["ClassRemoveFalsePositive"]
                 crfp = ClassRemoveFalsePositive(self.__parameters, self.outputFilesPath)
-                # cpd.PeakDisPlotPeak()
-                RemoveFPIsFinished, RemoveFPResult = crfp.RemoveFalsePositive()
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
                 retList.append(RemoveFPResult)
                 retList.append(RemoveFPIsFinished)
                 self.signal.emit(retList)
@@ -83,6 +83,18 @@ class MultiThread(QThread):
                 if ConstValues.PsIsDebug:
                     print("ClassRemoveFalsePositive Error : ", e)
                 self.signal.emit(["ClassRemoveFalsePositive Error"])
+        elif self.__function == "ClassPeakDivision":
+            try:
+                retList = ["ClassPeakDivision"]
+                cpd = ClassPeakDivision(self.__parameters, self.outputFilesPath)
+                PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
+                retList.append(PeakDivResult)
+                retList.append(PeakDivIsFinished)
+                self.signal.emit(retList)
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("ClassPeakDivision Error : ", e)
+                self.signal.emit(["ClassPeakDivision Error"])
         elif self.__function == "StartAll":
             try:
                 retList = ["StartAll"]

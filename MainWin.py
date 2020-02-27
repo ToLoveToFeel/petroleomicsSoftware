@@ -56,40 +56,47 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
-        textList = ["扣空白状态：", "数据库生成状态：", "去同位素状态：", "峰识别状态：", "去假阳性状态："]
+        space = 100
+        textList = ["扣空白状态：", "数据库生成状态：", "去同位素状态：", "峰识别状态：", "去假阳性状态：", "峰检测状态："]
         for i in range(len(textList)):
-            self.TextLabel(textList[i], 20, (i + 1) * 120)
+            self.TextLabel(textList[i], 20, (i + 1) * space)
 
         # 扣空白message
         self.messageLabel1 = QLabel(self)
         self.messageLabel1.setText("未运行")
         self.messageLabel1.resize(180, 50)
         self.messageLabel1.setFont(QFont("Arial", 15))
-        self.messageLabel1.move(180, 120)
+        self.messageLabel1.move(180, space * 1)
         # 数据库生成message
         self.messageLabel2 = QLabel(self)
         self.messageLabel2.setText("未运行")
         self.messageLabel2.resize(180, 50)
         self.messageLabel2.setFont(QFont("Arial", 15))
-        self.messageLabel2.move(180, 240)
+        self.messageLabel2.move(180, space * 2)
         # 去同位素message
         self.messageLabel3 = QLabel(self)
         self.messageLabel3.setText("未运行")
         self.messageLabel3.resize(180, 50)
         self.messageLabel3.setFont(QFont("Arial", 15))
-        self.messageLabel3.move(180, 360)
-        # 扣空白message
+        self.messageLabel3.move(180, space * 3)
+        # 峰识别message
         self.messageLabel4 = QLabel(self)
         self.messageLabel4.setText("未运行")
         self.messageLabel4.resize(180, 50)
         self.messageLabel4.setFont(QFont("Arial", 15))
-        self.messageLabel4.move(180, 480)
-        # 扣空白message
+        self.messageLabel4.move(180, space * 4)
+        # 去假阳性message
         self.messageLabel5 = QLabel(self)
         self.messageLabel5.setText("未运行")
         self.messageLabel5.resize(180, 50)
         self.messageLabel5.setFont(QFont("Arial", 15))
-        self.messageLabel5.move(180, 600)
+        self.messageLabel5.move(180, space * 5)
+        # 峰检测message
+        self.messageLabel6 = QLabel(self)
+        self.messageLabel6.setText("未运行")
+        self.messageLabel6.resize(180, 50)
+        self.messageLabel6.setFont(QFont("Arial", 15))
+        self.messageLabel6.move(180, space * 6)
 
     # 主界面文本显示
     def TextLabel(self, text, x, y):
@@ -231,8 +238,24 @@ class MainWin(QMainWindow):
                              self.RemoveFPContinue_CNum,
                              self.RemoveFPContinue_DBENum
                              ]
-        self.RemoveFPResult = None
+        # 结果是一个三维列表，有两个元素，第一个所有类别去假阳性的结果，第二个是去假阳性后需要峰检测的数据
+        self.RemoveFPResult = [[], []]
         self.RemoveFPIsFinished = False
+
+        # 峰检测全过程所需要的数据  0~1000000(整数)
+        self.PeakDivNoiseThreshold = ConstValues.PsPeakDivNoiseThreshold  # 噪音阈值
+        # 0.0~100.0(浮点数)
+        self.PeakDivRelIntensity = ConstValues.PsPeakDivRelIntensity  # # 相对强度阈值
+        # TODO:未定参数
+        self.PeakDivMinimalPeakWidth = ConstValues.PsPeakDivMinimalPeakWidth
+        self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                            self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                            self.PeakDivNoiseThreshold,
+                            self.PeakDivRelIntensity,
+                            self.PeakDivMinimalPeakWidth
+                            ]
+        self.PeakDivResult = None
+        self.PeakDivIsFinished = False
 
     # 使窗口居中
     def center(self):
@@ -257,6 +280,14 @@ class MainWin(QMainWindow):
         importBlankFile = QAction("导入空白文件", self)  # 添加二级菜单
         file.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
+
+        TICFile = QAction("导入总离子图文件", self)  # 添加二级菜单
+        file.addAction(TICFile)
+        TICFile.triggered.connect(self.ImportTICFile)
+
+        OutFilesPath = QAction("选择生成文件位置", self)  # 添加二级菜单
+        file.addAction(OutFilesPath)
+        OutFilesPath.triggered.connect(self.GetOutputFilesPath)
 
         exitProgram = QAction("退出程序", self)  # 添加二级菜单
         file.addAction(exitProgram)
@@ -284,6 +315,10 @@ class MainWin(QMainWindow):
         disturbRemove = QAction("去假阳性", self)  # 添加二级菜单
         set.addAction(disturbRemove)
         disturbRemove.triggered.connect(self.RemoveFalsePositiveSetup)
+
+        peakDivision = QAction("峰检测", self)  # 添加二级菜单
+        set.addAction(peakDivision)
+        peakDivision.triggered.connect(self.PeakDivisionSetup)
 
     # 设置工具栏
     def toolbar(self):
@@ -336,6 +371,10 @@ class MainWin(QMainWindow):
         disturbRemove = QAction(QIcon('./images/work/j5.png'), "去假阳性", self)
         tb2.addAction(disturbRemove)
         disturbRemove.triggered.connect(self.RemoveFalsePositive)
+
+        peakDivision = QAction(QIcon('./images/work/j6.png'), "峰检测", self)
+        tb2.addAction(peakDivision)
+        peakDivision.triggered.connect(self.PeakDivision)
 
 
         # 添加第三个工具栏
@@ -410,6 +449,7 @@ class MainWin(QMainWindow):
         self.messageLabel3.setText("未运行")  # 去同位素
         self.messageLabel4.setText("未运行")  # 峰识别
         self.messageLabel5.setText("未运行")  # 去同位素
+        self.messageLabel6.setText("未运行")  # 峰检测
 
     # 退出程序
     @staticmethod
@@ -452,6 +492,10 @@ class MainWin(QMainWindow):
         newParameters = SetupInterface().RemoveFalsePositiveSetup(self.RemoveFPList[2:])
         # 更新数据
         self.UpdateData("RemoveFalsePositiveSetup", newParameters)
+
+    # 峰检测参数设置
+    def PeakDivisionSetup(self):
+        pass
 
     # 去空白 #######################################
     def DeleteBlank(self):
@@ -500,6 +544,16 @@ class MainWin(QMainWindow):
         # 程序开始运行后收尾工作
         self.AfterRunning("RemoveFalsePositive")
 
+    # 峰检测
+    def PeakDivision(self):
+        # 程序运行前准备工作
+        if not self.BeforeRunning("PeakDivision"):
+            return
+        # 去假阳性
+        self.StartRunning("PeakDivision")
+        # 程序开始运行后收尾工作
+        self.AfterRunning("PeakDivision")
+
     # 辅助函数 #######################################
     def StartAll(self):  # 全部开始
         # 程序运行前准备工作
@@ -543,6 +597,12 @@ class MainWin(QMainWindow):
             # 显示完成提示
             self.messageLabel5.setText("处理完毕!")
             self.RemoveFPPromptBox.closeGif()
+        elif retList[0] == "ClassPeakDivision":
+            self.PeakDivResult = retList[1]
+            self.PeakDivIsFinished = retList[2]
+            # 显示完成提示
+            self.messageLabel6.setText("处理完毕!")
+            self.PeakDivPromptBox.closeGif()
         elif retList[0] == "StartAll":
             # 更新结果
             self.deleteBlankResult = retList[1]
@@ -587,6 +647,9 @@ class MainWin(QMainWindow):
         elif retList[0] == "ClassRemoveFalsePositive Error":
             self.RemoveFPPromptBox.closeGif()
             PromptBox().errorMessage("去假阳性出现错误!")
+        elif retList[0] == "ClassPeakDivision Error":
+            self.PeakDivPromptBox.closeGif()
+            PromptBox().errorMessage("峰检测出现错误!")
         elif retList[0] == "StartAll Error":
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
@@ -700,6 +763,7 @@ class MainWin(QMainWindow):
                                     self.deleteBlankPercentage  # 格式：整数
                                     ]
         elif Type == "GenerateDataBase":
+            # 无
             pass
         elif Type == "DeleteIsotope":
             # 单独运行，调试使用
@@ -760,7 +824,7 @@ class MainWin(QMainWindow):
                 elif self.RemoveFPId == 2:
                     self.PeakDisIsFinished = True
                     self.PeakDisResult = ReadExcelToList(
-                        filepath="./intermediateFiles/_4_peakDistinguish/PeakDistinguishPart1.xlsx", hasNan=True)
+                        filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
             # 去假阳性前需要去同位素 或者 峰识别第一阶段
             if self.RemoveFPId == 1:
                 if not self.DelIsoIsFinished:
@@ -777,6 +841,23 @@ class MainWin(QMainWindow):
                                  self.RemoveFPContinue_CNum,
                                  self.RemoveFPContinue_DBENum
                                  ]
+        elif Type == "PeakDivision":
+            if self.RemoveFPId == 1:
+                return False
+            # 单独运行，调试使用
+            if ConstValues.PsIsSingleRun:
+                self.RemoveFPIsFinished = True
+            # 峰检测之前需要 去假阳性
+            if not self.RemoveFPIsFinished:
+                PromptBox().warningMessage(ConstValues.PsPeakDivErrorMessage)
+                return False
+            # 更新数据
+            self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                                self.PeakDivNoiseThreshold,
+                                self.PeakDivRelIntensity,
+                                self.PeakDivMinimalPeakWidth
+                                ]
         elif Type == "StartAll":
             if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
                 PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
@@ -859,6 +940,10 @@ class MainWin(QMainWindow):
             self.RemoveFPMt = MultiThread("ClassRemoveFalsePositive", self.RemoveFPList, self.outputFilesPath)
             self.RemoveFPMt.signal.connect(self.HandleData)
             self.RemoveFPMt.start()
+        elif Type == "PeakDivision":
+            self.PeakDivMt = MultiThread("ClassPeakDivision", self.PeakDivList, self.outputFilesPath)
+            self.PeakDivMt.signal.connect(self.HandleData)
+            self.PeakDivMt.start()
         elif Type == "StartAll":
             self.StartAllMt = MultiThread("StartAll", self.AllData, self.outputFilesPath)
             self.StartAllMt.signal.connect(self.HandleData)
@@ -887,14 +972,12 @@ class MainWin(QMainWindow):
             # 界面显示的提示信息
             self.messageLabel3.setText("正在处理，请稍后...")
             # 弹出提示框
-            # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
             self.DelIsoPromptBox = PromptBox()
             self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后...", "./images/ajax-loading.gif")
         elif Type == "PeakDistinguish":
             # 界面显示的提示信息
             self.messageLabel4.setText("正在处理，请稍后...")
             # 弹出提示框
-            # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
             self.PeakDisPromptBox = PromptBox()
             self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后...", "./images/ajax-loading.gif")
         elif Type == "RemoveFalsePositive":
@@ -903,6 +986,12 @@ class MainWin(QMainWindow):
             # 弹出提示框
             self.RemoveFPPromptBox = PromptBox()
             self.RemoveFPPromptBox.showGif("正在处理去假阳性，请稍后...", "./images/ajax-loading.gif")
+        elif Type == "PeakDivision":
+            # 界面显示的提示信息
+            self.messageLabel6.setText("正在处理，请稍后...")
+            # 弹出提示框
+            self.PeakDivPromptBox = PromptBox()
+            self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", "./images/ajax-loading.gif")
         elif Type == "StartAll":
             # 界面显示的提示信息
             self.messageLabel1.setText("正在处理，请稍后...")
@@ -910,6 +999,7 @@ class MainWin(QMainWindow):
             self.messageLabel3.setText("正在处理，请稍后...")
             self.messageLabel4.setText("正在处理，请稍后...")
             self.messageLabel5.setText("正在处理，请稍后...")
+            self.messageLabel6.setText("正在处理，请稍后...")
             # 弹出提示框
             self.StartAllPromptBox = PromptBox()
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", "./images/ajax-loading.gif")

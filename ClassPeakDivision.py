@@ -20,7 +20,8 @@ class ClassPeakDivision:
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
         if ConstValues.PsIsDebug:
-            self.RemoveFPPlotResult = ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP.xlsx", hasNan=False)
+            self.RemoveFPPlotResult = \
+                ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP.xlsx", hasNan=False)
 
     # 第二部分，峰检测分割  ######################################################################
     def PeakDivision(self):
@@ -193,13 +194,14 @@ class ClassPeakDivision:
         :return:
         """
         # 返回内容
-        redList = []
+        ret = []
         areas = []
         # 定义峰谷，峰顶左右比较数据的偏移量
         # 若：smoothdata[i] < smoothdata[i-deviation]，smoothdata[i] < smoothdata[i+deviation]，smoothdata[i]是峰底
         # 若：smoothdata[i] > smoothdata[i-deviation]，smoothdata[i] > smoothdata[i+deviation]，smoothdata[i]是峰顶
         deviation = int(len(rawdata) / 75)
-
+        # 平滑后的数据的最大值
+        smoothMax = np.max(smoothdata)
         i = deviation
         while i < len(smoothdata) - deviation:
             # 寻找峰谷
@@ -211,19 +213,42 @@ class ClassPeakDivision:
             while (i < len(smoothdata) - deviation) and \
                     not ((smoothdata[i] > smoothdata[i-deviation]) and (smoothdata[i] > smoothdata[i+deviation])):
                 i += 1
-            # top = i
+            top = i
             # 寻找峰谷
             while (i < len(smoothdata) - deviation) and \
                     not ((smoothdata[i] < smoothdata[i - deviation]) and (smoothdata[i] < smoothdata[i + deviation])):
                 i += 1
             right = i
+            # 判断峰是否足够高
+            while (i < len(smoothdata) - deviation) and (smoothdata[top] - smoothdata[right] < smoothMax / 100):
+                # 寻找峰顶
+                while (i < len(smoothdata) - deviation) and \
+                        not ((smoothdata[i] > smoothdata[i - deviation]) and (smoothdata[i] > smoothdata[i + deviation])):
+                    i += 1
+                top = i
+                # 寻找峰谷
+                while (i < len(smoothdata) - deviation) and \
+                        not ((smoothdata[i] < smoothdata[i - deviation]) and (smoothdata[i] < smoothdata[i + deviation])):
+                    i += 1
+                right = i
             if i < len(smoothdata) - deviation:
-                redList.append(left)
-                redList.append(right)
+                ret.append(left)
+                ret.append(right)
                 # 计算面积
                 areas.append(format(np.sum(rawdata[left:right])/ordervalue, '.2f'))
+        # 合并面积小于0.05的峰，合并到前一个峰
+        areaThreshold = 0.05
+        redList = []
+        areasList = []
+        k = 0
+        while k < len(areas):
+            if float(areas[k]) >= areaThreshold:
+                redList.append(ret[2*k])
+                redList.append(ret[2*k+1])
+                areasList.append(areas[k])
+            k += 1
 
-        return redList, areas
+        return redList, areasList
 
     # 根据某个峰的数据，画出相应的图形
     def PlotAfterRemoveFP(self, parameters):
@@ -246,7 +271,7 @@ class ClassPeakDivision:
         parameter = parameters[2]
         # 二级参数
         redList = parameter[0]  # 列表
-        areas = parameter[1]  # 列表
+        areas = parameter[1]  # 列表，里面的数据是str
         orderOfMagnitude = parameter[2]  # 字符串
         max = parameter[3]  # 浮点数
         # 将item分切为两部分，信息 和 数据
@@ -283,9 +308,10 @@ class ClassPeakDivision:
                 if start == end:  # 说明两个峰的峰谷重合
                     i += 1
                     continue
-                plt.vlines(x=x[start:end], ymin=0, ymax=data[start:end], colors="b")
+                plt.vlines(x=x[start:end], ymin=0, ymax=data[start:end], colors="b", linewidth=1)
                 if end != len(data) - 1:  # 最后的位置不画红线
-                    plt.vlines(x=x[end], ymin=-int(0.1*max), ymax=int(1.2*max), colors="g")
+                    # plt.vlines(x=x[end], ymin=-int(0.1*max), ymax=int(1.2*max), colors="g", linewidth=1)
+                    plt.vlines(x=x[end]+15, ymin=-int(0.1*max), ymax=int(1.2*max), colors="g", linewidth=0.5)  # +50因为画出的图向左错位
                 if (start != 0) and (end != len(data) - 1) and i % 2 == 1:  # 第一个区间和最后一个区间不显示面积
                     # [0, 50, 100, 100, 425, 500, 700, len(data) - 1]代表[50...100]，[100...425]，[500...700]三个峰
                     # [2.104, 3.105, 5.211]
@@ -299,15 +325,15 @@ class ClassPeakDivision:
                     # [700..end]        i=6
                     middle = int((start + end) / 2 - 50)
                     if areaIndex % 2 == 0:
-                        plt.text(middle, int(1.05 * (max + 1)), str(areas[areaIndex]), fontproperties='SimHei', fontsize=5, color="k")
+                        plt.text(middle, int(1.05 * (max + 1)), areas[areaIndex], fontproperties='SimHei', fontsize=5, color="k")
                     else:
-                        plt.text(middle, int(1.1 * (max + 1)), str(areas[areaIndex]), fontproperties='SimHei', fontsize=5, color="k")
+                        plt.text(middle, int(1.1 * (max + 1)), areas[areaIndex], fontproperties='SimHei', fontsize=5, color="k")
                     areaIndex += 1
                 i += 1
             # 添加数量级标识
-            plt.text(int(4 * len(data) / 5), int(1.2 * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=10, color="k")
+            plt.text(int(4 * len(data) / 5), int(1.16 * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=10, color="k")
             # 画出平滑后的曲线
-            plt.plot(x, smoothItem, color="r")
+            plt.plot(x, smoothItem, color="r", linewidth=0.6)
             # 保存图像
             plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
             # 关闭当前图像

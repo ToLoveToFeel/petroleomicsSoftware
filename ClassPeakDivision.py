@@ -236,7 +236,7 @@ class ClassPeakDivision:
                 ret.append(right)
                 # 计算面积
                 areas.append(format(np.sum(rawdata[left:right])/ordervalue, '.2f'))
-        # 合并面积小于0.05的峰，合并到前一个峰
+        # 合并面积小于0.05的峰，删除
         areaThreshold = 0.05
         redList = []
         areasList = []

@@ -61,42 +61,20 @@ class MainWin(QMainWindow):
         for i in range(len(textList)):
             self.TextLabel(textList[i], 20, (i + 1) * space)
 
+        message = "未运行"
+        messageX = 180
         # 扣空白message
-        self.messageLabel1 = QLabel(self)
-        self.messageLabel1.setText("未运行")
-        self.messageLabel1.resize(180, 50)
-        self.messageLabel1.setFont(QFont("Arial", 15))
-        self.messageLabel1.move(180, space * 1)
+        self.messageLabel1 = self.TextLabel(message, messageX, space * 1)
         # 数据库生成message
-        self.messageLabel2 = QLabel(self)
-        self.messageLabel2.setText("未运行")
-        self.messageLabel2.resize(180, 50)
-        self.messageLabel2.setFont(QFont("Arial", 15))
-        self.messageLabel2.move(180, space * 2)
+        self.messageLabel2 = self.TextLabel(message, messageX, space * 2)
         # 去同位素message
-        self.messageLabel3 = QLabel(self)
-        self.messageLabel3.setText("未运行")
-        self.messageLabel3.resize(180, 50)
-        self.messageLabel3.setFont(QFont("Arial", 15))
-        self.messageLabel3.move(180, space * 3)
+        self.messageLabel3 = self.TextLabel(message, messageX, space * 3)
         # 峰识别message
-        self.messageLabel4 = QLabel(self)
-        self.messageLabel4.setText("未运行")
-        self.messageLabel4.resize(180, 50)
-        self.messageLabel4.setFont(QFont("Arial", 15))
-        self.messageLabel4.move(180, space * 4)
+        self.messageLabel4 = self.TextLabel(message, messageX, space * 4)
         # 去假阳性message
-        self.messageLabel5 = QLabel(self)
-        self.messageLabel5.setText("未运行")
-        self.messageLabel5.resize(180, 50)
-        self.messageLabel5.setFont(QFont("Arial", 15))
-        self.messageLabel5.move(180, space * 5)
+        self.messageLabel5 = self.TextLabel(message, messageX, space * 5)
         # 峰检测message
-        self.messageLabel6 = QLabel(self)
-        self.messageLabel6.setText("未运行")
-        self.messageLabel6.resize(180, 50)
-        self.messageLabel6.setFont(QFont("Arial", 15))
-        self.messageLabel6.move(180, space * 6)
+        self.messageLabel6 = self.TextLabel(message, messageX, space * 6)
 
     # 主界面文本显示
     def TextLabel(self, text, x, y):
@@ -105,6 +83,7 @@ class MainWin(QMainWindow):
         textLabel.setText(text)
         textLabel.setFont(QFont("Arial", 15))
         textLabel.move(x, y)
+        return textLabel
 
     # 分区绘制
     def paintEvent(self, event):
@@ -372,9 +351,10 @@ class MainWin(QMainWindow):
         tb2.addAction(disturbRemove)
         disturbRemove.triggered.connect(self.RemoveFalsePositive)
 
-        peakDivision = QAction(QIcon('./images/work/j6.png'), "峰检测", self)
-        tb2.addAction(peakDivision)
-        peakDivision.triggered.connect(self.PeakDivision)
+        self.TBpeakDivision = QAction(QIcon('./images/work/j6.png'), "峰检测", self)  # 因为需要控制是否使能，所以为全局变量
+        tb2.addAction(self.TBpeakDivision)
+        self.TBpeakDivision.triggered.connect(self.PeakDivision)
+        self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
 
 
         # 添加第三个工具栏
@@ -392,9 +372,28 @@ class MainWin(QMainWindow):
     # 设置主窗口底部状态栏
     def status(self):
         self.statusBar = self.statusBar()
+        # 设置状态栏背景颜色：白烟色
+        self.statusBar.setStyleSheet("background-color: #F5F5F5;")
+        # 设置字体显示样式
+        style = "color:rgb(0,0,0,250); font-size:15px; font-family: Microsoft YaHei;"
+        # 第一条显示的信息
         nowDate = str(QDate.currentDate().toString("yyyy.MM.dd"))
-        self.statusBar.showMessage(ConstValues.PsMainWindowStatusMessage +
-                                   "|   日期：" + nowDate, 0)  # 0代表永久显示
+        self.statusContext1 = QLabel(ConstValues.PsMainWindowStatusMessage + "|   日期：" + nowDate)
+        self.statusContext1.setStyleSheet(style)
+        # 第二条显示的信息
+        self.statusContext2 = QLabel("当前处于空闲状态.")
+        self.statusContext2.setStyleSheet(style)
+        # 状态栏添加显示的信息
+        self.statusBar.addPermanentWidget(self.statusContext1, stretch=3)
+        self.statusBar.addPermanentWidget(self.statusContext2, stretch=1)
+
+    # 设置主窗口底部状态栏显示文字
+    def statusSetup(self, text1, text2):
+        # 设置第一条显示的信息
+        nowDate = str(QDate.currentDate().toString("yyyy.MM.dd"))
+        self.statusContext1.setText(text1 + "|   日期：" + nowDate)
+        # 设置第二条显示的信息
+        self.statusContext2.setText(text2)
 
     # 导入样本文件，文件路径存在sampleFileName中
     def ImportSampleFile(self):
@@ -572,36 +571,48 @@ class MainWin(QMainWindow):
             # 显示完成提示
             self.messageLabel1.setText("处理完毕!")
             # PromptBox().informationMessageAutoClose("处理完毕！", ConstValues.PsAfterRunningPromptBoxTime)
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去空白处理完毕!")
             self.deleteBlankPromptBox.closeGif()
         elif retList[0] == "ClassGenerateDataBase":
             self.GDBResult = retList[1]
             self.GDBIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel2.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据库生成处理完毕!")
             self.GDBPromptBox.closeGif()
         elif retList[0] == "ClassDeleteIsotope":
             self.DelIsoResult = retList[1]
             self.DelIsoIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel3.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去同位素处理完毕!")
             self.DelIsoPromptBox.closeGif()
         elif retList[0] == "ClassPeakDistinguish":
             self.PeakDisResult = retList[1]
             self.PeakDisIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel4.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "峰识别处理完毕!")
             self.PeakDisPromptBox.closeGif()
         elif retList[0] == "ClassRemoveFalsePositive":
             self.RemoveFPResult = retList[1]
             self.RemoveFPIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel5.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去假阳性处理完毕!")
             self.RemoveFPPromptBox.closeGif()
         elif retList[0] == "ClassPeakDivision":
             self.PeakDivResult = retList[1]
             self.PeakDivIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel6.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "峰检测处理完毕!")
             self.PeakDivPromptBox.closeGif()
         elif retList[0] == "StartAll":
             # 更新结果
@@ -615,23 +626,43 @@ class MainWin(QMainWindow):
             self.PeakDisIsFinished = retList[8]
             self.RemoveFPResult = retList[9]
             self.RemoveFPIsFinished = retList[10]
+            if self.PeakDisClassIsNeed:
+                self.PeakDivResult = retList[11]
+                self.PeakDivIsFinished = retList[12]
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕!")
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
         elif retList[0] == "deleteBlankFinished":
             # 显示完成提示
             self.messageLabel1.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去空白处理完毕!")
         elif retList[0] == "GDBFinished":
             # 显示完成提示
             self.messageLabel2.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据库生成处理完毕!")
         elif retList[0] == "DelIsoFinished":
             # 显示完成提示
             self.messageLabel3.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去同位素处理完毕!")
         elif retList[0] == "PeakDisFinished":
             # 显示完成提示
             self.messageLabel4.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "峰识别处理完毕!")
         elif retList[0] == "RemoveFPFinished":
             # 显示完成提示
             self.messageLabel5.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去假阳性处理完毕!")
+        elif retList[0] == "PeakDivFinished":
+            # 显示完成提示
+            self.messageLabel6.setText("处理完毕!")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "峰检测处理完毕!")
         elif retList[0] == "ClassDeleteBlank Error":
             self.deleteBlankPromptBox.closeGif()
             PromptBox().errorMessage("去空白出现错误!")
@@ -654,6 +685,7 @@ class MainWin(QMainWindow):
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
             PromptBox().errorMessage("程序运行出现错误!")
+
 
     # 设置：数据更新
     def UpdateData(self, Type, newParameters):
@@ -731,6 +763,8 @@ class MainWin(QMainWindow):
                                 self.PeakDisScanPoints
                                 ]
 
+            # 更新状态栏
+            self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
             if ConstValues.PsIsDebug:
                 print(self.PeakDisList[2:])
         elif Type == "RemoveFalsePositiveSetup":
@@ -957,6 +991,8 @@ class MainWin(QMainWindow):
             # self.messageLabel1.setMovie(gifQMovie)
             # gifQMovie.start()
             self.messageLabel1.setText("正在处理，请稍后...")  # 方式2
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理扣空白，请稍后...")
             # 弹出提示框
             # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
             self.deleteBlankPromptBox = PromptBox()
@@ -964,31 +1000,40 @@ class MainWin(QMainWindow):
         elif Type == "GenerateDataBase":
             # 界面显示的提示信息
             self.messageLabel2.setText("正在处理，请稍后...")  # 文字可以正常显示
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在生成数据库，请稍后...")
             # 弹出提示框
-            # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
             self.GDBPromptBox = PromptBox()
             self.GDBPromptBox.showGif("正在生成数据库，请稍后...", "./images/ajax-loading.gif")
         elif Type == "DeleteIsotope":
             # 界面显示的提示信息
             self.messageLabel3.setText("正在处理，请稍后...")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去同位素，请稍后...")
             # 弹出提示框
             self.DelIsoPromptBox = PromptBox()
             self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后...", "./images/ajax-loading.gif")
         elif Type == "PeakDistinguish":
             # 界面显示的提示信息
             self.messageLabel4.setText("正在处理，请稍后...")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去峰识别，请稍后...")
             # 弹出提示框
             self.PeakDisPromptBox = PromptBox()
             self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后...", "./images/ajax-loading.gif")
         elif Type == "RemoveFalsePositive":
             # 界面显示的提示信息
             self.messageLabel5.setText("正在处理，请稍后...")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去假阳性，请稍后...")
             # 弹出提示框
             self.RemoveFPPromptBox = PromptBox()
             self.RemoveFPPromptBox.showGif("正在处理去假阳性，请稍后...", "./images/ajax-loading.gif")
         elif Type == "PeakDivision":
             # 界面显示的提示信息
             self.messageLabel6.setText("正在处理，请稍后...")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理峰检测，请稍后...")
             # 弹出提示框
             self.PeakDivPromptBox = PromptBox()
             self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", "./images/ajax-loading.gif")
@@ -1000,6 +1045,8 @@ class MainWin(QMainWindow):
             self.messageLabel4.setText("正在处理，请稍后...")
             self.messageLabel5.setText("正在处理，请稍后...")
             self.messageLabel6.setText("正在处理，请稍后...")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理中，请稍后...")
             # 弹出提示框
             self.StartAllPromptBox = PromptBox()
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", "./images/ajax-loading.gif")

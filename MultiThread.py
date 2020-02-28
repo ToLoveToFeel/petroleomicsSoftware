@@ -104,6 +104,7 @@ class MultiThread(QThread):
                 DelIsoParameterList = self.__parameters[2]  # 扣同位素
                 PeakDisParameterList = self.__parameters[3]  # 峰识别
                 RemoveFPParameterList = self.__parameters[4]  # 去假阳性
+                PeakDivParameterList = self.__parameters[5]  # 峰检测
                 # 去空白
                 cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
                 deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
@@ -140,7 +141,7 @@ class MultiThread(QThread):
                 if ConstValues.PsIsDebug:
                     print("峰识别完成！")
                 # 去假阳性
-                RemoveFPParameterList[0] = DelIsoResult
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
                 RemoveFPParameterList[1] = PeakDisResult
                 crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
                 RemoveFPIsFinished, RemoveFPResult = crfp.RemoveFalsePositive()
@@ -149,6 +150,17 @@ class MultiThread(QThread):
                 self.signal.emit(["RemoveFPFinished"])
                 if ConstValues.PsIsDebug:
                     print("去假阳性完成！")
+                # 峰检测
+                PeakDisClassIsNeed = PeakDisParameterList[5]
+                if PeakDisClassIsNeed:  # 需要判断是否需要运行
+                    PeakDivParameterList[1] = RemoveFPResult[1]  # 更新数据，此处注意
+                    cpd = ClassPeakDivision(self.__parameters, self.outputFilesPath)
+                    PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
+                    retList.append(PeakDivResult)
+                    retList.append(PeakDivIsFinished)
+                    self.signal.emit(["PeakDivFinished"])
+                    if ConstValues.PsIsDebug:
+                        print("峰检测完成！")
                 # 返回结果
                 self.signal.emit(retList)
             except Exception as e:

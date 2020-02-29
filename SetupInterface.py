@@ -61,8 +61,6 @@ class SetupInterface():
         # str类型
         self.PeakDisClassIsNeed = None  # 第二部分，峰检测
         self.PeakDisClass = None
-        # 3~10（整数）
-        self.PeakDisScanPoints = None
 
         # 去同位素所需要返回的数据，数据初值无所谓
         self.RemoveFPId = None  # 1：去同位素之后的内容，2：峰识别之后的内容
@@ -70,6 +68,15 @@ class SetupInterface():
         self.RemoveFPContinue_CNum = None  # 连续碳数
         # 0~100（整数）
         self.RemoveFPContinue_DBENum = None
+
+        # 峰检测全过程所需要的数据  0~1000000(整数)
+        self.PeakDivNoiseThreshold = None  # 噪音阈值
+        # 0.0~100.0(浮点数)
+        self.PeakDivRelIntensity = None  # # 相对强度阈值
+        # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+        self.PeakDivNeedMerge = None
+        # 该参数决定是否生成图片信息
+        self.PeakDivNeedGenImage = None
 
     # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
@@ -249,8 +256,10 @@ class SetupInterface():
         # 离子类型（复选按钮）
         GDBCheckBox1 = QCheckBox("[M+H]+")  # 四个复选框
         GDBCheckBox2 = QCheckBox("M+")
+        self.GDBFlag12 = False
         GDBCheckBox3 = QCheckBox("[M-H]-")
         GDBCheckBox4 = QCheckBox("M-")
+        self.GDBFlag34 = False
         GDBCheckBox1.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))  # 设置字体
         GDBCheckBox2.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
         GDBCheckBox3.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
@@ -259,10 +268,10 @@ class SetupInterface():
         GDBCheckBox2.setChecked(self.GDB_MPostive)
         GDBCheckBox3.setChecked(self.GDB_MHNegative)
         GDBCheckBox4.setChecked(self.GDB_MNegative)
-        GDBCheckBox1.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 1))  # 绑定槽函数
-        GDBCheckBox2.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 2))
-        GDBCheckBox3.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 3))
-        GDBCheckBox4.stateChanged.connect(lambda: self.GDBCheckboxState(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4, 4))
+        GDBCheckBox1.stateChanged.connect(lambda: self.GDBCheckboxState12(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4))  # 绑定槽函数
+        GDBCheckBox2.stateChanged.connect(lambda: self.GDBCheckboxState12(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4))
+        GDBCheckBox3.stateChanged.connect(lambda: self.GDBCheckboxState34(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4))
+        GDBCheckBox4.stateChanged.connect(lambda: self.GDBCheckboxState34(GDBCheckBox1, GDBCheckBox2, GDBCheckBox3, GDBCheckBox4))
 
         # 创建按钮
         GDBButton1 = QPushButton("确定")
@@ -355,36 +364,51 @@ class SetupInterface():
             elif GDBType == "m/z rage high":
                 self.GDBM_ZRageHigh = int(edit.text())
 
-    # 当GDBCheckBox1~GDBCheckBox4状态改变会进入该函数
-    def GDBCheckboxState(self, cb1, cb2, cb3, cb4, type):
+    # 当GDBCheckBox1，GDBCheckBox2状态改变会进入该函数
+    def GDBCheckboxState12(self, cb1, cb2, cb3, cb4):
         """
         :param cb1: 第一个复选框
         :param cb2: 第二个复选框
-        :param cb3: 第三个复选框
-        :param cb4: 第四个复选框
-        :param type: 区分是通过哪个复选框按下进入的
         :return:
         """
         # 3种状态：未选中：0，半选中：1， 选中：2
-        if (cb1.isChecked() or cb2.isChecked()) and (cb3.isChecked() or cb4.isChecked()):
-            # 说明勾选某个复选框后造成不合法，正负离子均被选中
-            if type == 1:  # 正离子状态[M+H]+
-                cb3.setCheckState(False)
-                cb4.setCheckState(False)
-            elif type == 2:  # 正离子状态M+
-                cb3.setCheckState(False)
-                cb4.setCheckState(False)
-            elif type == 3:  # 负离子状态[M-H]-
-                cb1.setCheckState(False)
-                cb2.setCheckState(False)
-            elif type == 4:  # 负离子状态M-
-                cb1.setCheckState(False)
-                cb2.setCheckState(False)
-        if cb1.isChecked() or cb2.isChecked() or cb3.isChecked() or cb4.isChecked():  # 有一个勾选即可改变变量的值
-            self.GDB_MHPostive = cb1.isChecked()  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
-            self.GDB_MPostive = cb2.isChecked()  # 数据库生成(参数)：正离子，是否选择M+，True为选中
-            self.GDB_MHNegative = cb3.isChecked()  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
-            self.GDB_MNegative = cb4.isChecked()  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        # 避免GDBCheckboxState34在调用 setChecked 进入该函数
+        if self.GDBFlag34:
+            return
+        self.GDBFlag12 = True
+        # 合法性检查
+        if cb3.isChecked() or cb4.isChecked():
+            cb3.setChecked(False)
+            cb4.setChecked(False)
+        # 更新变量的值
+        self.GDB_MHPostive = cb1.isChecked()  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = cb2.isChecked()  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = cb3.isChecked()  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = cb4.isChecked()  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        self.GDBFlag12 = False
+
+    # 当GDBCheckBox3，GDBCheckBox4状态改变会进入该函数
+    def GDBCheckboxState34(self, cb1, cb2, cb3, cb4):
+        """
+        :param cb3: 第三个复选框
+        :param cb4: 第四个复选框
+        :return:
+        """
+        # 3种状态：未选中：0，半选中：1， 选中：2
+        # 避免GDBCheckboxState12在调用 setChecked 进入该函数
+        if self.GDBFlag12:
+            return
+        self.GDBFlag34 = True
+        # 合法性检查
+        if cb1.isChecked() or cb2.isChecked():
+            cb1.setChecked(False)
+            cb2.setChecked(False)
+        # 更新变量的值
+        self.GDB_MHPostive = cb1.isChecked()  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = cb2.isChecked()  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = cb3.isChecked()  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = cb4.isChecked()  # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        self.GDBFlag34 = False
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCGDB(self, parameters, isOK):
@@ -605,9 +629,6 @@ class SetupInterface():
         # Class
         self.peakDistinguishEdit4 = self.RegExpQLineEdit("([A-Z0-9]|,)+$", ",".join(self.PeakDisClass))  # 注意：list需要转为str
         self.peakDistinguishEdit4.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("Class", self.peakDistinguishEdit4))
-        # ScanPoints对话框
-        self.peakDistinguishEdit5 = self.IntQLineEdit(ConstValues.PsPeakDisScanPointsMin, ConstValues.PsPeakDisScanPointsMax, str(self.PeakDisScanPoints))
-        self.peakDistinguishEdit5.textChanged.connect(lambda: self.HandleTextChangedPeakDistinguish("ScanPoints", self.peakDistinguishEdit5))
 
         # 创建按钮
         peakDistinguishButton1 = QPushButton("确定")
@@ -635,12 +656,8 @@ class SetupInterface():
         # 第五行内容，Class
         layout.addWidget(self.GetQLabel("Class(需要峰检测的类型) : "), 4, 0, 1, 2)
         layout.addWidget(self.peakDistinguishEdit4, 4, 2, 1, 4)
-        # 第六行内容，ScanPoints
-        layout.addWidget(self.GetQLabel("ScanPoints(" + str(ConstValues.PsPeakDisScanPointsMin) + "~" + str(ConstValues.PsPeakDisScanPointsMax) + "):"), 5, 0, 1, 3)
-        layout.addWidget(self.peakDistinguishEdit5, 5, 3, 1, 3)
         if not self.PeakDisClassIsNeed:
             self.peakDistinguishEdit4.setEnabled(False)
-            self.peakDistinguishEdit5.setEnabled(False)
 
         # 最后一行内容，按钮行
         layout.addWidget(peakDistinguishButton1, 6, 4)
@@ -653,7 +670,6 @@ class SetupInterface():
                    self.PeakDisDiscontinuityPointNum,
                    self.PeakDisClassIsNeed,  # 第二部分
                    self.PeakDisClass,
-                   self.PeakDisScanPoints
                   ]
         return retList
 
@@ -669,8 +685,6 @@ class SetupInterface():
         # str类型
         self.PeakDisClassIsNeed = parameters[3]  # 第二部分，峰检测
         self.PeakDisClass = parameters[4]
-        # 3~10（整数）
-        self.PeakDisScanPoints = parameters[5]
 
     # 用户输入文本后，会进入这个函数处理
     def HandleTextChangedPeakDistinguish(self, DBType, edit):
@@ -683,8 +697,6 @@ class SetupInterface():
                 self.PeakDisDiscontinuityPointNum = int(edit.text())
             elif DBType == "Class":
                 self.PeakDisClass = edit.text().split(",")  # 转为list
-            elif DBType == "ScanPoints":
-                self.PeakDisScanPoints = int(edit.text())
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCPeakDistinguish(self, parameters, isOK):
@@ -711,11 +723,9 @@ class SetupInterface():
         if radioButton.isChecked():
             self.PeakDisClassIsNeed = True
             self.peakDistinguishEdit4.setEnabled(True)
-            self.peakDistinguishEdit5.setEnabled(True)
         else:
             self.PeakDisClassIsNeed = False
             self.peakDistinguishEdit4.setEnabled(False)
-            self.peakDistinguishEdit5.setEnabled(False)
 
     # 参数合法性检查
     def PeakDistinguishIsParameterValidate(self):
@@ -740,9 +750,6 @@ class SetupInterface():
                 else:  # 应该是数字字符
                     if not ("0" <= item[i] <= "9"):
                         return 5
-        # 判断self.PeakDisScanPoints是否合法，对应代码6
-        if not (ConstValues.PsPeakDisScanPointsMin <= self.PeakDisScanPoints <= ConstValues.PsPeakDisScanPointsMax):
-            return 6
         # 合法
         return 1
 
@@ -867,4 +874,116 @@ class SetupInterface():
         # 合法
         return 1
 
+    #############################################################
+    def PeakDivisionSetup(self, parameters):
+        # 峰检测设置对话框，设置默认参数
+        self.PeakDivisionDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.PeakDivDialog = QDialog()
+        self.PeakDivDialog.setWindowTitle("峰检测参数设置")
+        self.PeakDivDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.PeakDivDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+
+        # PeakDivNoiseThreshold 对话框
+        PeakDivEdit1 = self.IntQLineEdit(ConstValues.PsPeakDivNoiseThresholdMin, ConstValues.PsPeakDivNoiseThresholdMax, str(self.PeakDivNoiseThreshold))
+        PeakDivEdit1.textChanged.connect(lambda: self.HandleTextChangedPeakDivision("Noise Threshold", PeakDivEdit1))
+        # PeakDivRelIntensity 对话框
+        PeakDivEdit2 = self.DoubleQLineEdit(int(ConstValues.PsPeakDivRelIntensityMin), int(ConstValues.PsPeakDivRelIntensityMax), 2, str(self.PeakDivRelIntensity))
+        PeakDivEdit2.textChanged.connect( lambda: self.HandleTextChangedPeakDivision("Relative Noise Threshold", PeakDivEdit2))
+        # 多选框，两个选择框
+        PeakDivBox1 = QCheckBox("Enable")  # self.PeakDivNeedMerge
+        PeakDivBox2 = QCheckBox("Enable")  # self.PeakDivNeedGenImage
+        PeakDivBox1.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))  # 设置字体
+        PeakDivBox2.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        PeakDivBox1.setChecked(self.PeakDivNeedMerge)  # 设置初始勾选
+        PeakDivBox2.setChecked(self.PeakDivNeedGenImage)
+        PeakDivBox1.stateChanged.connect(lambda: self.PeakDivCheckboxState(PeakDivBox1, PeakDivBox2))  # 绑定槽函数
+        PeakDivBox2.stateChanged.connect(lambda: self.PeakDivCheckboxState(PeakDivBox1, PeakDivBox2))
+
+        # 创建按钮
+        PeakDivisionButton1 = QPushButton("确定")
+        PeakDivisionButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        PeakDivisionButton1.clicked.connect(lambda: self.HBCPeakDivision(parameters, True))
+        PeakDivisionButton2 = QPushButton("退出")
+        PeakDivisionButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        PeakDivisionButton2.clicked.connect(lambda: self.HBCPeakDivision(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.PeakDivDialog)
+        # 第一行内容，PeakDivNoiseThreshold 对话框
+        layout.addWidget(self.GetQLabel("Noise Threshold(" + str(ConstValues.PsPeakDivNoiseThresholdMin) + "~" + ConstValues.PsPeakDivNoiseThresholdMaxStr + "):"), 0, 0, 1, 2)
+        layout.addWidget(PeakDivEdit1, 0, 2, 1, 2)
+        # 第二行内容，PeakDivRelIntensity 对话框
+        layout.addWidget(self.GetQLabel("Relative Noise Threshold(" + str(ConstValues.PsPeakDivRelIntensityMin) + "~" + str(ConstValues.PsPeakDivRelIntensityMax) + "):"), 1, 0, 1, 2)
+        layout.addWidget(PeakDivEdit2, 1, 2, 1, 2)
+        # 第三行内容，self.PeakDivNeedMerge
+        layout.addWidget(self.GetQLabel("Merge First Pike : "), 2, 0, 1, 2)
+        layout.addWidget(PeakDivBox1, 2, 2, 1, 2)
+        # 第四行内容，self.PeakDivNeedGenImage
+        layout.addWidget(self.GetQLabel("Generate Images : "), 3, 0, 1, 2)
+        layout.addWidget(PeakDivBox2, 3, 2, 1, 2)
+        # 最后一行内容，按钮行
+        layout.addWidget(PeakDivisionButton1, 4, 2)
+        layout.addWidget(PeakDivisionButton2, 4, 3)
+
+        self.PeakDivDialog.exec()
+        # 返回值类型：list
+        retList = [
+                    self.PeakDivNoiseThreshold,
+                    self.PeakDivRelIntensity,
+                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+                  ]
+        return retList
+
+    # 设置参数为用户上次输入的值
+    def PeakDivisionDefaultParameters(self, parameters):
+        # 设置参数，0~1000000(整数)
+        self.PeakDivNoiseThreshold = parameters[0]
+        # 0.0~100.0(浮点数)
+        self.PeakDivRelIntensity = parameters[1]
+        # bool，该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+        self.PeakDivNeedMerge = parameters[2]
+        # bool，该参数决定是否生成图片信息
+        self.PeakDivNeedGenImage = parameters[3]
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedPeakDivision(self, DBType, edit):
+        if edit.text() != "":
+            if DBType == "Noise Threshold":
+                self.PeakDivNoiseThreshold = int(edit.text())
+            elif DBType == "Relative Noise Threshold":
+                self.PeakDivRelIntensity = float(edit.text())
+
+    # 当 PeakDivBox1,PeakDivBox2 状态改变会进入该函数
+    def PeakDivCheckboxState(self, cb1, cb2):
+        self.PeakDivNeedMerge = cb1.isChecked()
+        self.PeakDivNeedGenImage = cb2.isChecked()
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCPeakDivision(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.PeakDivisionDefaultParameters(parameters)
+            self.PeakDivDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.PeakDivisionIsParameterValidate()
+            if inputState == 1:
+                self.PeakDivDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("Noise Threshold输入不合法！")
+            elif inputState == 3:
+                PromptBox().warningMessage("Relative Noise Threshold输入不合法！")
+
+    # 参数合法性检查
+    def PeakDivisionIsParameterValidate(self):
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.PeakDivNoiseThreshold 是否合法，对应代码2
+        if not (ConstValues.PsPeakDivNoiseThresholdMin <= self.PeakDivNoiseThreshold <= ConstValues.PsPeakDivNoiseThresholdMax):
+            return 2
+        # 判断self.PeakDivRelIntensity 是否合法，对应代码3
+        if not (ConstValues.PsPeakDivRelIntensityMin <= self.PeakDivRelIntensity <= ConstValues.PsPeakDivRelIntensityMax):
+            return 3
+        # 合法
+        return 1
 

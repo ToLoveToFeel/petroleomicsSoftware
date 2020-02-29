@@ -25,6 +25,10 @@ class ClassRemoveFalsePositive:
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
 
+        if ConstValues.PsIsSingleRun:
+            self.PeakDisResult = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
+            self.PeakDisResultDetail = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
+
     def RemoveFalsePositive(self):
         result = []
         # 创建文件夹
@@ -40,7 +44,7 @@ class ClassRemoveFalsePositive:
         # 去假阳性后峰识别的峰
         newData = []
         if self.RemoveFPId == 2:
-            newData = self.RemoveFPFromPeakDisPlot(result)  # 从读取PeakDisPart1DetailPlot.xlsx去假阳性
+            newData = self.RemoveFPFromPeakDisPlot(result)  # 从读取PeakDisPart1DetailPlot.xlsx去假阳性后生成newData
             # self.PlotAfterRemoveFP(newData)
 
         return [result, newData], True
@@ -248,7 +252,7 @@ class ClassRemoveFalsePositive:
     # 读取PeakDisPart1DetailPlot.xlsx文件的内容，并进行去假阳性
     def RemoveFPFromPeakDisPlot(self, result):
         # ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        if ConstValues.PsIsDebug:
+        if ConstValues.PsIsSingleRun:
             self.PeakDisResultDetail = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
         massSet = set()
         newData = []  # 存储需要画出图形的经过去假阳性后的数据

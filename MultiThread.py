@@ -144,7 +144,7 @@ class MultiThread(QThread):
                 RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
                 RemoveFPParameterList[1] = PeakDisResult
                 crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
-                RemoveFPIsFinished, RemoveFPResult = crfp.RemoveFalsePositive()
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
                 retList.append(RemoveFPResult)
                 retList.append(RemoveFPIsFinished)
                 self.signal.emit(["RemoveFPFinished"])
@@ -154,7 +154,8 @@ class MultiThread(QThread):
                 PeakDisClassIsNeed = PeakDisParameterList[5]
                 if PeakDisClassIsNeed:  # 需要判断是否需要运行
                     PeakDivParameterList[1] = RemoveFPResult[1]  # 更新数据，此处注意
-                    cpd = ClassPeakDivision(self.__parameters, self.outputFilesPath)
+                    PeakDivParameterList[2] = PeakDisResult[2]
+                    cpd = ClassPeakDivision(PeakDivParameterList, self.outputFilesPath)
                     PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
                     retList.append(PeakDivResult)
                     retList.append(PeakDivIsFinished)

@@ -1,8 +1,7 @@
 # coding=utf-8
 # 此文件负责定义：生成数据库
-import os
 from Utils import *
-from ConstValues import ConstValues
+from PromptBox import PromptBox
 
 
 class ClassGenerateDataBase():
@@ -34,7 +33,7 @@ class ClassGenerateDataBase():
         # 判断最后一列（ion）应该填入什么
         isPositive = self.GDB_MHPostive or self.GDB_MPostive  # 是否为正离子
         # isChoiceTwo = 0  # 是否勾选了两项
-        if isPositive == True:
+        if isPositive:
             isChoiceTwo = self.GDB_MHPostive + self.GDB_MPostive
         else:
             isChoiceTwo = self.GDB_MHNegative + self.GDB_MNegative

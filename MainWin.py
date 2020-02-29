@@ -107,7 +107,7 @@ class MainWin(QMainWindow):
         self.sampleFilePath = ""  # 样本文件路径
         self.blankFilePath = ""  # 空白文件路径
         self.outputFilesPath = ""  # 输出文件路径
-        if ConstValues.PsIsDebug:
+        if ConstValues.PsIsSingleRun:
             self.sampleFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.xlsx"
             self.blankFilePath = "./inputData/test/blank-54.xlsx"
 
@@ -181,7 +181,7 @@ class MainWin(QMainWindow):
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径，第一部分
-        if ConstValues.PsIsDebug:
+        if ConstValues.PsIsSingleRun:
             self.TICFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.txt"
         # 0~10000（整数）
         self.PeakDisContinuityNum = ConstValues.PsPeakDisContinuityNum
@@ -189,18 +189,16 @@ class MainWin(QMainWindow):
         self.PeakDisMassDeviation = ConstValues.PsPeakDisMassDeviation
         # 0~30(整数)
         self.PeakDisDiscontinuityPointNum = ConstValues.PsPeakDisDiscontinuityPointNum
-        self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed  # 第二部分，峰检测
+        # 第二部分，峰检测
+        self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed
         self.PeakDisClass = ConstValues.PsPeakDisClass
-        # 3~10（整数）
-        self.PeakDisScanPoints = ConstValues.PsPeakDisScanPoints
         self.PeakDisList = [self.TICFilePath,
                             self.DelIsoResult,
                             self.PeakDisContinuityNum,
                             self.PeakDisMassDeviation,
                             self.PeakDisDiscontinuityPointNum,
                             self.PeakDisClassIsNeed,  # 第二部分
-                            self.PeakDisClass,
-                            self.PeakDisScanPoints
+                            self.PeakDisClass
                             ]
         # 结果是一个列表，有三个元素，
         # 第一个是峰识别的结果（格式：list二维数组，有表头）
@@ -231,14 +229,17 @@ class MainWin(QMainWindow):
         self.PeakDivNoiseThreshold = ConstValues.PsPeakDivNoiseThreshold  # 噪音阈值
         # 0.0~100.0(浮点数)
         self.PeakDivRelIntensity = ConstValues.PsPeakDivRelIntensity  # # 相对强度阈值
-        # TODO:未定参数
-        self.PeakDivMinimalPeakWidth = ConstValues.PsPeakDivMinimalPeakWidth
+        # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+        self.PeakDivNeedMerge = ConstValues.PsPeakDivNeedMerge
+        # 该参数决定是否生成图片信息
+        self.PeakDivNeedGenImage = ConstValues.PsPeakDivNeedGenImage
         self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                             self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
                             self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
                             self.PeakDivNoiseThreshold,
                             self.PeakDivRelIntensity,
-                            self.PeakDivMinimalPeakWidth
+                            self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                            self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
                             ]
         self.PeakDivResult = None
         self.PeakDivIsFinished = False
@@ -501,7 +502,10 @@ class MainWin(QMainWindow):
 
     # 峰检测参数设置
     def PeakDivisionSetup(self):
-        pass
+        # 重新设置参数
+        newParameters = SetupInterface().PeakDivisionSetup(self.PeakDivList[3:])
+        # 更新数据
+        self.UpdateData("PeakDivisionSetup", newParameters)
 
     # 去空白 #######################################
     def DeleteBlank(self):
@@ -516,6 +520,8 @@ class MainWin(QMainWindow):
     # 数据库生成
     def GenerateDataBase(self):
         # 生成数据库
+        if not self.BeforeRunning("GenerateDataBase"):
+            return
         self.StartRunning("GenerateDataBase")
         # 程序开始运行后收尾工作
         self.AfterRunning("GenerateDataBase")
@@ -758,7 +764,6 @@ class MainWin(QMainWindow):
             self.PeakDisDiscontinuityPointNum = newParameters[2]
             self.PeakDisClassIsNeed = newParameters[3]
             self.PeakDisClass = newParameters[4]
-            self.PeakDisScanPoints = newParameters[5]
             self.PeakDisList = [self.TICFilePath,
                                 self.DelIsoResult,
                                 self.PeakDisContinuityNum,
@@ -766,7 +771,6 @@ class MainWin(QMainWindow):
                                 self.PeakDisDiscontinuityPointNum,
                                 self.PeakDisClassIsNeed,  # 第二部分
                                 self.PeakDisClass,
-                                self.PeakDisScanPoints
                                 ]
 
             # 更新状态栏
@@ -786,6 +790,22 @@ class MainWin(QMainWindow):
 
             if ConstValues.PsIsDebug:
                 print(self.RemoveFPList[2:])
+        elif Type == "PeakDivisionSetup":
+            self.PeakDivNoiseThreshold = newParameters[0]
+            self.PeakDivRelIntensity = newParameters[1]
+            self.PeakDivNeedMerge = newParameters[2]
+            self.PeakDivNeedGenImage = newParameters[3]
+            self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+                                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+                                self.PeakDivNoiseThreshold,
+                                self.PeakDivRelIntensity,
+                                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+                                ]
+
+            if ConstValues.PsIsDebug:
+                print(self.PeakDivList[3:])
 
     # 程序运行前准备工作
     def BeforeRunning(self, Type):
@@ -802,8 +822,9 @@ class MainWin(QMainWindow):
                                     self.deleteBlankPercentage  # 格式：整数
                                     ]
         elif Type == "GenerateDataBase":
-            # 无
-            pass
+            if not (self.GDB_MHPostive or self.GDB_MPostive or self.GDB_MHNegative or self.GDB_MNegative):
+                PromptBox().warningMessage("生成数据库需要至少一种离子模式!")
+                return False
         elif Type == "DeleteIsotope":
             # 单独运行，调试使用
             if ConstValues.PsIsSingleRun:
@@ -846,7 +867,6 @@ class MainWin(QMainWindow):
                                 self.PeakDisDiscontinuityPointNum,
                                 self.PeakDisClassIsNeed,  # 第二部分
                                 self.PeakDisClass,
-                                self.PeakDisScanPoints
                                 ]
         elif Type == "RemoveFalsePositive":
             # 单独运行，调试使用
@@ -856,7 +876,7 @@ class MainWin(QMainWindow):
                     self.DelIsoResult = ReadExcelToList(filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx", hasNan=True)
                 elif self.RemoveFPId == 2:
                     self.PeakDisIsFinished = True
-                    self.PeakDisResult = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
+                    self.PeakDisResult = [[], [], []]
             # 去假阳性前需要去同位素 或者 峰识别第一阶段
             if self.RemoveFPId == 1:
                 if not self.DelIsoIsFinished:
@@ -885,11 +905,12 @@ class MainWin(QMainWindow):
                 return False
             # 更新数据
             self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
-                                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+                                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头，第5步
+                                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)，第4步
                                 self.PeakDivNoiseThreshold,
                                 self.PeakDivRelIntensity,
-                                self.PeakDivMinimalPeakWidth
+                                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
                                 ]
         elif Type == "StartAll":
             if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
@@ -938,7 +959,6 @@ class MainWin(QMainWindow):
                     self.PeakDisDiscontinuityPointNum,
                     self.PeakDisClassIsNeed,  # 第二部分
                     self.PeakDisClass,
-                    self.PeakDisScanPoints
                 ],
                 [
                     # 去假阳性
@@ -951,10 +971,12 @@ class MainWin(QMainWindow):
                 [
                     # 峰检测
                     self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
                     self.PeakDivNoiseThreshold,
                     self.PeakDivRelIntensity,
-                    self.PeakDivMinimalPeakWidth
+                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
                  ]
             ]
 

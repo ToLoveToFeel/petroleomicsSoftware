@@ -12,7 +12,7 @@ from PromptBox import PromptBox
 
 class ClassPeakDistinguish:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 8, "ClassPeakDistinguish参数个数不对!"
+        assert len(parameterList) == 7, "ClassPeakDistinguish参数个数不对!"
         self.TICFilePath = parameterList[0]  # 总离子流图路径（第一阶段）
         self.DelIsoResult = parameterList[1]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
         self.PeakDisContinuityNum = parameterList[2]  # 连续出现的扫描点个数，格式：整数
@@ -20,7 +20,6 @@ class ClassPeakDistinguish:
         self.PeakDisDiscontinuityPointNum = parameterList[4]
         self.PeakDisClassIsNeed = parameterList[5]  # 第二部分，峰检测分割
         self.PeakDisClass = parameterList[6]
-        self.PeakDisScanPoints = parameterList[7]  # 判断峰值的扫描点个数
         # 总离子流图
         self.TICData = None
         # 第一部分结果

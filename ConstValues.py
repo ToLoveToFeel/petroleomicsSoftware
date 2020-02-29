@@ -10,7 +10,7 @@ class ConstValues():
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -122,10 +122,6 @@ class ConstValues():
     # 输入字符串
     PsPeakDisClassIsNeed = True  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
     PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
-    # 3~10（整数）
-    PsPeakDisScanPoints = 5
-    PsPeakDisScanPointsMin = 3
-    PsPeakDisScanPointsMax = 10
 
     # 去假阳性设置默认参数
     PsRemoveFPId = 2  # 默认处理的内容
@@ -138,16 +134,18 @@ class ConstValues():
     PsRemoveFPContinue_DBENumMin = 1
     PsRemoveFPContinue_DBENumMax = 100
 
-    # 峰检测全过程所需要的数据
+    # 峰检测全过程所需要的数据，必须 PsPeakDisClassIsNeed=True，峰检测过程才有效
     # 0~1000000(整数)
     PsPeakDivNoiseThreshold = 15000  # 噪音阈值
     PsPeakDivNoiseThresholdMin = 0
     PsPeakDivNoiseThresholdMax = 1000000
     PsPeakDivNoiseThresholdMaxStr = "1e6"  # 方便设置界面显示
     # 0.0~100.0(浮点数)
-    PsPeakDivRelIntensity = 2  # 相对强度阈值，去每张图中，相对强度小于最高峰的0.1%的那些信号
+    PsPeakDivRelIntensity = 2.0  # 相对强度阈值，去每张图中，相对强度小于最高峰的0.1%的那些信号
     PsPeakDivRelIntensityMin = 0.0
     PsPeakDivRelIntensityMax = 100.0
-    # TODO:未定参数
-    PsPeakDivMinimalPeakWidth = 10
+    # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+    PsPeakDivNeedMerge = True
+    # 该参数决定是否生成图片信息
+    PsPeakDivNeedGenImage = True
 

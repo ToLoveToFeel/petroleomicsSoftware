@@ -10,44 +10,58 @@ import traceback
 
 class ClassPeakDivision:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 6, "ClassPeakDivision参数个数不对!"
+        assert len(parameterList) == 7, "ClassPeakDivision参数个数不对!"
         self.RemoveFPId = parameterList[0]  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
         self.RemoveFPPlotResult = parameterList[1]  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
         self.sortedRTValue = parameterList[2]  # 第三个是txt文件中RT值(从小到大排序)
+
         self.PeakDivNoiseThreshold = parameterList[3]
         self.PeakDivRelIntensity = parameterList[4]
-        self.PeakDivMinimalPeakWidth = parameterList[5]
+        self.PeakDivNeedMerge = parameterList[5]  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+        self.PeakDivNeedGenImage = parameterList[6]  # 该参数决定是否生成图片信息
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
         if ConstValues.PsIsSingleRun:
             self.RemoveFPPlotResult = \
-                ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP1.xlsx", hasNan=False)
+                ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP.xlsx", hasNan=False)
             self.sortedRTValue = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/sortedRTValue.xlsx", hasNan=False)[0]
 
     # 第二部分，峰检测分割  ######################################################################
     def PeakDivision(self):
-        resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
-        headerPart2 = ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        resultPart2.append(headerPart2)
-        # 峰检测预处理
-        ret1DetailPreprocessing = self.PeakDivPreprocessing()
-        # 统计连续区间的个数
-        ret1DetailContinueList = self.PeakDivSeekContinue(ret1DetailPreprocessing)
-        # 为生成图片准备数据
-        parametersList = self.PeakDivPrepareParams(ret1DetailPreprocessing, ret1DetailContinueList)
-        # 生成图片
+        try:
+            resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
+            headerPart2 = ["SampleMass", "Area", "PeakRT", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion", "orderOfMagnitude"]
+            resultPart2.append(headerPart2)
+            # 峰检测预处理
+            ret1DetailPreprocessing = self.PeakDivPreprocessing()
+            # 统计连续区间的个数
+            ret1DetailContinueList = self.PeakDivSeekContinue(ret1DetailPreprocessing)
+            # 为生成图片准备数据
+            parametersList = self.PeakDivPrepareParams(ret1DetailPreprocessing, ret1DetailContinueList)
+            # 生成图片，同时生成结果
+            for parameters in parametersList:
+                ret = self.PlotAfterRemoveFP(parameters)  # 返回结果为二维列表
+                for item in ret:
+                    resultPart2.append(item)
+            # 数据写入文件
+            newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision")
+            WriteDataToExcel(ret1DetailPreprocessing, newDirectory + "/ret1DetailPreprocessing.xlsx")
+            WriteDataToExcel(resultPart2, newDirectory + "/PeakDivision.xlsx")
 
-        for parameters in parametersList:
-            self.PlotAfterRemoveFP(parameters)
-
-        return [], True
+            return resultPart2, True
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("plt Error : ", e)
+                traceback.print_exc()
 
     # 峰检测预处理
     def PeakDivPreprocessing(self):
+        # 返回结果：二维列表，和self.RemoveFPPlotResult格式完全一致
+
         # 预处理，删除一些干扰值，具体包括：
         # 1.设置噪音阈值: 500000，小于这个强度的都删除，这样应该删除一部分强度低，峰形不好的图像
         # 2.设置一个相对强度阈值：0.1%，这个和你之前的想法一样，就是删去每张图中，相对强度小于最高峰的0.1%的那些信号
-        # 3.设置一个最小峰宽?
+        # TODO: 3.设置一个最小峰宽? 至少现在没有这一步
 
         # 二维列表，物质相关信息，后续拼接使用
         rawInformation = [[num for num in self.RemoveFPPlotResult[i][:9]] for i in range(len(self.RemoveFPPlotResult))]
@@ -55,21 +69,12 @@ class ClassPeakDivision:
         rawData = np.array([[num for num in self.RemoveFPPlotResult[i][9:]] for i in range(len(self.RemoveFPPlotResult))])
         rawData[rawData < self.PeakDivNoiseThreshold] = 0  # 第1步
         for i in range(len(rawData)):
-            max = np.max(rawData[i])
-            # if max <= self.PeakDivNoiseThreshold * 4:  # 第1步
-            #     rawData[i][rawData[i] < self.PeakDivNoiseThreshold] = 0
-            # else:
-            #     rawData[i][rawData[i] < self.PeakDivNoiseThreshold/4] = 0
-
-            RelativeThreshold = max * self.PeakDivRelIntensity / 100.0  # 第二步
+            RelativeThreshold = np.max(rawData[i]) * self.PeakDivRelIntensity / 100.0  # 第2步
             rawData[i][rawData[i] < RelativeThreshold] = 0
 
         rawData = rawData.tolist()
         # 二维列表，最终结果
         ret1DetailPreprocessing = [rawInformation[i] + rawData[i] for i in range(len(rawInformation))]
-        # 数据写入文件
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision")
-        WriteDataToExcel(ret1DetailPreprocessing, newDirectory + "/ret1DetailPreprocessing.xlsx")
 
         return ret1DetailPreprocessing
 
@@ -88,6 +93,9 @@ class ClassPeakDivision:
 
     # dataProcessing中某一行查到符合连续条件（这里的连续是中间没有超过5个为0的点）的记录集合
     def PeakDivSeekContinueItem(self, item):
+        # 返回内容格式：
+        # 三维列表，[[[...], ..., [..]], ..., [[...], ..., [..]]]
+        # [[...], ..., [..]]代表dataProcessing每一行处理的结果
         # 获取需要处理的数据
         itemData = item[9:]
         # 获取扫描点数目
@@ -276,20 +284,21 @@ class ClassPeakDivision:
                 peakMaxIntensity = format(tempIntensity, '.3f')  # str格式
 
             peakInfo.append([peakMaxIndex, self.sortedRTValue[peakMaxIndex], peakMaxIntensity])  # 和areasList长度一致
-        # 最前面的尖峰合并到后面
-        lengthThreshold = int(len(smoothdata) / 15)  # 200左右
-        leftThreshold = int(len(smoothdata) / 6)  # 500左右
-        if len(areas) >= 3:  # 只有峰数大于等于三个才可能合并
-            if redList[1] <= leftThreshold \
-                    and (redList[1] - redList[0]) <= lengthThreshold \
-                    and redList[1] == redList[2]:
-                sumArea = format(float(areasList[0]) + float(areasList[1]), '.2f')
-                del redList[2]
-                del redList[1]
-                del areasList[1]
-                del areasList[0]
-                del peakInfo[0]
-                areasList.insert(0, sumArea)
+
+        if self.PeakDivNeedMerge:  # 根据参数决定最前面的尖峰是否合并到后面
+            lengthThreshold = int(len(smoothdata) / 15)  # 200左右
+            leftThreshold = int(len(smoothdata) / 6)  # 500左右
+            if len(areas) >= 3:  # 只有峰数大于等于三个才可能合并
+                if redList[1] <= leftThreshold \
+                        and (redList[1] - redList[0]) <= lengthThreshold \
+                        and redList[1] == redList[2]:
+                    sumArea = format(float(areasList[0]) + float(areasList[1]), '.2f')
+                    del redList[2]
+                    del redList[1]
+                    del areasList[1]
+                    del areasList[0]
+                    del peakInfo[0]
+                    areasList.insert(0, sumArea)
 
         return redList, areasList, peakInfo
 
@@ -330,53 +339,59 @@ class ClassPeakDivision:
         DBENum = information[3]  # 不饱和度数目
         formula = information[4]
         CNum = information[6]
-        # 创建对应的文件夹
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision/peakImages/" + Class + "_DBE" + str(DBENum))
-        try:
-            # 画图
-            step = 0.05
-            # 改变y坐标的范围
-            bottomNum = 2 if len(peakInfo) <= 2 else len(peakInfo)
-            plt.ylim(-(step * (bottomNum + 1) * max), (1+step*6) * max)
-            # 添加坐标提示，标题
-            plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='k')
-            plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='k')
-            title = "Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula
-            plt.title(title, fontproperties='SimHei', fontsize=12, color='red')
-            # 画出线图，原始数据
-            plt.vlines(x=x, ymin=0, ymax=data, colors="b", linewidth=1)
-            # 画出峰之间以及两侧的分割线，+15为了修正画出来的偏移
-            for splitIndex in redList:
-                plt.vlines(x=splitIndex+15, ymin=-int((step*2) * max), ymax=int((1+step*4) * max), colors="g", linewidth=0.5)
-            # 添加峰面积信息
-            k = 0
-            while k < len(areas):
-                start = redList[k*2]
-                end = redList[k*2+1]
-                middle = int((start + end) / 2 - 50)
-                plt.text(middle, int((1+step*(k % 2+1))*(max+1)), areas[k], fontproperties='SimHei', fontsize=5, color="k")
-                k += 1
-            # 添加数量级标识
-            plt.text(int(4 * len(data) / 5), int((1+step*4.4) * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=8, color="k")
-            # 添加三元组含义提示
-            plt.text(int(len(data) / 50), int((1+step*4.6) * (max + 1)), "三元组含义:(Index, RT, Intensity)", fontproperties='SimHei', fontsize=6, color="k")
-            # 画出平滑后的曲线
-            plt.plot(x, smoothItem, color="r", linewidth=0.6)
-            # 添加峰顶标记信息
-            for i in range(len(peakInfo)):
-                peak = peakInfo[i]
-                index = peak[0]  # int
-                RT = peak[1]  # float
-                Intensity = peak[2]  # str
-                plt.vlines(x=x[index], ymin=-int(step * max), ymax=int((1+step*2) * max), colors="r", linewidth=0.5, linestyle="--")
-                text = "(" + str(index) + ", " + str(RT) + ", " + Intensity + ")"
-                plt.text(index-200, -int(step * (i % 4 + 1) * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
-            # 保存图像
-            plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
-            # 关闭当前图像
-            plt.close()
-        except Exception as e:
-            if ConstValues.PsIsDebug:
-                print("plt Error : ", e)
-                traceback.print_exc()
+        # 返回值
+        ret = []
+        for i in range(len(areas)):
+            ret.append([SampleMass, float(areas[i]), peakInfo[i][0]] + information[2:] + [orderOfMagnitude])
+        if len(ret) != 0:
+            ret.append([])
+        if self.PeakDivNeedGenImage:  # 根据参数决定是否生成图片
+            # 创建对应的文件夹
+            newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision/peakImages/" + Class + "_DBE" + str(DBENum))
+            try:
+                # 画图
+                step = 0.05
+                # 改变y坐标的范围
+                bottomNum = 2 if len(peakInfo) <= 2 else len(peakInfo)
+                plt.ylim(-(step * (bottomNum + 1) * max), (1+step*6) * max)
+                # 添加坐标提示，标题
+                plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='k')
+                plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='k')
+                title = "Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula
+                plt.title(title, fontproperties='SimHei', fontsize=12, color='red')
+                # 画出线图，原始数据
+                plt.vlines(x=x, ymin=0, ymax=data, colors="b", linewidth=1)
+                # 画出峰之间以及两侧的分割线，+15为了修正画出来的偏移
+                for splitIndex in redList:
+                    plt.vlines(x=splitIndex+15, ymin=-int((step*2) * max), ymax=int((1+step*4) * max), colors="g", linewidth=0.5)
+                # 添加峰面积信息
+                for k in range(len(areas)):
+                    start = redList[k*2]
+                    end = redList[k*2+1]
+                    middle = int((start + end) / 2 - 50)
+                    plt.text(middle, int((1+step*(k % 2+1))*(max+1)), areas[k], fontproperties='SimHei', fontsize=5, color="k")
+                # 添加数量级标识
+                plt.text(int(4 * len(data) / 5), int((1+step*4.4) * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=8, color="k")
+                # 添加三元组含义提示
+                plt.text(int(len(data) / 50), int((1+step*4.6) * (max + 1)), "三元组含义:(Index, RT, Intensity)", fontproperties='SimHei', fontsize=6, color="k")
+                # 画出平滑后的曲线
+                plt.plot(x, smoothItem, color="r", linewidth=0.6)
+                # 添加峰顶标记信息
+                for i in range(len(peakInfo)):
+                    peak = peakInfo[i]
+                    index = peak[0]  # int
+                    RT = peak[1]  # float
+                    Intensity = peak[2]  # str
+                    plt.vlines(x=x[index], ymin=-int(step * max), ymax=int((1+step*2) * max), colors="r", linewidth=0.5, linestyle="--")
+                    text = "(" + str(index) + ", " + str(RT) + ", " + Intensity + ")"
+                    plt.text(index-200, -int(step * (i % 4 + 1) * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
+                # 保存图像
+                plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
+                # 关闭当前图像
+                plt.close()
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("plt Error : ", e)
+                    traceback.print_exc()
 
+        return ret

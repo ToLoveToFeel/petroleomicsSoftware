@@ -21,7 +21,7 @@ class ClassPeakDivision:
         self.outputFilesPath = outputFilesPath
         if ConstValues.PsIsSingleRun:
             self.RemoveFPPlotResult = \
-                ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP.xlsx", hasNan=False)
+                ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP1.xlsx", hasNan=False)
             self.sortedRTValue = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/sortedRTValue.xlsx", hasNan=False)[0]
 
     # 第二部分，峰检测分割  ######################################################################
@@ -254,19 +254,6 @@ class ClassPeakDivision:
                 redList.append(ret[2*k+1])
                 areasList.append(areas[k])
             k += 1
-        # 最前面的尖峰合并到后面
-        lengthThreshold = int(len(smoothdata) / 15)  # 200左右
-        leftThreshold = int(len(smoothdata) / 6)  # 500左右
-        if len(areas) >= 3:  # 只有峰数大于等于三个才可能合并
-            if redList[1] <= leftThreshold \
-                    and (redList[1] - redList[0]) <= lengthThreshold \
-                    and redList[1] == redList[2]:
-                sumArea = format(float(areasList[0]) + float(areasList[1]), '.2f')
-                del redList[2]
-                del redList[1]
-                del areasList[1]
-                del areasList[0]
-                areasList.insert(0, sumArea)
         # 计算峰顶相关信息，smoothData[a:b]最大值对应的索引对应的实际值
         peakInfo = []
         for i in range(len(areasList)):
@@ -288,7 +275,21 @@ class ClassPeakDivision:
                 peakMaxIndex = tempIndex
                 peakMaxIntensity = format(tempIntensity, '.3f')  # str格式
 
-            peakInfo.append([peakMaxIndex, self.sortedRTValue[peakMaxIndex], peakMaxIntensity])
+            peakInfo.append([peakMaxIndex, self.sortedRTValue[peakMaxIndex], peakMaxIntensity])  # 和areasList长度一致
+        # 最前面的尖峰合并到后面
+        lengthThreshold = int(len(smoothdata) / 15)  # 200左右
+        leftThreshold = int(len(smoothdata) / 6)  # 500左右
+        if len(areas) >= 3:  # 只有峰数大于等于三个才可能合并
+            if redList[1] <= leftThreshold \
+                    and (redList[1] - redList[0]) <= lengthThreshold \
+                    and redList[1] == redList[2]:
+                sumArea = format(float(areasList[0]) + float(areasList[1]), '.2f')
+                del redList[2]
+                del redList[1]
+                del areasList[1]
+                del areasList[0]
+                del peakInfo[0]
+                areasList.insert(0, sumArea)
 
         return redList, areasList, peakInfo
 
@@ -330,61 +331,35 @@ class ClassPeakDivision:
         formula = information[4]
         CNum = information[6]
         # 创建对应的文件夹
-        newDirectory = CreateDirectory(self.outputFilesPath,
-                                       "./intermediateFiles",
-                                       "/_6_peakDivision/peakImages/" + Class + "_DBE" + str(DBENum)
-                                       )
-        # 为redList首尾添加-1和len(data)-1
-        redList.insert(0, -1)
-        redList.append(len(data) - 1)
-        # 画图
-        bottomStep = 0.05
-        # plt.xlim()
-        if len(peakInfo) <= 2:
-            plt.ylim(-(bottomStep * 3 * max), 1.3 * max)
-        elif len(peakInfo) == 3:
-            plt.ylim(-(bottomStep * 4 * max), 1.3 * max)
-        else:
-            plt.ylim(-(bottomStep * 5 * max), 1.3 * max)
-        plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='blue')
-        plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='blue')
-        plt.title("Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula,
-                  fontproperties='SimHei', fontsize=12, color='red')
-        # 主逻辑画线图，并标识出各个峰以及面积
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision/peakImages/" + Class + "_DBE" + str(DBENum))
         try:
-            i = 0
-            areaIndex = 0
-            while i + 1 < len(redList):  # n个数循环n-1次
-                start = redList[i] + 1
-                end = redList[i + 1]
-                if start == end:  # 说明两个峰的峰谷重合
-                    i += 1
-                    continue
-                plt.vlines(x=x[start:end], ymin=0, ymax=data[start:end], colors="b", linewidth=1)
-                if end != len(data) - 1:  # 最后的位置不画红线
-                    # plt.vlines(x=x[end], ymin=-int(0.1*max), ymax=int(1.2*max), colors="g", linewidth=1)
-                    plt.vlines(x=x[end]+15, ymin=-int(0.1*max), ymax=int(1.2*max), colors="g", linewidth=0.5)  # +15因为画出的图向左错位
-                if (start != 0) and (end != len(data) - 1) and i % 2 == 1:  # 第一个区间和最后一个区间不显示面积
-                    # [0, 50, 100, 100, 425, 500, 700, len(data) - 1]代表[50...100]，[100...425]，[500...700]三个峰
-                    # [2.104, 3.105, 5.211]
-                    # 区间               i     是否显示面积？
-                    # [0..50]           i=0
-                    # [50..100]         i=1         *
-                    # [100..100]        i=2
-                    # [100..425]        i=3         *
-                    # [425..500]        i=4
-                    # [500..700]        i=5         *
-                    # [700..end]        i=6
-                    middle = int((start + end) / 2 - 50)
-                    if areaIndex % 2 == 0:
-                        plt.text(middle, int(1.05 * (max + 1)), areas[areaIndex], fontproperties='SimHei', fontsize=5, color="k")
-                    else:
-                        plt.text(middle, int(1.1 * (max + 1)), areas[areaIndex], fontproperties='SimHei', fontsize=5, color="k")
-                    areaIndex += 1
-                i += 1
+            # 画图
+            step = 0.05
+            # 改变y坐标的范围
+            bottomNum = 2 if len(peakInfo) <= 2 else len(peakInfo)
+            plt.ylim(-(step * (bottomNum + 1) * max), (1+step*6) * max)
+            # 添加坐标提示，标题
+            plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='k')
+            plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='k')
+            title = "Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula
+            plt.title(title, fontproperties='SimHei', fontsize=12, color='red')
+            # 画出线图，原始数据
+            plt.vlines(x=x, ymin=0, ymax=data, colors="b", linewidth=1)
+            # 画出峰之间以及两侧的分割线，+15为了修正画出来的偏移
+            for splitIndex in redList:
+                plt.vlines(x=splitIndex+15, ymin=-int((step*2) * max), ymax=int((1+step*4) * max), colors="g", linewidth=0.5)
+            # 添加峰面积信息
+            k = 0
+            while k < len(areas):
+                start = redList[k*2]
+                end = redList[k*2+1]
+                middle = int((start + end) / 2 - 50)
+                plt.text(middle, int((1+step*(k % 2+1))*(max+1)), areas[k], fontproperties='SimHei', fontsize=5, color="k")
+                k += 1
             # 添加数量级标识
-            plt.text(int(4 * len(data) / 5), int(1.22 * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=10, color="k")
-            plt.text(int(len(data) / 50), int(1.23 * (max + 1)), "三元组含义:(Index,RT,Intensity)", fontproperties='SimHei', fontsize=6, color="k")
+            plt.text(int(4 * len(data) / 5), int((1+step*4.4) * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=8, color="k")
+            # 添加三元组含义提示
+            plt.text(int(len(data) / 50), int((1+step*4.6) * (max + 1)), "三元组含义:(Index, RT, Intensity)", fontproperties='SimHei', fontsize=6, color="k")
             # 画出平滑后的曲线
             plt.plot(x, smoothItem, color="r", linewidth=0.6)
             # 添加峰顶标记信息
@@ -393,16 +368,9 @@ class ClassPeakDivision:
                 index = peak[0]  # int
                 RT = peak[1]  # float
                 Intensity = peak[2]  # str
-                plt.vlines(x=x[index], ymin=-int(0.05 * max), ymax=int(1.1 * max), colors="r", linewidth=0.5, linestyle="--")
+                plt.vlines(x=x[index], ymin=-int(step * max), ymax=int((1+step*2) * max), colors="r", linewidth=0.5, linestyle="--")
                 text = "(" + str(index) + ", " + str(RT) + ", " + Intensity + ")"
-                if i % 4 == 0:
-                    plt.text(index-200, -int(bottomStep * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
-                elif i % 4 == 1:
-                    plt.text(index-200, -int(bottomStep * 2 * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
-                elif i % 4 == 2:
-                    plt.text(index-200, -int(bottomStep * 3 * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
-                elif i % 4 == 3:
-                    plt.text(index-200, -int(bottomStep * 4 * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
+                plt.text(index-200, -int(step * (i % 4 + 1) * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
             # 保存图像
             plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
             # 关闭当前图像

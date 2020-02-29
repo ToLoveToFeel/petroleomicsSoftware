@@ -202,7 +202,11 @@ class MainWin(QMainWindow):
                             self.PeakDisClass,
                             self.PeakDisScanPoints
                             ]
-        self.PeakDisResult = None  # 峰识别：最终返回的结果（格式：list二维数组，有表头）
+        # 结果是一个列表，有三个元素，
+        # 第一个是峰识别的结果（格式：list二维数组，有表头）
+        # 第二个是需要需要峰检测（第二部分）的详细数据，二维列表，无表头
+        # 第三个是txt文件中RT值(从小到大排序)
+        self.PeakDisResult = [[], [], []]
         self.PeakDisIsFinished = False  # 峰识别：记录峰识别过程是否完成
 
         # 去假阳性全过程所需要的数据
@@ -217,7 +221,9 @@ class MainWin(QMainWindow):
                              self.RemoveFPContinue_CNum,
                              self.RemoveFPContinue_DBENum
                              ]
-        # 结果是一个三维列表，有两个元素，第一个所有类别去假阳性的结果，第二个是去假阳性后需要峰检测的数据
+        # 结果是一个列表，有两个元素
+        # 第一个所有类别去假阳性的结果，二维列表，或者1：去同位素之后的内容，或者2：峰识别之后的内容 都有表头
+        # 第二个是去假阳性后需要峰检测（第二部分）的数据，二维列表，无表头，即self.PeakDisResult[1]去假阳性后的数据
         self.RemoveFPResult = [[], []]
         self.RemoveFPIsFinished = False
 
@@ -228,7 +234,8 @@ class MainWin(QMainWindow):
         # TODO:未定参数
         self.PeakDivMinimalPeakWidth = ConstValues.PsPeakDivMinimalPeakWidth
         self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                            self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                            self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+                            self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
                             self.PeakDivNoiseThreshold,
                             self.PeakDivRelIntensity,
                             self.PeakDivMinimalPeakWidth
@@ -591,7 +598,7 @@ class MainWin(QMainWindow):
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "去同位素处理完毕!")
             self.DelIsoPromptBox.closeGif()
         elif retList[0] == "ClassPeakDistinguish":
-            self.PeakDisResult = retList[1]
+            self.PeakDisResult = retList[1]  # 列表，有三个数据
             self.PeakDisIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel4.setText("处理完毕!")
@@ -599,7 +606,7 @@ class MainWin(QMainWindow):
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "峰识别处理完毕!")
             self.PeakDisPromptBox.closeGif()
         elif retList[0] == "ClassRemoveFalsePositive":
-            self.RemoveFPResult = retList[1]
+            self.RemoveFPResult = retList[1]  # 列表，有两个数据
             self.RemoveFPIsFinished = retList[2]
             # 显示完成提示
             self.messageLabel5.setText("处理完毕!")
@@ -622,9 +629,9 @@ class MainWin(QMainWindow):
             self.GDBIsFinished = retList[4]
             self.DelIsoResult = retList[5]
             self.DelIsoIsFinished = retList[6]
-            self.PeakDisResult = retList[7]
+            self.PeakDisResult = retList[7]  # 列表，有三个数据
             self.PeakDisIsFinished = retList[8]
-            self.RemoveFPResult = retList[9]
+            self.RemoveFPResult = retList[9]  # 列表，有两个数据
             self.RemoveFPIsFinished = retList[10]
             if self.PeakDisClassIsNeed:
                 self.PeakDivResult = retList[11]
@@ -685,7 +692,6 @@ class MainWin(QMainWindow):
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
             PromptBox().errorMessage("程序运行出现错误!")
-
 
     # 设置：数据更新
     def UpdateData(self, Type, newParameters):
@@ -788,7 +794,6 @@ class MainWin(QMainWindow):
             if self.sampleFilePath == "" or self.blankFilePath == "":
                 PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
                 return False
-
             # 因为有self.sampleFilePath，self.blankFilePath，所以需要更新self.sampleFilePath,self.blankFilePath（最开始前两项为空字符串）
             self.deleteBlankList = [self.sampleFilePath,  # 格式：字符串
                                     self.blankFilePath,  # 格式：字符串
@@ -803,17 +808,13 @@ class MainWin(QMainWindow):
             # 单独运行，调试使用
             if ConstValues.PsIsSingleRun:
                 self.deleteBlankIsFinished = True
-                self.deleteBlankResult = ReadExcelToList(filepath="./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx",
-                                                         hasNan=False)
+                self.deleteBlankResult = ReadExcelToList(filepath="./intermediateFiles/_1_deleteBlank/DeleteBlank.xlsx", hasNan=False)
                 self.GDBIsFinished = True
-                self.GDBResult = ReadExcelToList(filepath="./intermediateFiles/_2_generateDataBase/GDB.xlsx",
-                                                 hasNan=False)
-
+                self.GDBResult = ReadExcelToList(filepath="./intermediateFiles/_2_generateDataBase/GDB.xlsx", hasNan=False)
             # 去同位素前需要扣空白，数据库生成
             if (not self.deleteBlankIsFinished) or (not self.GDBIsFinished):
                 PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
                 return False
-
             # 因为有self.deleteBlankResult和self.GDBResult，所以需要更新self.DelIsoList（最开始前两项为空）
             self.DelIsoList = [self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
                                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
@@ -832,8 +833,7 @@ class MainWin(QMainWindow):
             # 单独运行，调试使用
             if ConstValues.PsIsSingleRun:
                 self.DelIsoIsFinished = True
-                self.DelIsoResult = ReadExcelToList(filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx",
-                                                    hasNan=True)
+                self.DelIsoResult = ReadExcelToList(filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx", hasNan=True)
             # 峰识别前需要去同位素
             if not self.DelIsoIsFinished:
                 PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
@@ -853,12 +853,10 @@ class MainWin(QMainWindow):
             if ConstValues.PsIsSingleRun:
                 if self.RemoveFPId == 1:
                     self.DelIsoIsFinished = True
-                    self.DelIsoResult = ReadExcelToList(
-                        filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx", hasNan=True)
+                    self.DelIsoResult = ReadExcelToList(filepath="./intermediateFiles/_3_deleteIsotope/DeleteIsotope.xlsx", hasNan=True)
                 elif self.RemoveFPId == 2:
                     self.PeakDisIsFinished = True
-                    self.PeakDisResult = ReadExcelToList(
-                        filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
+                    self.PeakDisResult = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
             # 去假阳性前需要去同位素 或者 峰识别第一阶段
             if self.RemoveFPId == 1:
                 if not self.DelIsoIsFinished:
@@ -870,7 +868,7 @@ class MainWin(QMainWindow):
                     return False
             # 更新数据
             self.RemoveFPList = [self.DelIsoResult,
-                                 self.PeakDisResult,
+                                 self.PeakDisResult,  # 列表，有三个数据
                                  self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                                  self.RemoveFPContinue_CNum,
                                  self.RemoveFPContinue_DBENum
@@ -888,6 +886,7 @@ class MainWin(QMainWindow):
             # 更新数据
             self.PeakDivList = [self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                                 self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
                                 self.PeakDivNoiseThreshold,
                                 self.PeakDivRelIntensity,
                                 self.PeakDivMinimalPeakWidth
@@ -942,12 +941,21 @@ class MainWin(QMainWindow):
                     self.PeakDisScanPoints
                 ],
                 [
+                    # 去假阳性
                     self.DelIsoResult,
                     self.PeakDisResult,
                     self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                     self.RemoveFPContinue_CNum,
                     self.RemoveFPContinue_DBENum
                  ],
+                [
+                    # 峰检测
+                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别结果
+                    self.PeakDivNoiseThreshold,
+                    self.PeakDivRelIntensity,
+                    self.PeakDivMinimalPeakWidth
+                 ]
             ]
 
         return True

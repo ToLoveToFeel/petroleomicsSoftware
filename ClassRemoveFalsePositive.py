@@ -10,7 +10,15 @@ class ClassRemoveFalsePositive:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 5, "ClassRemoveFalsePositive参数个数不对!"
         self.DelIsoResult = parameterList[0]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
-        self.PeakDisResult = parameterList[1]  # 峰识别第一阶段后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
+
+        peakDisResult = parameterList[1]
+        # 结果是一个列表，有三个元素，
+        # 第一个是峰识别的结果（格式：list二维数组，有表头）
+        # 第二个是需要需要峰检测（第二部分）的详细数据，二维列表，无表头
+        # 第三个是txt文件中RT值(从小到大排序)
+        self.PeakDisResult = peakDisResult[0]  # 峰识别第一阶段后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
+        self.PeakDisResultDetail = peakDisResult[1]
+
         self.RemoveFPId = parameterList[2]  # 1：去同位素之后的内容self.DelIsoResult 2：峰识别之后的内容self.DelIsoResult
         self.RemoveFPContinue_CNum = parameterList[3]
         self.RemoveFPContinue_DBENum = parameterList[4]
@@ -240,13 +248,14 @@ class ClassRemoveFalsePositive:
     # 读取PeakDisPart1DetailPlot.xlsx文件的内容，并进行去假阳性
     def RemoveFPFromPeakDisPlot(self, result):
         # ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        data = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
+        if ConstValues.PsIsDebug:
+            self.PeakDisResultDetail = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
         massSet = set()
         newData = []  # 存储需要画出图形的经过去假阳性后的数据
         for item in result:
             if len(item) != 0:
                 massSet.add(item[0])
-        for item in data:
+        for item in self.PeakDisResultDetail:
             if item[0] in massSet:
                 newData.append(item)
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive")

@@ -1,5 +1,6 @@
 # coding=utf-8
-# 此文件负责定义：峰识别第一阶段，峰识别
+# 此文件负责定义：峰识别（第一阶段）
+# 第二部分是 峰检测：检测出各个峰，并计算面积
 import matplotlib.pyplot as plt
 import time
 import os
@@ -12,7 +13,7 @@ from PromptBox import PromptBox
 class ClassPeakDistinguish:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 8, "ClassPeakDistinguish参数个数不对!"
-        self.TICFilePath = parameterList[0]  # 总离子流图路径，第一部分
+        self.TICFilePath = parameterList[0]  # 总离子流图路径（第一阶段）
         self.DelIsoResult = parameterList[1]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
         self.PeakDisContinuityNum = parameterList[2]  # 连续出现的扫描点个数，格式：整数
         self.PeakDisMassDeviation = parameterList[3]  # 质量偏差，格式：浮点数
@@ -32,6 +33,10 @@ class ClassPeakDistinguish:
     def PeakDistinguish(self):
         # 读取总离子流图
         self.TICData = self.ReadTIC()
+        # 获取排序后的RT，后面峰检测需要使用
+        sortedRTValue = sorted([float(num) for num in list(self.TICData)])
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish")
+        WriteDataToExcel([sortedRTValue], newDirectory + "/sortedRTValue.xlsx")  # 只有一行，没有表头，峰检测（第二部分）需要
         # 去掉表头
         self.DelIsoResult = self.DelIsoResult[1:]
         # 说明读取的文件存在问题
@@ -43,7 +48,7 @@ class ClassPeakDistinguish:
         # 存储第一阶段的详细信息，为第二阶段做准备，三维列表[[a, ..., b], ...]
         # self.resultPart1Detail[0]代表某个去同位素后的样本在TIC中的所有数据（如果连续或没匹配上为0）。
         # self.resultPart1Detail[0]前面部分为该样本的信息，字段和  类型一 一样
-        # self.resultPart1Detail中所有的数据都是是用户输入的需要进行第二部分的类别
+        # self.resultPart1Detail中所有的数据都是是用户输入的需要进行峰检测（第二部分）的类别
         self.resultPart1Detail = []
         flag = 1
         try:
@@ -70,14 +75,13 @@ class ClassPeakDistinguish:
         self.resultPart1Detail = self.PeakDisSortDetail()
 
         # 数据写入excel文件中
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish")
         WriteDataToExcel(self.resultPart1, newDirectory + "/PeakDisPart1.xlsx")
         WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDisPart1DetailPlot.xlsx")
 
         # # 第二部分需要处理的数据，将图像输出到文件中
         # self.PeakDisPlotPeak()
 
-        return self.resultPart1, True
+        return [self.resultPart1, self.resultPart1Detail, sortedRTValue], True
 
     # 负责判断某个扣同位素后的样本是否能成功在总离子流图文件(txt)查到符合条件的记录集合
     def PeakDisHandleItem(self, sampleItem):

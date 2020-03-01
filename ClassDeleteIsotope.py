@@ -82,17 +82,20 @@ class ClassDeleteIsotope():
                 if (sampleItemIntensity > self.DelIsoIntensityX) and (DBItem_13C2Intensity > self.DelIso_13C2RelativeIntensity):
                     # 4.样本(self.deleteBlankResult)中所有mass是否有对应的“13C1”和“13C2”及intensity相近
                     parameterList = [DBItem_13C1, DBItem_13C1Intensity, DBItem_13C2, DBItem_13C2Intensity, sampleItemIntensity]
-                    if self.DelIsoHasCorrespondInSample(parameterList):
+                    retValue = self.DelIsoHasCorrespondInSample(parameterList)
+                    if retValue[0]:
                         ret.append(sampleItem + DBItem)
-                        ret.append([DBItem_13C1, DBItem_13C1Intensity, "iostope"])
-                        ret.append([DBItem_13C2, DBItem_13C2Intensity, "iostope"])
+                        ret.append(retValue[1] + ["iostope"])
+                        if len(ret) == 3:
+                            ret.append(retValue[2] + ["iostope"])
                         break
                 else:
                     # 5.样本中是否有对应的“13C1”及intensity1相近
                     parameterList = [DBItem_13C1, DBItem_13C1Intensity, sampleItemIntensity]
-                    if self.DelIsoHasCorrespondInSample(parameterList):
+                    retValue = self.DelIsoHasCorrespondInSample(parameterList)
+                    if retValue[0]:
                         ret.append(sampleItem + DBItem)
-                        ret.append([DBItem_13C1, DBItem_13C1Intensity, "iostope"])
+                        ret.append(retValue[1] + ["iostope"])
                         break
 
         if len(ret) == 0:
@@ -104,31 +107,50 @@ class ClassDeleteIsotope():
     # 4.样本(self.deleteBlankResult)中所有mass是否有对应的“13C1”和“13C2”及intensity相近。5.样本中是否有对应的“13C1”及intensity1相近
     def DelIsoHasCorrespondInSample(self, parameterList):
         if len(parameterList) == 5:  # 4.样本(self.deleteBlankResult)中所有mass是否有对应的“13C1”和“13C2”及intensity相近
+            # 返回值可能为：[False]，[True, []]，[True, [], []]
             DBItem_13C1 = parameterList[0]
             DBItem_13C1Intensity = parameterList[1]
             DBItem_13C2 = parameterList[2]
             DBItem_13C2Intensity = parameterList[3]
             sampleItemIntensity = parameterList[4]
-            for item in self.deleteBlankResult:
-                Mass = item[0]
-                Intensity = item[1]
-                if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation) and \
-                        (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
-                    return True
-            return False
-        elif len(parameterList) == 3:  # 5.样本中是否有对应的“13C1”及intensity1相近
-            DBItem_13C1 = parameterList[0]
-            DBItem_13C1Intensity = parameterList[1]
-            sampleItemIntensity = parameterList[2]
+            ret = []
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
                 if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
                         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
-                    return True
-            return False
+                    ret.append(True)
+                    ret.append(item)
+                    break
+            for item in self.deleteBlankResult:
+                Mass = item[0]
+                Intensity = item[1]
+                if (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                    if len(ret) == 0:
+                        ret.append(True)
+                    ret.append(item)
+                    break
+            if len(ret) == 0:
+                ret.append(False)
+            return ret
+        elif len(parameterList) == 3:  # 5.样本中是否有对应的“13C1”及intensity1相近
+            # 返回值可能为：[False]，[True, []]
+            DBItem_13C1 = parameterList[0]
+            DBItem_13C1Intensity = parameterList[1]
+            sampleItemIntensity = parameterList[2]
+            ret = []
+            for item in self.deleteBlankResult:
+                Mass = item[0]
+                Intensity = item[1]
+                if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                    ret.append(True)
+                    ret.append(item)
+                    break
+            if len(ret) == 0:
+                ret.append(False)
+            return ret
 
         # 传入的参数个数错误
         if ConstValues.PsIsDebug:

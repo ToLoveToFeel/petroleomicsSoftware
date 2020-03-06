@@ -3,7 +3,7 @@
 # 石油组学软件 petromics software
 
 
-class ConstValues():
+class ConstValues:
     def __init__(self):
         pass
 
@@ -26,6 +26,20 @@ class ConstValues():
     # 运行提示框弹出时间 1 -> 1s
     PsBeforeRunningPromptBoxTime = 1
     PsAfterRunningPromptBoxTime = 1
+    # 各个功能对应的图标
+    PsIconOpenFile = './images/open.png'  # 打开文件图标
+    PsIconExit = './images/close.ico'  # 退出软件图标
+    PsIconDeleteBlank = './images/work/j1.png'  # 删空白图标
+    PsIconDBSearch = './images/work/j2.png'  # 数据库生成图标
+    PsIcondelIso = './images/work/j3.png'  # 去同位素图标
+    PsIconpeakDis = './images/work/j4.png'  # 峰识别图标
+    PsIconRemoveFP = './images/work/j5.png'  # 去假阳性图标
+    PsIconpeakDiv = './images/work/j6.png'  # 峰检测图标
+    PsIconAllStart = './images/work/j21.png'  # 全部开始图标
+    PsIconAllReset = './images/work/j12.png'  # 重置软件图标
+    PsIconPlot = './images/work/j8.png'  # 重置软件图标
+    PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
+
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
     # 去同位素错误提示信息

@@ -501,22 +501,22 @@ class SetupInterface():
         layout = QGridLayout(self.deleteIsotopeDialog)
         # 第一行内容，IntensityX
         layout.addWidget(self.GetQLabel("IntensityX(" + str(ConstValues.PsDelIsoIntensityXMin) + "~" + ConstValues.PsDelIsoIntensityXMaxStr + ") :"), 0, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit1, 0, 2, 1, 2)
+        layout.addWidget(deleteIsotopeEdit1, 0, 4, 1, 2)
         # 第二行内容，13C2RelativeIntensity
         layout.addWidget(self.GetQLabel("13C2RelativeIntensity(" + str(ConstValues.PsDelIso_13C2RelativeIntensityMin) + "~" + str(ConstValues.PsDelIso_13C2RelativeIntensityMax) + "):"), 1, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit2, 1, 2, 1, 2)
+        layout.addWidget(deleteIsotopeEdit2, 1, 4, 1, 2)
         # 第三行内容，Mass Deviation
         layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsDelIsoMassDeviationMin) + "~" + str(ConstValues.PsDelIsoMassDeviationMax) + ") :"), 2, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit3, 2, 2, 1, 2)
+        layout.addWidget(deleteIsotopeEdit3, 2, 4, 1, 2)
         # 第三行内容，Isotope Mass Deviation
         layout.addWidget(self.GetQLabel("Isotope Mass Deviation(" + str(ConstValues.PsDelIsoIsotopeMassDeviationMin) + "~" + str(ConstValues.PsDelIsoIsotopeMassDeviationMax) + ") :"), 3, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit4, 3, 2, 1, 2)
+        layout.addWidget(deleteIsotopeEdit4, 3, 4, 1, 2)
         # 第三行内容，Isotope Intensity Deviation
         layout.addWidget(self.GetQLabel("Isotope Intensity Deviation(" + str(ConstValues.PsDelIsoIsotopeIntensityDeviationMin) + "~" + str(ConstValues.PsDelIsoIsotopeIntensityDeviationMax) + ") :"), 4, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit5, 4, 2, 1, 2)
+        layout.addWidget(deleteIsotopeEdit5, 4, 4, 1, 2)
         # 最后一行内容，按钮行
-        layout.addWidget(deleteIsotopeButton1, 5, 2)
-        layout.addWidget(deleteIsotopeButton2, 5, 3)
+        layout.addWidget(deleteIsotopeButton1, 5, 4)
+        layout.addWidget(deleteIsotopeButton2, 5, 5)
 
         self.deleteIsotopeDialog.exec()
         # 返回值类型：list

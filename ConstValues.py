@@ -23,22 +23,54 @@ class ConstValues:
     PsMainWindowStatusMessage = "欢迎使用！"
     # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
     PsMainWindowStyle = "Macintosh"
+    # 主窗口背景样式（背景颜色RGB）
+    PsMainBackgroundStyle = "#MainWindow{background-color: #F5F5F5;}"  # 白烟色
+    # 状态栏背景样式（颜色RGB）
+    PsStatusStyle = "background-color: #DCDCDC;"
+    # 主界面显示的字体及大小
+    PsMainFontType = "Arial"
+    PsMainFontSize = 12
+    # 下拉菜单显示的字体及大小
+    PsMenuFontType = "Arial"
+    PsMenuFontSize = 10
+    # 工具栏显示的字体及大小
+    PsToolbarFontType = "Arial"
+    PsToolbarFontSize = 10
     # 运行提示框弹出时间 1 -> 1s
     PsBeforeRunningPromptBoxTime = 1
     PsAfterRunningPromptBoxTime = 1
-    # 各个功能对应的图标
+    # 图标系统  1:从图片读取  2:来自 qtawesome
+    PsIconType = 2
+    PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
+    # 从图片读取
     PsIconOpenFile = './images/open.png'  # 打开文件图标
     PsIconExit = './images/close.ico'  # 退出软件图标
     PsIconDeleteBlank = './images/work/j1.png'  # 删空白图标
-    PsIconDBSearch = './images/work/j2.png'  # 数据库生成图标
+    PsIconGDB = './images/work/j2.png'  # 数据库生成图标
     PsIcondelIso = './images/work/j3.png'  # 去同位素图标
     PsIconpeakDis = './images/work/j4.png'  # 峰识别图标
     PsIconRemoveFP = './images/work/j5.png'  # 去假阳性图标
     PsIconpeakDiv = './images/work/j6.png'  # 峰检测图标
+    PsIconPlot = './images/work/j7.png'  # 画图图标
     PsIconAllStart = './images/work/j21.png'  # 全部开始图标
     PsIconAllReset = './images/work/j12.png'  # 重置软件图标
-    PsIconPlot = './images/work/j8.png'  # 重置软件图标
-    PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
+    PsIconBack = "./images/back.png"
+    # 来自 qtawesome 网址：https://fontawesome.dashgame.com/
+    PsqtaColor = "black"
+    PsqtaIconOpenFileExcel = 'fa.file-excel-o'  # 打开Excel文件图标
+    PsqtaIconOpenFileTxt = 'fa.file-text-o'  # 打开Txt文件图标
+    PsqtaIconOpenFileOut = 'fa.folder-o'  # 输出到文件夹图标
+    PsqtaIconExit = 'fa.window-close-o'  # 退出软件图标
+    PsqtaIconDeleteBlank = 'fa.trash-o'  # 删空白图标
+    PsqtaIconGDB = 'fa.cab'  # 数据库生成图标
+    PsqtaIcondelIso = 'fa.search'  # 去同位素图标
+    PsqtaIconpeakDis = 'fa.wheelchair'  # 峰识别图标
+    PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
+    PsqtaIconpeakDiv = 'fa.search'  # 峰检测图标
+    PsqtaIconPlot = 'fa.pie-chart'  # 峰检测图标
+    PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
+    PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
+    PsqtaIconBack = "fa.arrow-left"  # 返回上一级图标
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -59,6 +91,7 @@ class ConstValues:
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
+    PsSetupStyle = "background-color: #E8E8E8;"
 
     # 扣空白设置默认参数
     # 1~9999（整数）
@@ -162,4 +195,8 @@ class ConstValues:
     PsPeakDivNeedMerge = True
     # 该参数决定是否生成图片信息
     PsPeakDivNeedGenImage = True
+
+    # 峰检测全过程所需要的数据
+    PsPlotType = 1  # 1~6(整数)
+
 

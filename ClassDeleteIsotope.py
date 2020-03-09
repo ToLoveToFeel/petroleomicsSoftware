@@ -1,6 +1,5 @@
 # coding=utf-8
 # 此文件负责定义：去同位素
-import os
 from Utils import *
 from ConstValues import ConstValues
 

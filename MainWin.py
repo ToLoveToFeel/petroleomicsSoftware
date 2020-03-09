@@ -6,6 +6,7 @@ from PromptBox import PromptBox
 from Utils import *
 from SetupInterface import SetupInterface
 from MultiThread import MultiThread
+import qtawesome
 
 
 class MainWin(QMainWindow):
@@ -44,7 +45,9 @@ class MainWin(QMainWindow):
         self.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
         # 设置背景颜色
         self.setObjectName("MainWindow")
-        self.setStyleSheet("#MainWindow{background-color:white}")
+        self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
+        # 设置透明度
+        self.setWindowOpacity(0.98)
         # 设置窗口显示内容
         self.initShow()
         # 显示主窗口
@@ -52,11 +55,15 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
+        # 创建文件夹
+        newDirectory = CreateDirectory("", "./intermediateFiles", "/_7_plot")
+
         self.centralwidget = QWidget()
         self.setCentralWidget(self.centralwidget)
         self.Layout = QGridLayout(self.centralwidget)
         # 创建左右两边Widget框
         self.plotList = QListWidget()  # 列表控件
+        self.plotList.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         self.plotStack = QStackedWidget()  # 堆栈窗口控件
         # 列表控件关联槽函数
         self.plotList.currentRowChanged.connect(self.PlotDisplay)
@@ -68,16 +75,51 @@ class MainWin(QMainWindow):
         self.plotList.insertItem(0, '联系方式')
         self.plotList.insertItem(1, '个人信息')
         self.plotList.insertItem(2, '教育程度')
-        # self.stack1 = QWidget()
-        # self.stack2 = QWidget()
-        # self.stack3 = QWidget()
-        # self.plotStack.addWidget(self.stack1)
-        # self.plotStack.addWidget(self.stack2)
-        # self.plotStack.addWidget(self.stack3)
 
+        self.tabWidget1, self.tabWidgetLabel1 = self.CreateQTabWidget()
+        self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget()
+
+        self.plotStack.addWidget(self.tabWidget1)
+        self.plotStack.addWidget(self.tabWidget2)
+
+        # 右键处理
+        self.tabWidgetLabel1.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tabWidgetLabel1.customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
+
+    # 创建选项卡控件
+    def CreateQTabWidget(self):
+        tabWidget = QTabWidget()
+        tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+
+        # tb1相关内容
+        tb1 = QWidget()
+        hlayout = QHBoxLayout()  # 水平盒布局
+        label = QLabel()  # 创建Label
+        label.setPixmap(QPixmap("./images/python.jpg"))
+        hlayout.addWidget(label, 1, Qt.AlignCenter)
+        tb1.setLayout(hlayout)
+
+        # tb2相关内容
+        tb2 = QWidget()
+
+        tabWidget.addTab(tb1, "图形")
+        tabWidget.addTab(tb2, "原始数据")
+        return tabWidget, label
+
+    # 右击选项菜单（Plot / Raw Plot Data）
+    def rightMenuShow(self):
+        menu = QMenu()
+        menu.addAction(QAction("导出到", menu))
+        menu.triggered.connect(self.MenuSlot)
+        menu.exec_(QCursor.pos())
+
+    # 右击后处理函数
+    def MenuSlot(self, act):
+        print(act.text())
+
+    # 画图显示
     def PlotDisplay(self, index):
-        # self.stack.setCurrentIndex(index)
-        pass
+        self.plotStack.setCurrentIndex(index)
 
     # 全局数据初始化
     def dataInit(self):
@@ -231,6 +273,15 @@ class MainWin(QMainWindow):
         self.PeakDivResult = None
         self.PeakDivIsFinished = False
 
+        # 绘图全过程所需要的数据  1~6(整数)
+        self.PlotType = ConstValues.PsPlotType  # 绘图类型
+
+        self.PlotList = [
+                            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+                            self.PlotType,  # 绘图类型
+                        ]
+
     # 使窗口居中
     def center(self):
         # 获取屏幕坐标系
@@ -246,58 +297,101 @@ class MainWin(QMainWindow):
         # 获取菜单栏
         bar = self.menuBar()
         # 创建第一个主菜单
-        file = bar.addMenu("File")
-        importSampleFile = QAction(QIcon(ConstValues.PsIconOpenFile), "导入样本文件", self)  # 添加二级菜单
+        file = bar.addMenu("文件")
+        importSampleFile = QAction("样本", self)  # 添加二级菜单
         file.addAction(importSampleFile)
         importSampleFile.triggered.connect(self.ImportSampleFile)
 
-        importBlankFile = QAction(QIcon(ConstValues.PsIconOpenFile), "导入空白文件", self)  # 添加二级菜单
+        importBlankFile = QAction("空白", self)  # 添加二级菜单
         file.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction(QIcon(ConstValues.PsIconOpenFile), "导入总离子图文件", self)  # 添加二级菜单
+        TICFile = QAction("离子图", self)  # 添加二级菜单
         file.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
 
-        OutFilesPath = QAction(QIcon(ConstValues.PsIconOpenFile), "选择生成文件位置", self)  # 添加二级菜单
+        OutFilesPath = QAction("输出", self)  # 添加二级菜单
         file.addAction(OutFilesPath)
         OutFilesPath.triggered.connect(self.GetOutputFilesPath)
 
-        exitProgram = QAction(QIcon(ConstValues.PsIconExit), "退出程序", self)  # 添加二级菜单
+        exitProgram = QAction("退出", self)  # 添加二级菜单
         file.addAction(exitProgram)
         exitProgram.triggered.connect(self.QuitApplication)
 
         # 创建第二个主菜单
-        set = bar.addMenu("Edit")
-        deleteBlank = QAction(QIcon(ConstValues.PsIconDeleteBlank), "去空白", self)  # 添加二级菜单
+        set = bar.addMenu("编辑")
+        deleteBlank = QAction("去空白", self)  # 添加二级菜单
         set.addAction(deleteBlank)
         deleteBlank.triggered.connect(self.DeleteBlankSetup)
 
-        DBSearch = QAction(QIcon(ConstValues.PsIconDBSearch), "数据库生成", self)  # 添加二级菜单
+        DBSearch = QAction("数据库生成", self)  # 添加二级菜单
         set.addAction(DBSearch)
         DBSearch.triggered.connect(self.GenerateDataBaseSetup)
 
-        deleteIsotope = QAction(QIcon(ConstValues.PsIcondelIso), "去同位素", self)  # 添加二级菜单
+        deleteIsotope = QAction("搜同位素", self)  # 添加二级菜单
         set.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotopeSetup)
 
-        peakDistinguish = QAction(QIcon(ConstValues.PsIconpeakDis), "峰识别", self)  # 添加二级菜单
+        peakDistinguish = QAction("峰识别", self)  # 添加二级菜单
         set.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguishSetup)
 
-        disturbRemove = QAction(QIcon(ConstValues.PsIconRemoveFP), "去假阳性", self)  # 添加二级菜单
-        set.addAction(disturbRemove)
-        disturbRemove.triggered.connect(self.RemoveFalsePositiveSetup)
+        RemoveFP = QAction("去假阳性", self)  # 添加二级菜单
+        set.addAction(RemoveFP)
+        RemoveFP.triggered.connect(self.RemoveFalsePositiveSetup)
 
-        peakDivision = QAction(QIcon(ConstValues.PsIconpeakDiv), "峰检测", self)  # 添加二级菜单
+        peakDivision = QAction("峰检测", self)  # 添加二级菜单
         set.addAction(peakDivision)
         peakDivision.triggered.connect(self.PeakDivisionSetup)
 
         # 创建第三个主菜单
-        plot = bar.addMenu("Plot")
-        addPlot = QAction(QIcon(ConstValues.PsIconPlot), "add", self)  # 添加二级菜单
+        plot = bar.addMenu("画图")
+        addPlot = QAction("添加", self)  # 添加二级菜单
         plot.addAction(addPlot)
-        addPlot.triggered.connect(self.Plot)
+        addPlot.triggered.connect(self.SetupAndPlot)
+
+        # 设置字体大小
+        bar.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        importSampleFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        importBlankFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        TICFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        OutFilesPath.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        exitProgram.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        deleteBlank.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        DBSearch.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        deleteIsotope.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        peakDistinguish.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        RemoveFP.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        peakDivision.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+        plot.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
+
+        # 设置图标
+        if ConstValues.PsIconType == 1:  # 从图片读取
+            importSampleFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            importBlankFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            TICFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            OutFilesPath.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            exitProgram.setIcon(QIcon(ConstValues.PsIconExit))
+            deleteBlank.setIcon(QIcon(ConstValues.PsIconDeleteBlank))
+            DBSearch.setIcon(QIcon(ConstValues.PsIconGDB))
+            deleteIsotope.setIcon(QIcon(ConstValues.PsIcondelIso))
+            peakDistinguish.setIcon(QIcon(ConstValues.PsIconpeakDis))
+            RemoveFP.setIcon(QIcon(ConstValues.PsIconRemoveFP))
+            peakDivision.setIcon(QIcon(ConstValues.PsIconpeakDiv))
+            addPlot.setIcon(QIcon(ConstValues.PsIconPlot))
+        elif ConstValues.PsIconType == 2:  # 来自 qtawesome
+            importSampleFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
+            importBlankFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
+            TICFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileTxt, color=ConstValues.PsqtaColor))
+            OutFilesPath.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileOut, color=ConstValues.PsqtaColor))
+            exitProgram.setIcon(qtawesome.icon(ConstValues.PsqtaIconExit, color=ConstValues.PsqtaColor))
+            deleteBlank.setIcon(qtawesome.icon(ConstValues.PsqtaIconDeleteBlank, color=ConstValues.PsqtaColor))
+            DBSearch.setIcon(qtawesome.icon(ConstValues.PsqtaIconGDB, color=ConstValues.PsqtaColor))
+            deleteIsotope.setIcon(qtawesome.icon(ConstValues.PsqtaIcondelIso, color=ConstValues.PsqtaColor))
+            peakDistinguish.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDis, color=ConstValues.PsqtaColor))
+            RemoveFP.setIcon(qtawesome.icon(ConstValues.PsqtaIconRemoveFP, color=ConstValues.PsqtaColor))
+            peakDivision.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDiv, color=ConstValues.PsqtaColor))
+            addPlot.setIcon(qtawesome.icon(ConstValues.PsqtaIconPlot, color=ConstValues.PsqtaColor))
 
     # 设置工具栏
     def toolbar(self):
@@ -305,23 +399,28 @@ class MainWin(QMainWindow):
         tb1 = self.addToolBar("文件")
         tb1.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # 设置图标下显示功能
         # 为第一个工具栏添加按钮
-        importSampleFile = QAction(QIcon(ConstValues.PsIconOpenFile), "sample", self)
+        importSampleFile = QAction("样本", self)
+        importSampleFile.setToolTip("选择需要导入的样本文件")  # 鼠标停放时显示的信息
         tb1.addAction(importSampleFile)
         importSampleFile.triggered.connect(self.ImportSampleFile)
 
-        importBlankFile = QAction(QIcon(ConstValues.PsIconOpenFile), "blank", self)
+        importBlankFile = QAction("空白", self)
+        importBlankFile.setToolTip("选择需要导入的空白文件")
         tb1.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction(QIcon(ConstValues.PsIconOpenFile), "TIC", self)
+        TICFile = QAction("离子图", self)
+        TICFile.setToolTip("选择需要导入的总离子图文件")
         tb1.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
 
-        OutFilesPath = QAction(QIcon(ConstValues.PsIconOpenFile), "OUT", self)
+        OutFilesPath = QAction("输出", self)
+        OutFilesPath.setToolTip("选择生成文件位置")
         tb1.addAction(OutFilesPath)
         OutFilesPath.triggered.connect(self.GetOutputFilesPath)
 
-        exitProgram = QAction(QIcon(ConstValues.PsIconExit), "exit", self)
+        exitProgram = QAction("退出", self)
+        exitProgram.setToolTip("退出程序")
         tb1.addAction(exitProgram)
         exitProgram.triggered.connect(self.QuitApplication)
 
@@ -330,48 +429,100 @@ class MainWin(QMainWindow):
         # tb2.setToolButtonStyle(Qt.ToolButtonTextOnly)  # 设置只显示文本
         tb2.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # 设置图标下显示功能
         # 为第二个工具栏添加按钮
-        deleteBlank = QAction(QIcon(ConstValues.PsIconDeleteBlank), "去空白", self)
+        deleteBlank = QAction("去空白", self)
         tb2.addAction(deleteBlank)
         deleteBlank.triggered.connect(self.DeleteBlank)
 
-        DBSearch = QAction(QIcon(ConstValues.PsIconDBSearch), "数据库生成", self)
+        DBSearch = QAction("数据库生成", self)
         tb2.addAction(DBSearch)
         DBSearch.triggered.connect(self.GenerateDataBase)
 
-        deleteIsotope = QAction(QIcon(ConstValues.PsIcondelIso), "去同位素", self)
+        deleteIsotope = QAction("搜同位素", self)
         tb2.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotope)
 
-        peakDistinguish = QAction(QIcon(ConstValues.PsIconpeakDis), "峰识别", self)
+        peakDistinguish = QAction("峰识别", self)
         tb2.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguish)
 
-        RemoveFP = QAction(QIcon(ConstValues.PsIconRemoveFP), "去假阳性", self)
+        RemoveFP = QAction("去假阳性", self)
         tb2.addAction(RemoveFP)
         RemoveFP.triggered.connect(self.RemoveFalsePositive)
 
-        self.TBpeakDivision = QAction(QIcon(ConstValues.PsIconpeakDiv), "峰检测", self)  # 因为需要控制是否使能，所以为全局变量
+        self.TBpeakDivision = QAction("峰检测", self)  # 因为需要控制是否使能，所以为全局变量
         tb2.addAction(self.TBpeakDivision)
         self.TBpeakDivision.triggered.connect(self.PeakDivision)
         self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
 
+        plot = QAction("画图", self)
+        tb2.addAction(plot)
+        plot.triggered.connect(self.SetupAndPlot)
+
         # 添加第三个工具栏
-        tb3 = self.addToolBar("全部开始按钮")
-        tb3.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # 设置图标下显示功能
+        tb4 = self.addToolBar("全部开始按钮")
+        tb4.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # 设置图标下显示功能
         # 为第三个工具栏添加按钮
-        allStart = QAction(QIcon(ConstValues.PsIconAllStart), "全部开始", self)
-        tb3.addAction(allStart)
+        allStart = QAction("全部开始", self)
+        tb4.addAction(allStart)
         allStart.triggered.connect(self.StartAll)
 
-        allReset = QAction(QIcon(ConstValues.PsIconAllReset), "重置软件", self)
-        tb3.addAction(allReset)
+        allReset = QAction("重置软件", self)
+        allReset.setToolTip("重置所有参数为默认参数")
+        tb4.addAction(allReset)
         allReset.triggered.connect(self.ResetProgram)
+
+        # 设置字体大小
+        importSampleFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        importBlankFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        TICFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        OutFilesPath.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        exitProgram.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        deleteBlank.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        DBSearch.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        deleteIsotope.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        peakDistinguish.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        RemoveFP.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        self.TBpeakDivision.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        allStart.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+        allReset.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+
+        # 设置图标
+        if ConstValues.PsIconType == 1:  # 从图片读取
+            importSampleFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            importBlankFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            TICFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            OutFilesPath.setIcon(QIcon(ConstValues.PsIconOpenFile))
+            exitProgram.setIcon(QIcon(ConstValues.PsIconExit))
+            deleteBlank.setIcon(QIcon(ConstValues.PsIconDeleteBlank))
+            DBSearch.setIcon(QIcon(ConstValues.PsIconGDB))
+            deleteIsotope.setIcon(QIcon(ConstValues.PsIcondelIso))
+            peakDistinguish.setIcon(QIcon(ConstValues.PsIconpeakDis))
+            RemoveFP.setIcon(QIcon(ConstValues.PsIconRemoveFP))
+            self.TBpeakDivision.setIcon(QIcon(ConstValues.PsIconpeakDiv))
+            plot.setIcon(QIcon(ConstValues.PsIconPlot))
+            allStart.setIcon(QIcon(ConstValues.PsIconAllStart))
+            allReset.setIcon(QIcon(ConstValues.PsIconAllReset))
+        elif ConstValues.PsIconType == 2:  # 来自 qtawesome
+            importSampleFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
+            importBlankFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
+            TICFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileTxt, color=ConstValues.PsqtaColor))
+            OutFilesPath.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileOut, color=ConstValues.PsqtaColor))
+            exitProgram.setIcon(qtawesome.icon(ConstValues.PsqtaIconExit, color=ConstValues.PsqtaColor))
+            deleteBlank.setIcon(qtawesome.icon(ConstValues.PsqtaIconDeleteBlank, color=ConstValues.PsqtaColor))
+            DBSearch.setIcon(qtawesome.icon(ConstValues.PsqtaIconGDB, color=ConstValues.PsqtaColor))
+            deleteIsotope.setIcon(qtawesome.icon(ConstValues.PsqtaIcondelIso, color=ConstValues.PsqtaColor))
+            peakDistinguish.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDis, color=ConstValues.PsqtaColor))
+            RemoveFP.setIcon(qtawesome.icon(ConstValues.PsqtaIconRemoveFP, color=ConstValues.PsqtaColor))
+            self.TBpeakDivision.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDiv, color=ConstValues.PsqtaColor))
+            plot.setIcon(qtawesome.icon(ConstValues.PsqtaIconPlot, color=ConstValues.PsqtaColor))
+            allStart.setIcon(qtawesome.icon(ConstValues.PsqtaIconAllStart, color=ConstValues.PsqtaColor))
+            allReset.setIcon(qtawesome.icon(ConstValues.PsqtaIconAllReset, color=ConstValues.PsqtaColor))
 
     # 设置主窗口底部状态栏
     def status(self):
         self.statusBar = self.statusBar()
-        # 设置状态栏背景颜色：白烟色
-        self.statusBar.setStyleSheet("background-color: #F5F5F5;")
+        # 设置状态栏背景颜色
+        self.statusBar.setStyleSheet(ConstValues.PsStatusStyle)
         # 设置字体显示样式
         style = "color:rgb(0,0,0,250); font-size:15px; font-family: Microsoft YaHei;"
         # 第一条显示的信息
@@ -474,6 +625,10 @@ class MainWin(QMainWindow):
         newParameters = SetupInterface().PeakDivisionSetup(self.PeakDivList[3:])
         self.UpdateData("PeakDivisionSetup", newParameters)
 
+    def PlotSetup(self):
+        newParameters = SetupInterface().PlotSetup(self.PlotList[2:])
+        # self.UpdateData("PlotSetup", newParameters)
+
     # 去空白 #######################################
     def DeleteBlank(self):
         # 程序运行前准备工作
@@ -518,6 +673,10 @@ class MainWin(QMainWindow):
             return
         self.StartRunning("PeakDivision")
         self.AfterRunning("PeakDivision")
+
+    # 画图
+    def Plot(self):
+        pass
 
     # 全部开始
     def StartAll(self):
@@ -995,7 +1154,7 @@ class MainWin(QMainWindow):
             self.StartAllPromptBox = PromptBox()
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
 
-    # 有关画图的函数 #######################################
-    def Plot(self):
-        pass
-
+    # 画图
+    def SetupAndPlot(self):
+        self.PlotSetup()
+        self.Plot()

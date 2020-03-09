@@ -6,6 +6,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
+import qtawesome
 
 
 class SetupInterface():
@@ -78,6 +79,9 @@ class SetupInterface():
         # 该参数决定是否生成图片信息
         self.PeakDivNeedGenImage = None
 
+        # 绘图全过程所需要的数据  1~6(整数)
+        self.PlotType = None  # 绘图类型
+
     # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
         # 设置校验器
@@ -119,10 +123,11 @@ class SetupInterface():
         return lineEdit
 
     # 设置QLabel
-    def GetQLabel(self, text):
+    def GetQLabel(self, text, style=""):
         label = QLabel()
         label.setText(text)
         label.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        label.setStyleSheet(style)
         return label
 
     #############################################################
@@ -134,8 +139,9 @@ class SetupInterface():
         # 创建QDialog
         self.deleteBlankDialog = QDialog()
         self.deleteBlankDialog.setWindowTitle("扣空白参数设置")
-        self.deleteBlankDialog.setFixedSize(ConstValues.PsSetupFontSize * 25, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.deleteBlankDialog.setFixedSize(ConstValues.PsSetupFontSize * 25, ConstValues.PsSetupFontSize * 16)  # 固定窗口大小
         self.deleteBlankDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.deleteBlankDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -234,6 +240,8 @@ class SetupInterface():
         self.GDBDialog.setWindowTitle("数据库生成参数设置")
         self.GDBDialog.setFixedSize(ConstValues.PsSetupFontSize * 52, ConstValues.PsSetupFontSize * 35)  # 固定窗口大小
         self.GDBDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.GDBDialog.setStyleSheet(ConstValues.PsSetupStyle)
+
 
         # Class
         GDBEdit1 = self.RegExpQLineEdit("([A-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
@@ -260,10 +268,10 @@ class SetupInterface():
         GDBCheckBox3 = QCheckBox("[M-H]-")
         GDBCheckBox4 = QCheckBox("M-")
         self.GDBFlag34 = False
-        GDBCheckBox1.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))  # 设置字体
-        GDBCheckBox2.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
-        GDBCheckBox3.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
-        GDBCheckBox4.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        GDBCheckBox1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        GDBCheckBox2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        GDBCheckBox3.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        GDBCheckBox4.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         GDBCheckBox1.setChecked(self.GDB_MHPostive)  # 设置初始勾选
         GDBCheckBox2.setChecked(self.GDB_MPostive)
         GDBCheckBox3.setChecked(self.GDB_MHNegative)
@@ -470,8 +478,9 @@ class SetupInterface():
         # 创建QDialog
         self.deleteIsotopeDialog = QDialog()
         self.deleteIsotopeDialog.setWindowTitle("去同位素参数设置")
-        self.deleteIsotopeDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
+        self.deleteIsotopeDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
         self.deleteIsotopeDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.deleteIsotopeDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
@@ -608,6 +617,7 @@ class SetupInterface():
         self.peakDistinguishDialog.setWindowTitle("峰识别参数设置")
         self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 40, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
         self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.peakDistinguishDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PeakDisContinuityNum对话框
         peakDistinguishEdit1 = self.IntQLineEdit(ConstValues.PsPeakDisContinuityNumMin, ConstValues.PsPeakDisContinuityNumMax, str(self.PeakDisContinuityNum))
@@ -762,8 +772,9 @@ class SetupInterface():
         # 创建QDialog
         self.RemoveFPDialog = QDialog()
         self.RemoveFPDialog.setWindowTitle("去假阳性参数设置")
-        self.RemoveFPDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
+        self.RemoveFPDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
         self.RemoveFPDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.RemoveFPDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -884,6 +895,7 @@ class SetupInterface():
         self.PeakDivDialog.setWindowTitle("峰检测参数设置")
         self.PeakDivDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
         self.PeakDivDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.PeakDivDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PeakDivNoiseThreshold 对话框
         PeakDivEdit1 = self.IntQLineEdit(ConstValues.PsPeakDivNoiseThresholdMin, ConstValues.PsPeakDivNoiseThresholdMax, str(self.PeakDivNoiseThreshold))
@@ -894,8 +906,8 @@ class SetupInterface():
         # 多选框，两个选择框
         PeakDivBox1 = QCheckBox("Enable")  # self.PeakDivNeedMerge
         PeakDivBox2 = QCheckBox("Enable")  # self.PeakDivNeedGenImage
-        PeakDivBox1.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))  # 设置字体
-        PeakDivBox2.setFont(QFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize)))
+        PeakDivBox1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        PeakDivBox2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         PeakDivBox1.setChecked(self.PeakDivNeedMerge)  # 设置初始勾选
         PeakDivBox2.setChecked(self.PeakDivNeedGenImage)
         PeakDivBox1.stateChanged.connect(lambda: self.PeakDivCheckboxState(PeakDivBox1, PeakDivBox2))  # 绑定槽函数
@@ -986,4 +998,222 @@ class SetupInterface():
             return 3
         # 合法
         return 1
+
+    #############################################################
+    def PlotSetup(self, parameters):
+        # 图形生成参数设置对话框，设置默认参数，这是第一个主窗口
+        self.PlotDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.PlotDialog = QDialog()
+        self.PlotDialog.setWindowTitle("图形生成参数设置")
+        self.PlotDialog.setFixedSize(ConstValues.PsSetupFontSize * 67, ConstValues.PsSetupFontSize * 40)  # 固定窗口大小
+        self.PlotDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        # self.PlotDialog.setStyleSheet(ConstValues.PsSetupStyle)
+
+        # 创建栅格布局
+        self.PlotLayout = QGridLayout(self.PlotDialog)
+
+        # 主界面内容设置
+        self.PlotMainUIList = self.PlotMainUI(parameters)
+
+        # 运行
+        self.PlotDialog.exec()
+
+    # 设置参数为用户上次输入的值
+    def PlotDefaultParameters(self, parameters):
+        self.PlotType = parameters[0]
+
+    # 用户输入文本后，会进入这个函数处理
+    def HandleTextChangedPlot(self, DBType, edit):
+        pass
+
+    # 当单选按钮状态改变会进入该函数
+    def PlotMainUIRadioButtonState(self, radioButton, Id):  # 用一个整数代表选中了哪个单选按钮
+        if radioButton.isChecked():
+            if ConstValues.PsIsDebug:
+                print(Id)
+            self.PlotType = Id
+
+    # HBC：HandleButtonClicked 用户点击 Finished/Cancel后，会进入这个函数处理
+    def HBCPlot(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.PlotDefaultParameters(parameters)
+            self.PlotDialog.close()
+        else:  # 点击确认按钮
+            inputState = self.PlotIsParameterValidate()
+
+    # 参数合法性检查
+    def PlotIsParameterValidate(self):
+        return 0
+
+    # 主设置界面
+    def PlotMainUI(self, parameters):
+        self.PlotMainUICreateWidget(parameters)
+        return self.PlotMainUIAddWidget()
+
+    # 创建主界面控件
+    def PlotMainUICreateWidget(self, parameters):
+        # 单选按钮
+        self.PlotMainUIRadioButton1 = QRadioButton("Class distribution")
+        self.PlotMainUIRadioButton2 = QRadioButton("DBE distribution by class")
+        self.PlotMainUIRadioButton3 = QRadioButton("Carbon number distribution by class and DBE")
+        self.PlotMainUIRadioButton4 = QRadioButton("van Krevelen by class")
+        self.PlotMainUIRadioButton5 = QRadioButton("DBE vs. carbon number by class")
+        self.PlotMainUIRadioButton6 = QRadioButton("Kendrick mass defect vs. m/z")
+        self.PlotMainUIRadioButton1.setChecked(True)
+        self.PlotMainUIRadioButton1.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton1, 1))
+        self.PlotMainUIRadioButton2.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton2, 2))
+        self.PlotMainUIRadioButton3.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton3, 3))
+        self.PlotMainUIRadioButton4.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton4, 4))
+        self.PlotMainUIRadioButton5.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton5, 5))
+        self.PlotMainUIRadioButton6.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton6, 6))
+        self.PlotMainUIRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotMainUIRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotMainUIRadioButton3.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotMainUIRadioButton4.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotMainUIRadioButton5.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotMainUIRadioButton6.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        # Next/Cancel
+        self.PlotMainUIButton1 = QPushButton("Next")
+        self.PlotMainUIButton1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotMainUIButton1.clicked.connect(lambda: self.PlotSubUI_1(parameters))
+        self.PlotMainUIButton2 = QPushButton("Cancel")
+        self.PlotMainUIButton2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotMainUIButton2.clicked.connect(lambda: self.HBCPlot(parameters, False))
+
+        # 创建Label
+        self.PlotMainUILabel1 = self.GetQLabel("Select Plot Type", "font:15pt '楷体'; color:blue;")
+        content = " This Plot Setup Wizard guide you through the steps required to add a new plot and to specify the " + \
+                  "plot content\n and properties.\n First,select the type of plot to add:"
+        style = "font:10pt '楷体'; border-width:1px; border-style:solid; border-color:rgb(255, 255, 255);"
+        self.PlotMainUILabel2 = self.GetQLabel(content, style)
+        self.PlotMainUILabel3 = self.GetQLabel("Bar Charts(Histograms)", "color:red")
+        self.PlotMainUILabel4 = self.GetQLabel("Dot Plots", "color:red")
+        self.PlotMainUILabel5 = self.GetQLabel("")
+        self.PlotMainUILabel6 = self.GetQLabel("")
+
+    # 添加主界面控件
+    def PlotMainUIAddWidget(self):
+        # 向 self.PlotLayout 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotMainUILabel1, 0, 0, 1, 5)
+        # 第二个文本
+        self.PlotLayout.addWidget(self.PlotMainUILabel2, 1, 0, 1, 5)
+        # 第三个文本
+        self.PlotLayout.addWidget(self.PlotMainUILabel3, 2, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUILabel4, 2, 2, 1, 2)
+        # 第四个：单选按钮
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton1, 3, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton4, 3, 2, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton2, 4, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton5, 4, 2, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton3, 5, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton6, 5, 2, 1, 2)
+        # 空行
+        self.PlotLayout.addWidget(self.PlotMainUILabel5, 6, 0, 1, 5)
+        self.PlotLayout.addWidget(self.PlotMainUILabel6, 7, 0, 1, 5)
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotMainUIButton1, 8, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotMainUIButton2, 8, 4, 1, 1)
+
+        return [
+            self.PlotMainUIRadioButton1,
+            self.PlotMainUIRadioButton2,
+            self.PlotMainUIRadioButton3,
+            self.PlotMainUIRadioButton4,
+            self.PlotMainUIRadioButton5,
+            self.PlotMainUIRadioButton6,
+            self.PlotMainUILabel1,
+            self.PlotMainUILabel2,
+            self.PlotMainUILabel3,
+            self.PlotMainUILabel4,
+            self.PlotMainUILabel5,
+            self.PlotMainUILabel6,
+            self.PlotMainUIButton1,
+            self.PlotMainUIButton2
+        ]
+        
+    # 删除控件
+    def PlotRemoveWidget(self, destoryList):
+        for item in destoryList:
+            # self.PlotLayout.removeWidget(item)  # 不行
+            item.setParent(None)
+
+    # 添加控件
+    def PlotAddWidget(self, IdStr):
+        if IdStr == "MainUI":
+            self.PlotMainUIAddWidget()
+
+    # 删除控件后再添加控件
+    def PlotRemoveAddWidget(self, destoryList, IdStr):
+        self.PlotRemoveWidget(destoryList)
+        self.PlotAddWidget(IdStr)
+
+    # 一级子界面
+    def PlotSubUI_1(self, parameters):
+        # 删除界面中所有控件
+        self.PlotRemoveWidget(self.PlotMainUIList)
+        # 根据选择绘制一级子界面
+        if self.PlotType == 1:  # Class distribution
+            self.PlotSubUI_1_1List = self.PlotSubUI_1_1(parameters)
+        elif self.PlotType == 2:  # DBE distribution by class
+            pass
+        elif self.PlotType == 3:  # Carbon number distribution by class and DBE
+            pass
+        elif self.PlotType == 4:  # van Krevelen by class
+            pass
+        elif self.PlotType == 5:  # DBE vs. carbon number by class
+            pass
+        elif self.PlotType == 6:  # Kendrick mass defect vs. m/z
+            pass
+
+    # 一级界面下右六个不同的设置界面，第一个：Class distribution
+    def PlotSubUI_1_1(self, parameters):
+        # 返回上一个界面按钮
+        self.PlotSubUI_1_1ButtonPrev = QPushButton("back")
+        self.PlotSubUI_1_1ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_1_1ButtonPrev.clicked.connect(lambda: self.PlotRemoveAddWidget(self.PlotSubUI_1_1List, "MainUI"))
+        if ConstValues.PsIconType == 1:
+            self.PlotSubUI_1_1ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+        elif ConstValues.PsIconType == 2:
+            self.PlotSubUI_1_1ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
+        # 复选按钮
+        self.PlotSubUI_1_1CheckBox1 = QCheckBox("All")
+        self.PlotSubUI_1_1CheckBox1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotSubUI_1_1CheckBox2 = QCheckBox("None")
+        self.PlotSubUI_1_1CheckBox2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+
+        # 复选按钮
+        self.PlotSubUI_1_1CheckBox3 = QCheckBox("1")
+        self.PlotSubUI_1_1Item1 = QListWidgetItem()
+
+        self.PlotSubUI_1_1List = QListWidget()  # 列表控件
+        self.PlotSubUI_1_1List.addItem(self.PlotSubUI_1_1Item1)
+        self.PlotSubUI_1_1List.setItemWidget(self.PlotSubUI_1_1Item1, self.PlotSubUI_1_1CheckBox3)
+
+        # Next/Cancel
+        self.PlotSubUI_1_1Button1 = QPushButton("Next")
+        self.PlotSubUI_1_1Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_1_1Button2 = QPushButton("Cancel")
+        self.PlotSubUI_1_1Button2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_1_1Button2.clicked.connect(lambda: self.HBCPlot(parameters, False))
+
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1ButtonPrev, 0, 0, 1, 1)
+        self.PlotSubUI_1_1Label1 = self.GetQLabel("")
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1Label1, 0, 1, 1, 4)
+        # 第二行
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1CheckBox1, 1, 0, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1CheckBox2, 1, 1, 1, 1)
+        # 第三行
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1List, 2, 0, 1, 2)
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1Button1, 8, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_1_1Button2, 8, 4, 1, 1)
+
+        return [
+            self.PlotSubUI_1_1Button1
+        ]
+
+
 

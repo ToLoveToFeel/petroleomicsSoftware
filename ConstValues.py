@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -59,7 +59,7 @@ class ConstValues:
     PsqtaColor = "black"
     PsqtaIconOpenFileExcel = 'fa.file-excel-o'  # 打开Excel文件图标
     PsqtaIconOpenFileTxt = 'fa.file-text-o'  # 打开Txt文件图标
-    PsqtaIconOpenFileOut = 'fa.folder-o'  # 输出到文件夹图标
+    PsqtaIconOpenFileOut = 'fa.folder-open-o'  # 输出到文件夹图标
     PsqtaIconExit = 'fa.window-close-o'  # 退出软件图标
     PsqtaIconDeleteBlank = 'fa.trash-o'  # 删空白图标
     PsqtaIconGDB = 'fa.cab'  # 数据库生成图标
@@ -67,7 +67,7 @@ class ConstValues:
     PsqtaIconpeakDis = 'fa.wheelchair'  # 峰识别图标
     PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
     PsqtaIconpeakDiv = 'fa.search'  # 峰检测图标
-    PsqtaIconPlot = 'fa.pie-chart'  # 峰检测图标
+    PsqtaIconPlot = 'fa.bar-chart-o'  # 峰检测图标
     PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
     PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
     PsqtaIconBack = "fa.arrow-left"  # 返回上一级图标
@@ -84,6 +84,8 @@ class ConstValues:
     PsRemoveFPErrorMessage2 = "请先峰识别!"
     # 峰检测提示信息
     PsPeakDivErrorMessage = "请先去假阳性!"
+    # 画图提示信息
+    PsPlotErrorMessage = "请先去假阳性!"
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7

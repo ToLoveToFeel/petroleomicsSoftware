@@ -275,11 +275,13 @@ class MainWin(QMainWindow):
 
         # 绘图全过程所需要的数据  1~6(整数)
         self.PlotType = ConstValues.PsPlotType  # 绘图类型
+        self.PlotClassList = None  # 列表，需要绘制的类型，例子：["CH", "N1"]
 
         self.PlotList = [
                             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
                             self.PlotType,  # 绘图类型
+                            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                         ]
 
     # 使窗口居中
@@ -571,7 +573,7 @@ class MainWin(QMainWindow):
     # 选择输入的文件存放的文件夹
     def GetOutputFilesPath(self):
         # 导入文件，并得到文件名称
-        self.outputFilesPath = QFileDialog.getExistingDirectory(self, '打开文件夹', './')
+        self.outputFilesPath = QFileDialog.getExistingDirectory(self, '选择文件生成到的文件夹', './')
         if ConstValues.PsIsDebug:
             print(self.outputFilesPath)
 
@@ -626,7 +628,21 @@ class MainWin(QMainWindow):
         self.UpdateData("PeakDivisionSetup", newParameters)
 
     def PlotSetup(self):
-        newParameters = SetupInterface().PlotSetup(self.PlotList[2:])
+        if ConstValues.PsIsSingleRun:  # 读取文件需要花费一些时间，所以界面会延迟一下
+            self.RemoveFPIsFinished = True
+            self.RemoveFPResult[0] = ReadExcelToList(filepath="./intermediateFiles/_5_removeFalsePositive/PeakDisResultAfterRemoveFP.xlsx", hasNan=True)
+        # 画图前前需要先读入数据
+        if not self.RemoveFPIsFinished:
+            PromptBox().warningMessage(ConstValues.PsPlotErrorMessage)  # 弹出错误提示
+            return
+        # 更新数据
+        self.PlotList = [
+            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+            self.PlotType,  # 绘图类型
+            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+        ]
+        newParameters = SetupInterface().PlotSetup(self.PlotList)
         # self.UpdateData("PlotSetup", newParameters)
 
     # 去空白 #######################################

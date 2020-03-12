@@ -8,6 +8,7 @@ from ClassPeakDistinguish import ClassPeakDistinguish
 from ClassRemoveFalsePositive import ClassRemoveFalsePositive
 from ClassPeakDivision import ClassPeakDivision
 from ConstValues import ConstValues
+from PromptBox import PromptBox
 
 
 class MultiThread(QThread):
@@ -168,7 +169,20 @@ class MultiThread(QThread):
                 if ConstValues.PsIsDebug:
                     print("StartAll Error : ", e)
                 self.signal.emit(["StartAll Error"])
-
+        # elif self.__function == "showGif":  # 读入数据显示，后台处理
+        #     try:
+        #         retList = ["showGif"]
+        #         # 提取参数
+        #         text = self.__parameters[0]
+        #         # 弹出提示框
+        #         showGifPromptBox = PromptBox()
+        #         showGifPromptBox.showGif(text, ConstValues.PsIconLoading)
+        #         # 返回结果
+        #         self.signal.emit(retList)
+        #     except Exception as e:
+        #         if ConstValues.PsIsDebug:
+        #             print("showGif : ", e)
+        #         self.signal.emit(["showGif"])
         endTime = time.time()
         if ConstValues.PsIsDebug:
             if endTime - startTime > 60:

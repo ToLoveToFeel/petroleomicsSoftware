@@ -17,14 +17,14 @@ class ConstValues:
     PsMainWindowWidth = 1200
     # 主窗口高度
     PsMainWindowHeight = 800
-    # 窗口弹出的图片所在的位置
-    PsMainWindowIcon = './images/Dragon.ico'
+
     # 主窗口底部状态栏显示的信息
     PsMainWindowStatusMessage = "欢迎使用！"
     # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
     PsMainWindowStyle = "Macintosh"
     # 主窗口背景样式（背景颜色RGB）
     PsMainBackgroundStyle = "#MainWindow{background-color: #F5F5F5;}"  # 白烟色
+    # PsMainBackgroundStyle = "#MainWindow{border-image:url(./images/test.jpg);}}"  # 背景图片
     # 状态栏背景样式（颜色RGB）
     PsStatusStyle = "background-color: #DCDCDC;"
     # 主界面显示的字体及大小
@@ -43,6 +43,7 @@ class ConstValues:
     PsIconType = 2
     PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
     # 从图片读取
+    PsWindowIcon = './images/Dragon.ico'  # 窗口弹出的图标所在的位置
     PsIconOpenFile = './images/open.png'  # 打开文件图标
     PsIconExit = './images/close.ico'  # 退出软件图标
     PsIconDeleteBlank = './images/work/j1.png'  # 删空白图标
@@ -57,6 +58,8 @@ class ConstValues:
     PsIconBack = "./images/back.png"
     # 来自 qtawesome 网址：https://fontawesome.dashgame.com/
     PsqtaColor = "black"
+    PsqtaWindowIconColor = "red"
+    PsqtaWindowIcon = 'fa.fire'  # 窗口弹出的图标
     PsqtaIconOpenFileExcel = 'fa.file-excel-o'  # 打开Excel文件图标
     PsqtaIconOpenFileTxt = 'fa.file-text-o'  # 打开Txt文件图标
     PsqtaIconOpenFileOut = 'fa.folder-open-o'  # 输出到文件夹图标
@@ -93,7 +96,8 @@ class ConstValues:
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
-    PsSetupStyle = "background-color: #E8E8E8;"
+    PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
+    # PsSetupStyle = "background-color: #F5F5F5;"
 
     # 扣空白设置默认参数
     # 1~9999（整数）
@@ -199,6 +203,14 @@ class ConstValues:
     PsPeakDivNeedGenImage = True
 
     # 峰检测全过程所需要的数据
+    PsPlotHasEnter = False
     PsPlotType = 1  # 1~6(整数)
+    PsPlotClassList = []  # 需要绘制的类型
+    PsPlotTitleName = "plot"  # 标题名称
+    PsPlotTitleColor = (255, 0, 0, 255)  # 标题颜色，(R, G, B, Alpha)
+    PsPlotXAxisName = "x"  # x轴名称
+    PsPlotXAxisColor = (0, 0, 255, 255)  # x轴颜色，(R, G, B, Alpha)
+    PsPlotYAxisName = "y"  # y轴名称
+    PsPlotYAxisColor = (0, 0, 255, 255)  # y轴颜色，(R, G, B, Alpha)
 
 

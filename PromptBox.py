@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ConstValues import ConstValues
+import qtawesome
 
 
 class PromptBox():
@@ -82,7 +83,10 @@ class PromptBox():
         # 设置对话框名称
         self.imageDialog.setWindowTitle(title)
         # 设置对话框图标
-        self.imageDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        if ConstValues.PsIconType == 1:
+            self.imageDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            self.imageDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 设置对话框弹出后后面的界面不可用
         self.imageDialog.setWindowModality(Qt.ApplicationModal)
         # 创建image标签
@@ -106,7 +110,10 @@ class PromptBox():
         # 创建对话框
         self.gifDialog = QDialog()
         # 设置对话框图标
-        self.gifDialog.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        if ConstValues.PsIconType == 1:
+            self.gifDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            self.gifDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 设置窗口状态
         # self.gifDialog.setWindowFlags(Qt.WindowCloseButtonHint)  # 只显示叉号
         self.gifDialog.setWindowFlags(Qt.WindowMaximizeButtonHint| Qt.MSWindowsFixedSizeDialogHint)  # 禁止使用叉号

@@ -7,6 +7,11 @@ from Utils import *
 from SetupInterface import SetupInterface
 from MultiThread import MultiThread
 import qtawesome
+import numpy as np
+import pandas as pd
+import math
+import traceback
+import time
 
 
 class MainWin(QMainWindow):
@@ -42,7 +47,10 @@ class MainWin(QMainWindow):
                             | Qt.WindowCloseButtonHint  # 关闭
                             )
         # 创建主窗口应用的图标
-        self.setWindowIcon(QIcon(ConstValues.PsMainWindowIcon))
+        if ConstValues.PsIconType == 1:
+            self.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            self.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 设置背景颜色
         self.setObjectName("MainWindow")
         self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
@@ -55,6 +63,8 @@ class MainWin(QMainWindow):
 
     # 设置窗口显示内容
     def initShow(self):
+        # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
+        self.tabWidgetId = 0
         # 创建文件夹
         newDirectory = CreateDirectory("", "./intermediateFiles", "/_7_plot")
 
@@ -62,24 +72,24 @@ class MainWin(QMainWindow):
         self.setCentralWidget(self.centralwidget)
         self.Layout = QGridLayout(self.centralwidget)
         # 创建左右两边Widget框
-        self.plotList = QListWidget()  # 列表控件
-        self.plotList.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
-        self.plotStack = QStackedWidget()  # 堆栈窗口控件
-        # 列表控件关联槽函数
-        self.plotList.currentRowChanged.connect(self.PlotDisplay)
+        self.mainList = QListWidget()  # 列表控件，左边
+        self.mainList.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        self.plotStack = QStackedWidget()  # 堆栈窗口控件，右边
+        # 列表控件关联槽函数，显示内容包括excel
+        self.mainList.currentRowChanged.connect(self.Display)
         # 放置控件
-        self.Layout.addWidget(self.plotList, 0, 0, 1, 2)
+        self.Layout.addWidget(self.mainList, 0, 0, 1, 2)
         self.Layout.addWidget(self.plotStack, 0, 2, 1, 8)
 
-        # 设置填空信息
-        self.plotList.insertItem(0, '联系方式')
-        self.plotList.insertItem(1, '个人信息')
-        self.plotList.insertItem(2, '教育程度')
+        # 主界面添加内容
+        self.mainList.insertItem(self.tabWidgetId, '联系方式')  # mainList添加一条记录
+        self.tabWidgetId += 1
+        self.tabWidget1, self.tabWidgetLabel1 = self.CreateQTabWidget()  # 创建 QTabWidget
+        self.plotStack.addWidget(self.tabWidget1)  # 添加 QTabWidget
 
-        self.tabWidget1, self.tabWidgetLabel1 = self.CreateQTabWidget()
+        self.mainList.insertItem(self.tabWidgetId, '个人信息')
+        self.tabWidgetId += 1
         self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget()
-
-        self.plotStack.addWidget(self.tabWidget1)
         self.plotStack.addWidget(self.tabWidget2)
 
         # 右键处理
@@ -90,14 +100,17 @@ class MainWin(QMainWindow):
     def CreateQTabWidget(self):
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        # 固定 QTabWidget 大小
+        tabWidget.setFixedSize(ConstValues.PsMainWindowWidth*5/6, ConstValues.PsMainWindowHeight*855/1000)
 
         # tb1相关内容
-        tb1 = QWidget()
-        hlayout = QHBoxLayout()  # 水平盒布局
+        tb1 = QScrollArea()
+        tb1.setAlignment(Qt.AlignCenter)
+        tb1.setStyleSheet("background-color: #FFFFFF;")
         label = QLabel()  # 创建Label
-        label.setPixmap(QPixmap("./images/python.jpg"))
-        hlayout.addWidget(label, 1, Qt.AlignCenter)
-        tb1.setLayout(hlayout)
+        label.setPixmap(QPixmap("./images/test.jpg"))
+        # label.setPixmap(QPixmap("./images/python.jpg"))
+        tb1.setWidget(label)
 
         # tb2相关内容
         tb2 = QWidget()
@@ -105,6 +118,54 @@ class MainWin(QMainWindow):
         tabWidget.addTab(tb1, "图形")
         tabWidget.addTab(tb2, "原始数据")
         return tabWidget, label
+
+    # 创建表格控件
+    def CreateQTableWidget(self, data):
+            """
+            :param data: 二维列表，有表头的数据，第一行是表头
+            :return:
+            """
+            tableWidget = QTableWidget()
+            tableWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+            # 固定 tableWidget 大小
+            tableWidget.setFixedSize(ConstValues.PsMainWindowWidth * 5 / 6, ConstValues.PsMainWindowHeight * 850 / 1000)
+            # 调整列和行
+            tableWidget.resizeColumnsToContents()
+            tableWidget.resizeRowsToContents()
+            # 合法性检查,同时获取行数、列数
+            if data is None:
+                return None
+            rowNum = len(data) - 1
+            if rowNum == -1:
+                return None
+            columnNum = len(data[0])
+            if columnNum == 0:
+                return None
+
+            # 设置行列数
+            tableWidget.setRowCount(rowNum)
+            tableWidget.setColumnCount(columnNum)
+
+            # 获取表头，数据
+            # header = data[0]
+            # showData = data[1:]
+            showData = data
+
+            # 添加表头
+            # tableWidget.setHorizontalHeaderLabels(header)
+            # 添加数据
+            for i in range(rowNum):
+                for j in range(columnNum):
+                    item = showData[i][j]
+                    if isinstance(item, float) and math.isnan(item):
+                        continue
+                    item = str(item)
+                    nameItem = QTableWidgetItem(item)
+                    tableWidget.setItem(i, j, nameItem)
+            # 禁止编辑
+            tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+            return tableWidget
 
     # 右击选项菜单（Plot / Raw Plot Data）
     def rightMenuShow(self):
@@ -118,7 +179,7 @@ class MainWin(QMainWindow):
         print(act.text())
 
     # 画图显示
-    def PlotDisplay(self, index):
+    def Display(self, index):
         self.plotStack.setCurrentIndex(index)
 
     # 全局数据初始化
@@ -126,13 +187,15 @@ class MainWin(QMainWindow):
         # StartAll函数运行所需要的参数，全部参数
         self.AllData = None
         # 文件路径
-
         self.sampleFilePath = ""  # 样本文件路径
+        self.sampleData = []
         self.blankFilePath = ""  # 空白文件路径
+        self.blankData = []
         self.outputFilesPath = ""  # 输出文件路径
         if ConstValues.PsIsSingleRun:
             self.sampleFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.xlsx"
             self.blankFilePath = "./inputData/test/blank-54.xlsx"
+
 
         # 扣空白全过程需要的数据  0~10000（整数）
         self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 去空白(参数)：删除Intensity小于deleteBlankIntensity的行
@@ -273,15 +336,30 @@ class MainWin(QMainWindow):
         self.PeakDivResult = None
         self.PeakDivIsFinished = False
 
-        # 绘图全过程所需要的数据  1~6(整数)
+        # 绘图全过程所需要的数据  记录是否进入过PlotSetup()函数
+        self.PlotHasEnter = ConstValues.PsPlotHasEnter
+        # 1~6(整数)
         self.PlotType = ConstValues.PsPlotType  # 绘图类型
-        self.PlotClassList = None  # 列表，需要绘制的类型，例子：["CH", "N1"]
+        self.PlotClassList = ConstValues.PsPlotClassList  # 列表，需要绘制的类型，例子：["CH", "N1"]
+        self.PlotTitleName = ConstValues.PsPlotTitleName  # 标题名称
+        self.PlotTitleColor = ConstValues.PsPlotTitleColor  # 标题颜色
+        self.PlotXAxisName = ConstValues.PsPlotXAxisName  # x轴名称
+        self.PlotXAxisColor = ConstValues.PsPlotXAxisColor  # x轴颜色
+        self.PlotYAxisName = ConstValues.PsPlotYAxisName  # y轴名称
+        self.PlotYAxisColor = ConstValues.PsPlotYAxisColor  # y轴颜色
 
         self.PlotList = [
                             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+                            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
                             self.PlotType,  # 绘图类型
                             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                            self.PlotTitleName,
+                            self.PlotTitleColor,
+                            self.PlotXAxisName,
+                            self.PlotXAxisColor,
+                            self.PlotYAxisName,
+                            self.PlotYAxisColor
                         ]
 
     # 使窗口居中
@@ -548,11 +626,15 @@ class MainWin(QMainWindow):
 
     # 导入样本文件，文件路径存在sampleFileName中
     def ImportSampleFile(self):
-        # 导入文件，并得到文件名称
-        openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', '', 'Excel files(*.xlsx , *.xls)')
-        self.sampleFilePath = openfile_name[0]
-        if ConstValues.PsIsDebug:
-            print(self.sampleFilePath)
+
+        # 程序运行前准备工作
+        if not self.BeforeRunning("ImportSampleFile"):
+            return
+        # 处理扣空白，另起一个线程运行扣空白代码，主界面可以操作
+        self.StartRunning("ImportSampleFile", text="正在导入样本文件，请稍后...")
+        # 程序开始运行后收尾工作
+        self.AfterRunning("ImportSampleFile")
+
 
     # 导入空白文件，文件路径存在blankFileName中
     def ImportBlankFile(self):
@@ -639,11 +721,18 @@ class MainWin(QMainWindow):
         self.PlotList = [
             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
             self.PlotType,  # 绘图类型
             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotTitleName,
+            self.PlotTitleColor,
+            self.PlotXAxisName,
+            self.PlotXAxisColor,
+            self.PlotYAxisName,
+            self.PlotYAxisColor
         ]
         newParameters = SetupInterface().PlotSetup(self.PlotList)
-        # self.UpdateData("PlotSetup", newParameters)
+        self.UpdateData("PlotSetup", newParameters)
 
     # 去空白 #######################################
     def DeleteBlank(self):
@@ -798,6 +887,11 @@ class MainWin(QMainWindow):
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
             PromptBox().errorMessage("程序运行出现错误!")
+        # elif retList[0] == "showGif":
+        #     # 更新状态栏消息
+        #     self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕！")
+        #     # 结束对话框
+        #     self.importFileMt.exit()
 
     # 设置：数据更新
     def UpdateData(self, Type, newParameters):
@@ -912,6 +1006,32 @@ class MainWin(QMainWindow):
 
             if ConstValues.PsIsDebug:
                 print(self.PeakDivList[3:])
+        elif Type == "PlotSetup":
+            self.PlotHasEnter = newParameters[0]  # 记录是否进入过PlotSetup()函数
+            self.PlotType =newParameters[1]  # 绘图类型
+            self.PlotClassList = newParameters[2]  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotTitleName = newParameters[3]  # 标题名称
+            self.PlotTitleColor = newParameters[4]  # 标题颜色
+            self.PlotXAxisName = newParameters[5]  # x轴名称
+            self.PlotXAxisColor = newParameters[6]  # x轴颜色
+            self.PlotYAxisName = newParameters[7]  # y轴名称
+            self.PlotYAxisColor = newParameters[8]  # y轴颜色
+            self.PlotList = [
+                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+                self.PlotType,  # 绘图类型
+                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                self.PlotTitleName,
+                self.PlotTitleColor,
+                self.PlotXAxisName,
+                self.PlotXAxisColor,
+                self.PlotYAxisName,
+                self.PlotYAxisColor
+            ]
+
+            if ConstValues.PsIsDebug:
+                print(self.PlotList[2:])
 
     # 程序运行前准备工作
     def BeforeRunning(self, Type):
@@ -1090,11 +1210,23 @@ class MainWin(QMainWindow):
                     self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
                  ]
             ]
+        elif Type == "ImportSampleFile":
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入文件，请稍后...")
+            # 导入文件，并得到文件名称
+            openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', './inputdata/350', 'Excel files(*.xlsx , *.xls)')
+            self.sampleFilePath = openfile_name[0]
+            if ConstValues.PsIsDebug:
+                print(self.sampleFilePath)
+            if self.sampleFilePath == "":
+                # 更新状态栏消息
+                self.statusSetup(ConstValues.PsMainWindowStatusMessage, "当前处于空闲状态")
+                return False
 
         return True
 
     # 开启新进程，运行
-    def StartRunning(self, Type):
+    def StartRunning(self, Type, text=""):
         if Type == "DeleteBlank":
             self.deleteBlankMt = MultiThread("ClassDeleteBlank", self.deleteBlankList, self.outputFilesPath)
             self.deleteBlankMt.signal.connect(self.HandleData)
@@ -1123,6 +1255,18 @@ class MainWin(QMainWindow):
             self.StartAllMt = MultiThread("StartAll", self.AllData, self.outputFilesPath)
             self.StartAllMt.signal.connect(self.HandleData)
             self.StartAllMt.start()
+        elif Type == "ImportSampleFile":
+            # 读入数据，并显示到主界面
+            self.sampleData = np.array(pd.read_excel(self.sampleFilePath, header=None)).tolist()
+            if ConstValues.PsIsDebug:
+                print(self.sampleData)
+            # 处理过程
+            name = self.sampleFilePath.split("/")[-1]
+            self.mainList.insertItem(self.tabWidgetId, name)
+            self.tabWidgetId += 1
+            self.tableWidget1 = self.CreateQTableWidget(self.sampleData)  # 创建 QTableWidget
+            if self.tableWidget1 is not None:  # # 添加 QTableWidget
+                self.plotStack.addWidget(self.tableWidget1)
 
     # 程序开始运行后收尾工作
     def AfterRunning(self, Type):
@@ -1169,6 +1313,10 @@ class MainWin(QMainWindow):
             # 弹出提示框
             self.StartAllPromptBox = PromptBox()
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
+        elif Type == "ImportSampleFile":
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕！")
+
 
     # 画图
     def SetupAndPlot(self):

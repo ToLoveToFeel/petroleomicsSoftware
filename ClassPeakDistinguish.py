@@ -13,7 +13,8 @@ from PromptBox import PromptBox
 class ClassPeakDistinguish:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 7, "ClassPeakDistinguish参数个数不对!"
-        self.TICFilePath = parameterList[0]  # 总离子流图路径（第一阶段）
+        # self.TICData是读入后并处理后的数据, 为字典：{key: value}，value为二维列表[[Mass, Intensity], ..., [Mass, Intensity]]
+        self.TICData = parameterList[0]  # 总离子流图路径（第一阶段）
         self.DelIsoResult = parameterList[1]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
         self.PeakDisContinuityNum = parameterList[2]  # 连续出现的扫描点个数，格式：整数
         self.PeakDisMassDeviation = parameterList[3]  # 质量偏差，格式：浮点数
@@ -30,8 +31,6 @@ class ClassPeakDistinguish:
 
     # 负责峰识别
     def PeakDistinguish(self):
-        # 读取总离子流图
-        self.TICData = self.ReadTIC()
         # 获取排序后的RT，后面峰检测需要使用
         sortedRTValue = sorted([float(num) for num in list(self.TICData)])
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_4_peakDistinguish")
@@ -178,42 +177,42 @@ class ClassPeakDistinguish:
                 return item
         return None
 
-    # 负责读取总离子流图文件(txt)
-    def ReadTIC(self):
-        """
-        文件格式必须为：每行三个数据，一个表头，数据之间用制表符(\t)分割，无其他无关字符
-        :return:返回结果为字典：{key:value,...,key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-        """
-        startTime = time.time()
-        # 读取数据，数据分割
-        f = open(self.TICFilePath, "r")
-        content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
-        # 去除表头
-        content = content[3:]
-        if len(content) / 3 != int(len(content) / 3):
-            # raise Exception("Error in ClassPeakDistinguish ReadTIC.")
-            PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
-            return None
-        # str全部转为float
-        content = [float(item) for item in content]
-        # 返回结果为字典：{key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-        res = {}
-
-        key = content[0]
-        value = []
-        for i in range(int(len(content) / 3)):
-            if content[i * 3] != key:
-                res[key] = value  # 字典中添加元素（二维列表）
-                key = content[i * 3]
-                value = []
-            value.append([content[i * 3 + 1], content[i * 3 + 2]])
-
-        if ConstValues.PsIsDebug:
-            print("扫描点的个数： ", len(res))
-        endTime = time.time()
-        if ConstValues.PsIsDebug:
-            print("读入和处理文件费时： ",endTime - startTime, " s")
-        return res
+    # # 负责读取总离子流图文件(txt)
+    # def ReadTIC(self):
+    #     """
+    #     文件格式必须为：每行三个数据，一个表头，数据之间用制表符(\t)分割，无其他无关字符
+    #     :return:返回结果为字典：{key:value,...,key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
+    #     """
+    #     startTime = time.time()
+    #     # 读取数据，数据分割
+    #     f = open(self.TICFilePath, "r")
+    #     content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
+    #     # 去除表头
+    #     content = content[3:]
+    #     if len(content) / 3 != int(len(content) / 3):
+    #         # raise Exception("Error in ClassPeakDistinguish ReadTIC.")
+    #         PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
+    #         return None
+    #     # str全部转为float
+    #     content = [float(item) for item in content]
+    #     # 返回结果为字典：{key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
+    #     res = {}
+    #
+    #     key = content[0]
+    #     value = []
+    #     for i in range(int(len(content) / 3)):
+    #         if content[i * 3] != key:
+    #             res[key] = value  # 字典中添加元素（二维列表）
+    #             key = content[i * 3]
+    #             value = []
+    #         value.append([content[i * 3 + 1], content[i * 3 + 2]])
+    #
+    #     if ConstValues.PsIsDebug:
+    #         print("扫描点的个数： ", len(res))
+    #     endTime = time.time()
+    #     if ConstValues.PsIsDebug:
+    #         print("读入和处理文件费时： ",endTime - startTime, " s")
+    #     return res
 
     # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
     def PeakDisSort(self):

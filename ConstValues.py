@@ -77,7 +77,8 @@ class ConstValues:
     PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
     PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
     PsqtaIconBack = "fa.arrow-left"  # 返回上一级图标
-    PsqtaIconFolder = "fa.folder-o"
+    PsqtaIconTreeFolder = "fa.folder-o"  # 树控件文件夹
+    PsqtaIconTreeImage = "fa.file-image-o"  # 树控件文件夹
 
     # 左侧树结构二级目录名称
     PsTreeInputFiles = "输入文件"
@@ -107,7 +108,9 @@ class ConstValues:
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
     # 主页面最多显示的表格行数
-    PsMainMaxRowNum = 500000
+    PsMainMaxRowNum = 200000
+    # 读入文件默认目录
+    PsReadFileDefaultDirectoy = "./inputdata/350"
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"

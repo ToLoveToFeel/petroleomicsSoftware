@@ -8,6 +8,7 @@ from ClassPeakDistinguish import ClassPeakDistinguish
 from ClassRemoveFalsePositive import ClassRemoveFalsePositive
 from ClassPeakDivision import ClassPeakDivision
 from ConstValues import ConstValues
+from PromptBox import PromptBox
 import numpy as np
 import pandas as pd
 
@@ -34,7 +35,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassDeleteBlank Error : ", e)
+                    print("MultiThread ClassDeleteBlank Error : ", e)
                 self.signal.emit(["ClassDeleteBlank Error"])
         elif self.__function == "ClassGenerateDataBase":
             try:
@@ -46,7 +47,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassGenerateDataBase Error : ", e)
+                    print("MultiThread ClassGenerateDataBase Error : ", e)
                 self.signal.emit(["ClassGenerateDataBase Error"])
         elif self.__function == "ClassDeleteIsotope":
             try:
@@ -58,7 +59,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassDeleteIsotope Error : ", e)
+                    print("MultiThread ClassDeleteIsotope Error : ", e)
                 self.signal.emit(["ClassDeleteIsotope Error"])
         elif self.__function == "ClassPeakDistinguish":
             try:
@@ -71,7 +72,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassPeakDistinguish Error : ", e)
+                    print("MultiThread ClassPeakDistinguish Error : ", e)
                 self.signal.emit(["ClassPeakDistinguish Error"])
         elif self.__function == "ClassRemoveFalsePositive":
             try:
@@ -83,7 +84,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassRemoveFalsePositive Error : ", e)
+                    print("MultiThread ClassRemoveFalsePositive Error : ", e)
                 self.signal.emit(["ClassRemoveFalsePositive Error"])
         elif self.__function == "ClassPeakDivision":
             try:
@@ -95,7 +96,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ClassPeakDivision Error : ", e)
+                    print("MultiThread ClassPeakDivision Error : ", e)
                 self.signal.emit(["ClassPeakDivision Error"])
         elif self.__function == "StartAll":
             try:
@@ -168,7 +169,7 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("StartAll Error : ", e)
+                    print("MultiThread StartAll Error : ", e)
                 self.signal.emit(["StartAll Error"])
         elif self.__function == "ImportSampleFile":  # 读入数据显示，后台处理
             try:
@@ -182,8 +183,36 @@ class MultiThread(QThread):
                 self.signal.emit(retList)
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("ImportSampleFile : ", e)
-                self.signal.emit(["ImportSampleFile"])
+                    print("MultiThread ImportSampleFile : ", e)
+                # self.signal.emit(["ImportSampleFile"])
+        elif self.__function == "ImportBlankFile":  # 读入数据显示，后台处理
+            try:
+                retList = ["ImportBlankFile"]
+                # 提取参数
+                blankFilePath = self.__parameters[0]
+                # 弹出提示框
+                blankData = np.array(pd.read_excel(blankFilePath, header=None)).tolist()
+                # 返回结果
+                retList.append(blankData)
+                self.signal.emit(retList)
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread ImportBlankFile : ", e)
+                # self.signal.emit(["ImportBlankFile"])
+        elif self.__function == "ImportTICFile":  # 读入数据显示，后台处理
+            try:
+                retList = ["ImportTICFile"]
+                # 提取参数
+                TICFilePath = self.__parameters[0]
+                # 弹出提示框
+                TICData, TICDataDictionary = self.ReadTIC(TICFilePath)
+                # 返回结果
+                retList.append(TICData)
+                retList.append(TICDataDictionary)
+                self.signal.emit(retList)
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread ImportTICFile : ", e)
         endTime = time.time()
         if ConstValues.PsIsDebug:
             if endTime - startTime > 60:
@@ -191,5 +220,45 @@ class MultiThread(QThread):
             else:
                 print("程序运行总用时：", endTime - startTime, " s.")
 
+    # 负责读取总离子流图文件(txt)
+    def ReadTIC(self, TICFilePath):
+        """
+        文件格式必须为：每行三个数据，一个表头，数据之间用制表符(\t)分割，无其他无关字符
+        :return:返回结果为字典：{key:value,...,key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
+        """
+        startTime = time.time()
+        # 读取数据，数据分割
+        f = open(TICFilePath, "r")
+        content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
+        # 去除表头
+        header = content[:3]
+        content = content[3:]
+        if len(content) / 3 != int(len(content) / 3):
+            # raise Exception("Error in ClassPeakDistinguish ReadTIC.")
+            PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
+            return None, None
+        # str全部转为float
+        content = [float(item) for item in content]
+        # 返回结果，二维字典
+        resList = [header]
+        # 返回结果为字典：{key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
+        resDictionary = {}
+
+        key = content[0]
+        value = []
+        for i in range(int(len(content) / 3)):
+            resList.append(content[(i * 3): (i * 3 + 3)])
+            if content[i * 3] != key:
+                resDictionary[key] = value  # 字典中添加元素（二维列表）
+                key = content[i * 3]
+                value = []
+            value.append([content[i * 3 + 1], content[i * 3 + 2]])
+
+        if ConstValues.PsIsDebug:
+            print("扫描点的个数： ", len(resDictionary))
+        endTime = time.time()
+        if ConstValues.PsIsDebug:
+            print("读入和处理文件费时： ", endTime - startTime, " s")
+        return resList, resDictionary
 
 

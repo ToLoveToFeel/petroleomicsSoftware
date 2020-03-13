@@ -17,7 +17,6 @@ class ConstValues:
     PsMainWindowWidth = 1200
     # 主窗口高度
     PsMainWindowHeight = 800
-
     # 主窗口底部状态栏显示的信息
     PsMainWindowStatusMessage = "欢迎使用！"
     # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
@@ -36,6 +35,9 @@ class ConstValues:
     # 工具栏显示的字体及大小
     PsToolbarFontType = "Arial"
     PsToolbarFontSize = 10
+    # 主界面树控件显示的字体及大小
+    PsTreeFontType = "Arial"
+    PsTreeFontSize = 11
     # 运行提示框弹出时间 1 -> 1s
     PsBeforeRunningPromptBoxTime = 1
     PsAfterRunningPromptBoxTime = 1
@@ -59,6 +61,7 @@ class ConstValues:
     # 来自 qtawesome 网址：https://fontawesome.dashgame.com/
     PsqtaColor = "black"
     PsqtaWindowIconColor = "red"
+    PsqtaIconFolderColor = "black"
     PsqtaWindowIcon = 'fa.fire'  # 窗口弹出的图标
     PsqtaIconOpenFileExcel = 'fa.file-excel-o'  # 打开Excel文件图标
     PsqtaIconOpenFileTxt = 'fa.file-text-o'  # 打开Txt文件图标
@@ -74,6 +77,17 @@ class ConstValues:
     PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
     PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
     PsqtaIconBack = "fa.arrow-left"  # 返回上一级图标
+    PsqtaIconFolder = "fa.folder-o"
+
+    # 左侧树结构二级目录名称
+    PsTreeInputFiles = "输入文件"
+    PsTreeDeleteBlank = "去空白结果"
+    PsTreeGDB = "数据库生成结果"
+    PsTreeDelIso = "搜同位素结果"
+    PsTreePeakDis = "峰识别结果"
+    PsTreeRemoveFP = "去假阳性结果"
+    PsTreePeakDiv = "峰检测结果"
+    PsTreePlot = "画图结果"
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -92,6 +106,8 @@ class ConstValues:
 
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
+    # 主页面最多显示的表格行数
+    PsMainMaxRowNum = 500000
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"

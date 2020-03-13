@@ -7,8 +7,6 @@ from Utils import *
 from SetupInterface import SetupInterface
 from MultiThread import MultiThread
 import qtawesome
-import numpy as np
-import pandas as pd
 import math
 import traceback
 import time
@@ -65,6 +63,10 @@ class MainWin(QMainWindow):
     def initShow(self):
         # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
         self.tabWidgetId = 0
+        # 主界面读取文件名称列表，读入相同名称的文件时，需要确认是否覆盖
+        self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减
+        self.mainDataNameSetAll = set()  # 所有可能需要显示的表格名称集合，里面全是字符串，只增不减
+        self.mainNeedCover = False
         # 创建文件夹
         newDirectory = CreateDirectory("", "./intermediateFiles", "/_7_plot")
 
@@ -72,36 +74,132 @@ class MainWin(QMainWindow):
         self.setCentralWidget(self.centralwidget)
         self.Layout = QGridLayout(self.centralwidget)
         # 创建左右两边Widget框
-        self.mainList = QListWidget()  # 列表控件，左边
-        self.mainList.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        self.mainTreeWidget = QTreeWidget()  # 树控件，左边
+        self.mainTreeWidget.setColumnCount(1)
+        self.mainTreeWidget.setHeaderLabel("Project")
+        self.mainTreeWidget.header().setMinimumSectionSize(500)  # 杜文文件名太长，设置这一句有水平滚动条
+        self.mainTreeWidget.setFont(QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 设置字体和大小
         self.plotStack = QStackedWidget()  # 堆栈窗口控件，右边
-        # 列表控件关联槽函数，显示内容包括excel
-        self.mainList.currentRowChanged.connect(self.Display)
-        # 放置控件
-        self.Layout.addWidget(self.mainList, 0, 0, 1, 2)
+        # 主窗口放置左右两大控件
+        self.Layout.addWidget(self.mainTreeWidget, 0, 0, 1, 2)
         self.Layout.addWidget(self.plotStack, 0, 2, 1, 8)
 
-        # 主界面添加内容
-        self.mainList.insertItem(self.tabWidgetId, '联系方式')  # mainList添加一条记录
-        self.tabWidgetId += 1
-        self.tabWidget1, self.tabWidgetLabel1 = self.CreateQTabWidget()  # 创建 QTabWidget
-        self.plotStack.addWidget(self.tabWidget1)  # 添加 QTabWidget
+        # 树控件设置根节点
+        self.mainTreeRoot = QTreeWidgetItem(self.mainTreeWidget)
+        self.mainTreeRoot.setText(0, "石油组学数据")
+        self.mainTreeRoot.setIcon(0, qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        # 树控件创建子节点
+        self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild1.setText(0, ConstValues.PsTreeInputFiles)
+        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild2 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild2.setText(0, ConstValues.PsTreeDeleteBlank)
+        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild3 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild3.setText(0, ConstValues.PsTreeGDB)
+        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild4 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild4.setText(0, ConstValues.PsTreeDelIso)
+        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild5 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild5.setText(0, ConstValues.PsTreePeakDis)
+        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild6 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild6.setText(0, ConstValues.PsTreeRemoveFP)
+        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild7 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild7.setText(0, ConstValues.PsTreePeakDiv)
+        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild8 = QTreeWidgetItem(self.mainTreeRoot)
+        self.mainTreeChild8.setText(0, ConstValues.PsTreePlot)
+        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
 
-        self.mainList.insertItem(self.tabWidgetId, '个人信息')
-        self.tabWidgetId += 1
-        self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget()
-        self.plotStack.addWidget(self.tabWidget2)
+        # 展开所有树控件
+        self.mainTreeWidget.expandAll()
+        # 树控件关联槽函数，显示内容包括excel
+        self.mainTreeWidget.clicked.connect(self.onTreeClicked)
+
+        # 创建一个QTabWidget，专门用于存放用于显示的数据(包括excel,txt以及中间生成的数据)
+        self.tabWidgetShowData = QTabWidget()
+        self.tabWidgetShowData.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        self.tabWidgetShowData.setFixedWidth(ConstValues.PsMainWindowWidth*8/10)
+        style = "QTabBar::tab{background-color: #DCDCDC;}" + \
+              "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
+        self.tabWidgetShowData.setStyleSheet(style)
+        self.tabWidgetShowData.setTabsClosable(True)  # 可以关闭
+        self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
+        self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
+
+        # TODO:右侧添加内容，测试
+        self.tabWidget1, self.tabWidgetLabel1 = self.CreateQTabWidget()  # 创建 QTabWidget
+        self.plotStack.addWidget(self.tabWidget1)  # 添加 QTabWidget，2
+        self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget()  # 创建 QTabWidget
+        self.plotStack.addWidget(self.tabWidget2)  # 添加 QTabWidget，3
+
+        self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
+        self.mainTreeChild8_1.setText(0, "python1.jpg")
+        self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild8_2 = QTreeWidgetItem(self.mainTreeChild8)
+        self.mainTreeChild8_2.setText(0, "python2.jpg")
+        self.mainTreeChild8_2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconFolder, color=ConstValues.PsqtaIconFolderColor))
 
         # 右键处理
         self.tabWidgetLabel1.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tabWidgetLabel1.customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
 
+        # 树控件设置字体大小
+        item = QTreeWidgetItemIterator(self.mainTreeWidget)
+        while item.value():
+            treeWidgetItem = item.value()
+            treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))
+            # 到下一个节点
+            item += 1
+
+    # 左侧树控件点击后反应
+    def onTreeClicked(self, index):
+        item = self.mainTreeWidget.currentItem()  # 获取当前树控件，item.text(0)是树控件的名称
+        if item == self.mainTreeRoot:
+            if ConstValues.PsIsDebug:
+                print("i am root")
+            return
+        treeWidgetName = item.parent().text(0)
+        indexRow = index.row()
+        if treeWidgetName == ConstValues.PsTreeInputFiles:  # 输入文件
+            myName = item.text(0)
+            if myName not in self.mainDataNameSet:  # 如果当前tab没显示在主界面上，添加到主界面
+                self.tabWidgetShowData.addTab(globals()["tableWidget_" + myName], myName)
+            self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + myName])  # 切换到当前tab
+            self.plotStack.setCurrentIndex(0)
+        elif treeWidgetName == ConstValues.PsTreeDeleteBlank:  # 去空白结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreeGDB:  # 数据库生成结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreeDelIso:  # 搜同位素结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreePeakDis:  # 峰识别结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreeRemoveFP:  # 去假阳性结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreePeakDiv:  # 峰检测结果
+            pass
+        elif treeWidgetName == ConstValues.PsTreePlot:  # 画图结果
+            self.plotStack.setCurrentIndex(indexRow + 1)
+
+        if ConstValues.PsIsDebug:
+            print(indexRow)
+            print('key=%s' % treeWidgetName)
+
     # 创建选项卡控件
-    def CreateQTabWidget(self):
+    def CreateQTabWidget(self, needColsed=False):
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        style = "QTabBar::tab{background-color: #DCDCDC;}" + \
+                "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
+        tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
-        tabWidget.setFixedSize(ConstValues.PsMainWindowWidth*5/6, ConstValues.PsMainWindowHeight*855/1000)
+        tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth*8/10)
+        # 是否允许关闭某个标签
+        tabWidget.setTabsClosable(needColsed)
 
         # tb1相关内容
         tb1 = QScrollArea()
@@ -119,53 +217,58 @@ class MainWin(QMainWindow):
         tabWidget.addTab(tb2, "原始数据")
         return tabWidget, label
 
+    # 关闭 self.tabWidgetShowData 中的一个tab
+    def TabWidgetCloseTab(self, index):
+        sender = self.sender()
+        name = self.tabWidgetShowData.tabText(index)  # 当前tab的名称
+        if ConstValues.PsIsDebug:
+            print("TabWidgetCloseTab()中sender：", sender)
+            print("TabWidgetCloseTab()中name：", name)
+        if name in self.mainDataNameSet:
+            self.mainDataNameSet.remove(name)
+        sender.removeTab(index)
+
     # 创建表格控件
     def CreateQTableWidget(self, data):
-            """
-            :param data: 二维列表，有表头的数据，第一行是表头
-            :return:
-            """
-            tableWidget = QTableWidget()
-            tableWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
-            # 固定 tableWidget 大小
-            tableWidget.setFixedSize(ConstValues.PsMainWindowWidth * 5 / 6, ConstValues.PsMainWindowHeight * 850 / 1000)
-            # 调整列和行
-            tableWidget.resizeColumnsToContents()
-            tableWidget.resizeRowsToContents()
-            # 合法性检查,同时获取行数、列数
-            if data is None:
-                return None
-            rowNum = len(data) - 1
-            if rowNum == -1:
-                return None
-            columnNum = len(data[0])
-            if columnNum == 0:
-                return None
+        """
+        :param data: 二维列表，有表头的数据，第一行是表头
+        :return:
+        """
+        tableWidget = QTableWidget()
+        tableWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
+        # 调整列和行
+        tableWidget.resizeColumnsToContents()
+        tableWidget.resizeRowsToContents()
 
-            # 设置行列数
-            tableWidget.setRowCount(rowNum)
-            tableWidget.setColumnCount(columnNum)
+        # 合法性检查,同时获取行数、列数
+        if data is None:
+            return None
+        rowNum = len(data)
+        if rowNum == 0:
+            return None
+        columnNum = len(data[0])
+        if columnNum == 0:
+            return None
+        # 行数过多时，不全部显示
+        rowNum = min(rowNum, ConstValues.PsMainMaxRowNum)
 
-            # 获取表头，数据
-            # header = data[0]
-            # showData = data[1:]
-            showData = data
+        # 设置行列数
+        tableWidget.setRowCount(rowNum)
+        tableWidget.setColumnCount(columnNum)
 
-            # 添加表头
-            # tableWidget.setHorizontalHeaderLabels(header)
-            # 添加数据
-            for i in range(rowNum):
-                for j in range(columnNum):
-                    item = showData[i][j]
-                    if isinstance(item, float) and math.isnan(item):
-                        continue
-                    item = str(item)
-                    nameItem = QTableWidgetItem(item)
-                    tableWidget.setItem(i, j, nameItem)
-            # 禁止编辑
-            tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # 添加数据
+        for i in range(rowNum):
+            for j in range(columnNum):
+                item = data[i][j]
+                if isinstance(item, float) and math.isnan(item):
+                    continue
+                item = str(item)
+                nameItem = QTableWidgetItem(item)
+                tableWidget.setItem(i, j, nameItem)
+        # 禁止编辑
+        tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-            return tableWidget
+        return tableWidget
 
     # 右击选项菜单（Plot / Raw Plot Data）
     def rightMenuShow(self):
@@ -177,10 +280,6 @@ class MainWin(QMainWindow):
     # 右击后处理函数
     def MenuSlot(self, act):
         print(act.text())
-
-    # 画图显示
-    def Display(self, index):
-        self.plotStack.setCurrentIndex(index)
 
     # 全局数据初始化
     def dataInit(self):
@@ -626,7 +725,6 @@ class MainWin(QMainWindow):
 
     # 导入样本文件，文件路径存在sampleFileName中
     def ImportSampleFile(self):
-
         # 程序运行前准备工作
         if not self.BeforeRunning("ImportSampleFile"):
             return
@@ -634,7 +732,6 @@ class MainWin(QMainWindow):
         self.StartRunning("ImportSampleFile", text="正在导入样本文件，请稍后...")
         # 程序开始运行后收尾工作
         self.AfterRunning("ImportSampleFile")
-
 
     # 导入空白文件，文件路径存在blankFileName中
     def ImportBlankFile(self):
@@ -887,11 +984,53 @@ class MainWin(QMainWindow):
             # 关闭弹出的程序运行指示对话框
             self.StartAllPromptBox.closeGif()
             PromptBox().errorMessage("程序运行出现错误!")
-        # elif retList[0] == "showGif":
-        #     # 更新状态栏消息
-        #     self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕！")
-        #     # 结束对话框
-        #     self.importFileMt.exit()
+        elif retList[0] == "ImportSampleFile":
+            # 读入数据，并显示到主界面
+            self.sampleData = retList[1]
+            if ConstValues.PsIsDebug:
+                print(self.sampleData)
+            # 处理过程
+            name = self.sampleFilePath.split("/")[-1]
+            # 判断是否需要覆盖原本文件，并进行相应的操作
+            if self.mainNeedCover:
+                self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + name]))
+            # 记录导入文件的信息
+            self.mainDataNameSet.add(name)
+            self.mainDataNameSetAll.add(name)
+            # 树控件创建对应项
+            if not self.mainNeedCover:
+                mainTreeChild1_ = QTreeWidgetItem(self.mainTreeChild1)
+                mainTreeChild1_.setText(0, name)
+                mainTreeChild1_.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaIconFolderColor))
+                # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
+                item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                while item.value():
+                    treeWidgetItem = item.value()
+                    if ConstValues.PsIsDebug:
+                        print(treeWidgetItem)
+                        print(treeWidgetItem.text(0))
+                    if treeWidgetItem.isSelected():
+                        treeWidgetItem.setSelected(False)
+                    treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
+                    # 到下一个节点
+                    item += 1
+                # 光标选择到当前导入的文件
+                mainTreeChild1_.setSelected(True)
+            # 创建 QTableWidget
+            globals()["tableWidget_" + name] = self.CreateQTableWidget(self.sampleData)
+            # self.tabWidgetShowData 添加该项内容
+            if globals()["tableWidget_" + name] is not None:  # # 添加 QTableWidget
+                self.tabWidgetShowData.addTab(globals()["tableWidget_" + name], name)
+                self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + name])  # 切换到当前tab
+            self.plotStack.setCurrentIndex(0)  # 显示导入的数据
+            self.mainNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕！")
+            self.ImportSampleFilePromptBox.closeGif()
+            # 如果行数过多，不全部显示，提醒用户
+            if len(self.sampleData) > ConstValues.PsMainMaxRowNum:
+                message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
+                PromptBox().warningMessage(message)
 
     # 设置：数据更新
     def UpdateData(self, Type, newParameters):
@@ -1211,8 +1350,6 @@ class MainWin(QMainWindow):
                  ]
             ]
         elif Type == "ImportSampleFile":
-            # 更新状态栏消息
-            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入文件，请稍后...")
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', './inputdata/350', 'Excel files(*.xlsx , *.xls)')
             self.sampleFilePath = openfile_name[0]
@@ -1222,6 +1359,11 @@ class MainWin(QMainWindow):
                 # 更新状态栏消息
                 self.statusSetup(ConstValues.PsMainWindowStatusMessage, "当前处于空闲状态")
                 return False
+            # # 读入文件合法性检查（是否重名）
+            name = self.sampleFilePath.split("/")[-1]
+            if name in self.mainDataNameSetAll:
+                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
+                return self.mainNeedCover
 
         return True
 
@@ -1256,17 +1398,9 @@ class MainWin(QMainWindow):
             self.StartAllMt.signal.connect(self.HandleData)
             self.StartAllMt.start()
         elif Type == "ImportSampleFile":
-            # 读入数据，并显示到主界面
-            self.sampleData = np.array(pd.read_excel(self.sampleFilePath, header=None)).tolist()
-            if ConstValues.PsIsDebug:
-                print(self.sampleData)
-            # 处理过程
-            name = self.sampleFilePath.split("/")[-1]
-            self.mainList.insertItem(self.tabWidgetId, name)
-            self.tabWidgetId += 1
-            self.tableWidget1 = self.CreateQTableWidget(self.sampleData)  # 创建 QTableWidget
-            if self.tableWidget1 is not None:  # # 添加 QTableWidget
-                self.plotStack.addWidget(self.tableWidget1)
+            self.ImportExcelFileMt = MultiThread("ImportSampleFile", [self.sampleFilePath], self.outputFilesPath)
+            self.ImportExcelFileMt.signal.connect(self.HandleData)
+            self.ImportExcelFileMt.start()
 
     # 程序开始运行后收尾工作
     def AfterRunning(self, Type):
@@ -1315,7 +1449,10 @@ class MainWin(QMainWindow):
             self.StartAllPromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportSampleFile":
             # 更新状态栏消息
-            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "处理完毕！")
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入Excel文件，请稍后...")
+            # 弹出提示框
+            self.ImportSampleFilePromptBox = PromptBox()
+            self.ImportSampleFilePromptBox.showGif("正在导入Excel文件，请稍后...", ConstValues.PsIconLoading)
 
 
     # 画图

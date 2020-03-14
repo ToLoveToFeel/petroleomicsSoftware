@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口宽度
@@ -89,6 +89,14 @@ class ConstValues:
     PsTreeRemoveFP = "去假阳性结果"
     PsTreePeakDiv = "峰检测结果"
     PsTreePlot = "画图结果"
+    # 生成的文件名称
+    PsNameDeleteBlank = "__DeleteBlank.xlsx"
+    PsNameGDB = "__GDB.xlsx"
+    PsNameDeleteIsotope = "__FindIsotope.xlsx"
+    PsNamePeakDistinguish = "__PeakDistinguish.xlsx"  # 原始名称 PeakDisPart1.xlsx
+    PsNameRemoveFPFrom_DelIsoResult = "__RemoveFPFrom_DelIsoResult.xlsx"
+    PsNameRemoveFPFrom_PeakDisResult = "__RemoveFPFrom_PeakDisResult.xlsx"
+    PsNamePeakDivision = "__PeakDivision.xlsx"
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -116,6 +124,7 @@ class ConstValues:
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
     PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
+    PsSetupStyleEnabled = False  # 默认颜色是否使能
     # PsSetupStyle = "background-color: #F5F5F5;"
 
     # 扣空白设置默认参数

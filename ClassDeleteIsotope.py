@@ -40,7 +40,7 @@ class ClassDeleteIsotope():
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_3_deleteIsotope")
-        WriteDataToExcel(result, newDirectory + "/DeleteIsotope.xlsx")
+        WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameDeleteIsotope)
 
         return result, True
 

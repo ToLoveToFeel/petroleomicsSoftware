@@ -161,7 +161,8 @@ class SetupInterface():
             self.deleteBlankDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.deleteBlankDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.deleteBlankDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.deleteBlankDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -263,7 +264,8 @@ class SetupInterface():
             self.GDBDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.GDBDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.GDBDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.GDBDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
 
         # Class
@@ -506,7 +508,8 @@ class SetupInterface():
             self.deleteIsotopeDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.deleteIsotopeDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.deleteIsotopeDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.deleteIsotopeDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
@@ -646,7 +649,8 @@ class SetupInterface():
             self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.peakDistinguishDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.peakDistinguishDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.peakDistinguishDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PeakDisContinuityNum对话框
         peakDistinguishEdit1 = self.IntQLineEdit(ConstValues.PsPeakDisContinuityNumMin, ConstValues.PsPeakDisContinuityNumMax, str(self.PeakDisContinuityNum))
@@ -806,7 +810,8 @@ class SetupInterface():
             self.RemoveFPDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.RemoveFPDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.RemoveFPDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.RemoveFPDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -930,7 +935,8 @@ class SetupInterface():
             self.PeakDivDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.PeakDivDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        self.PeakDivDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.PeakDivDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # PeakDivNoiseThreshold 对话框
         PeakDivEdit1 = self.IntQLineEdit(ConstValues.PsPeakDivNoiseThresholdMin, ConstValues.PsPeakDivNoiseThresholdMax, str(self.PeakDivNoiseThreshold))
@@ -1070,7 +1076,8 @@ class SetupInterface():
         self.PlotDialog = QDialog()
         self.PlotDialog.setWindowTitle("图形生成参数设置")
         self.PlotDialog.setFixedSize(ConstValues.PsSetupFontSize * 67, ConstValues.PsSetupFontSize * 40)  # 固定窗口大小
-        self.PlotDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        if ConstValues.PsSetupStyleEnabled:
+            self.PlotDialog.setStyleSheet(ConstValues.PsSetupStyle)
         if ConstValues.PsIconType == 1:
             self.PlotDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:

@@ -66,7 +66,7 @@ class MultiThread(QThread):
                 retList = ["ClassPeakDistinguish"]
                 cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
                 # cpd.PeakDisPlotPeak()
-                PeakDisIsFinished, PeakDisResult = cpd.PeakDistinguish()
+                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
                 retList.append(PeakDisResult)
                 retList.append(PeakDisIsFinished)
                 self.signal.emit(retList)
@@ -111,17 +111,13 @@ class MultiThread(QThread):
                 # 去空白
                 cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
                 deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
-                retList.append(deleteBlankResult)
-                retList.append(deleteBlankIsFinished)
-                self.signal.emit(["deleteBlankFinished"])
+                self.signal.emit(["deleteBlankFinished", deleteBlankResult, deleteBlankIsFinished])
                 if ConstValues.PsIsDebug:
                     print("扣空白完成！")
                 # 数据库生成
                 cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
                 GDBResult, GDBIsFinished = cgdb.GenerateData()
-                retList.append(GDBResult)
-                retList.append(GDBIsFinished)
-                self.signal.emit(["GDBFinished"])
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
                 if ConstValues.PsIsDebug:
                     print("数据库生成完成！")
                 # 扣同位素
@@ -129,18 +125,14 @@ class MultiThread(QThread):
                 DelIsoParameterList[1] = GDBResult
                 cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
                 DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
-                retList.append(DelIsoResult)
-                retList.append(DelIsoIsFinished)
-                self.signal.emit(["DelIsoFinished"])
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
                 if ConstValues.PsIsDebug:
                     print("扣同位素完成！")
                 # 峰识别
                 PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
                 cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
                 PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
-                retList.append(PeakDisResult)
-                retList.append(PeakDisIsFinished)
-                self.signal.emit(["PeakDisFinished"])
+                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
                 if ConstValues.PsIsDebug:
                     print("峰识别完成！")
                 # 去假阳性
@@ -160,9 +152,7 @@ class MultiThread(QThread):
                     PeakDivParameterList[2] = PeakDisResult[2]
                     cpd = ClassPeakDivision(PeakDivParameterList, self.outputFilesPath)
                     PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
-                    retList.append(PeakDivResult)
-                    retList.append(PeakDivIsFinished)
-                    self.signal.emit(["PeakDivFinished"])
+                    self.signal.emit(["PeakDivFinished", PeakDivResult, PeakDivIsFinished])
                     if ConstValues.PsIsDebug:
                         print("峰检测完成！")
                 # 返回结果

@@ -26,8 +26,10 @@ class ClassRemoveFalsePositive:
         self.outputFilesPath = outputFilesPath
 
         if ConstValues.PsIsSingleRun:
-            self.PeakDisResult = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1.xlsx", hasNan=True)
-            self.PeakDisResultDetail = ReadExcelToList(filepath="./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
+            filePath = "./intermediateFiles/_4_peakDistinguish/" + ConstValues.PsNamePeakDistinguish
+            self.PeakDisResult = ReadExcelToList(filepath=filePath, hasNan=True)
+            filePath = "./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx"
+            self.PeakDisResultDetail = ReadExcelToList(filepath=filePath, hasNan=False)
 
     def RemoveFalsePositive(self):
         result = []
@@ -36,10 +38,10 @@ class ClassRemoveFalsePositive:
         # 运行主逻辑
         if self.RemoveFPId == 1:
             result = self.RemoveFPFromDelIso()
-            WriteDataToExcel(result, newDirectory + "/DelIsoResultAfterRemoveFP.xlsx")
+            WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult)
         elif self.RemoveFPId == 2:
             result = self.RemoveFPFromPeakDis()
-            WriteDataToExcel(result, newDirectory + "/PeakDisResultAfterRemoveFP.xlsx")
+            WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult)
 
         # 去假阳性后峰识别的峰
         newData = []

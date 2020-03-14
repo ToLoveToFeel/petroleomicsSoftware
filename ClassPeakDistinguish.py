@@ -21,8 +21,6 @@ class ClassPeakDistinguish:
         self.PeakDisDiscontinuityPointNum = parameterList[4]
         self.PeakDisClassIsNeed = parameterList[5]  # 第二部分，峰检测分割
         self.PeakDisClass = parameterList[6]
-        # 总离子流图
-        self.TICData = None
         # 第一部分结果
         self.resultPart1 = None
         self.resultPart1Detail = None
@@ -73,7 +71,7 @@ class ClassPeakDistinguish:
         self.resultPart1Detail = self.PeakDisSortDetail()
 
         # 数据写入excel文件中
-        WriteDataToExcel(self.resultPart1, newDirectory + "/PeakDisPart1.xlsx")
+        WriteDataToExcel(self.resultPart1, newDirectory + "/" + ConstValues.PsNamePeakDistinguish)
         WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDisPart1DetailPlot.xlsx")
 
         # # 第二部分需要处理的数据，将图像输出到文件中

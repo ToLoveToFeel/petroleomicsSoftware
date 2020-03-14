@@ -74,7 +74,7 @@ class ClassDeleteBlank():
             j = 0
             while j < m1.size:
                 if abs((m1[j] - m2[i]) * 1000000.0 / m1[j]) < self.deleteBlankPPM:
-                    if abs((in1[j] - in2[i]) * 100.0 / in1[j])< self.deleteBlankPercentage:
+                    if abs((in1[j] - in2[i]) * 100.0 / in1[j]) < self.deleteBlankPercentage:
                         deleteList.append(j)
                         breakFlag = True
                 elif breakFlag or m1[j] > m2[i]:
@@ -101,7 +101,7 @@ class ClassDeleteBlank():
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_1_deleteBlank")
-        WriteDataToExcel(result, newDirectory + "/DeleteBlank.xlsx")
+        WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameDeleteBlank)
 
         return result, True
 

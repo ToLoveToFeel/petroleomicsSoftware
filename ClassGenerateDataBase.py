@@ -62,7 +62,7 @@ class ClassGenerateDataBase():
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_2_generateDataBase")
-        WriteDataToExcel(result, newDirectory + "/GDB.xlsx")
+        WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameGDB)
 
         return result, True
 

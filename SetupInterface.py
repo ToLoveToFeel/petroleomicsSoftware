@@ -1061,7 +1061,7 @@ class SetupInterface():
         for item in self.RemoveFPResult:
             if len(item) != 0:
                 self.PlotClass.add(item[ClassIndex])
-        self.PlotClass = list(self.PlotClass)  # 转为list
+        self.PlotClass = sorted(list(self.PlotClass))  # 转为list并排序
         self.PlotClassFlag = [0 for _ in range(len(self.PlotClass))]  # 对应标志位，根据此判断是否需要处理这个类别，0不需要，1需要
         for item in self.PlotClass:
             globals()["checkBox" + item] = None
@@ -1089,6 +1089,22 @@ class SetupInterface():
         # 创建控件
         self.PlotMainUIList = self.PlotMainUICreateWidget()  # 主界面控件
         self.PlotSubUI_1_1List = self.PlotSubUI_1_1CreateWidget()  # SubUI_1_1控件
+        # 根据图的类型不同，绘制图形
+        if self.PlotType == 1:  # Class distribution
+            self.PlotTitleName = "Class distribution"  # 标题名称
+            self.PlotXAxisName = "Class"  # x轴名称
+            self.PlotYAxisName = "Relative abundance(%)"  # y轴名称
+        elif self.PlotType == 2:  # DBE distribution by class
+            pass
+        elif self.PlotType == 3:  # Carbon number distribution by class and DBE
+            pass
+        elif self.PlotType == 4:  # van Krevelen by class
+            pass
+        elif self.PlotType == 5:  # DBE vs. carbon number by class
+            pass
+        elif self.PlotType == 6:  # Kendrick mass defect vs. m/z
+            pass
+
         self.PlotSubUINameList = self.PlotSubUINameCreateWidget()  # 命名控件
 
         # 主界面添加控件
@@ -1218,14 +1234,14 @@ class SetupInterface():
         self.PlotLayout.addWidget(self.PlotMainUIButton2, 8, 4, 1, 1)
 
         # 绑定槽函数
-        self.PlotMainUIButton1.clicked.connect(lambda: self.PlotRemoveAddWidget("MainUI", "SubUI_1"))
+        self.PlotMainUIButton1.clicked.connect(self.PlotSubUI_1)
         self.PlotMainUIButton2.clicked.connect(lambda: self.HBCPlot(False))
 
     # -------------------------------------- 一级子界面
     def PlotSubUI_1(self):
         # 根据选择绘制一级子界面
         if self.PlotType == 1:  # Class distribution
-            self.PlotSubUI_1_1AddWidget()
+            self.PlotRemoveAddWidget("MainUI", "SubUI_1")
         elif self.PlotType == 2:  # DBE distribution by class
             pass
         elif self.PlotType == 3:  # Carbon number distribution by class and DBE
@@ -1346,7 +1362,7 @@ class SetupInterface():
         pa = QPalette()
         # 第一行输入内容
         self.PlotSubUINameLabel1 = self.GetQLabel("标题")
-        self.PlotSubUINameEdit1 = self.RegExpQLineEdit(text=self.PlotTitleName)  # 默认名称：plot
+        self.PlotSubUINameEdit1 = self.RegExpQLineEdit(text=self.PlotTitleName)
         self.PlotSubUINameEdit1.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel1_ = self.GetQLabel(text="标题", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
@@ -1355,7 +1371,7 @@ class SetupInterface():
         self.PlotSubUINameLabel1_.setPalette(pa)
         # 第二行输入内容
         self.PlotSubUINameLabel2 = self.GetQLabel("x轴名称")
-        self.PlotSubUINameEdit2 = self.RegExpQLineEdit(text=self.PlotXAxisName)  # 默认名称：x
+        self.PlotSubUINameEdit2 = self.RegExpQLineEdit(text=self.PlotXAxisName)
         self.PlotSubUINameEdit2.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel2_ = self.GetQLabel(text="x轴", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
@@ -1364,7 +1380,7 @@ class SetupInterface():
         self.PlotSubUINameLabel2_.setPalette(pa)
         # 第三行输入内容
         self.PlotSubUINameLabel3 = self.GetQLabel("y轴名称")
-        self.PlotSubUINameEdit3 = self.RegExpQLineEdit(text=self.PlotYAxisName)  # 默认名称：y
+        self.PlotSubUINameEdit3 = self.RegExpQLineEdit(text=self.PlotYAxisName)
         self.PlotSubUINameEdit3.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel3_ = self.GetQLabel(text="y轴", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)

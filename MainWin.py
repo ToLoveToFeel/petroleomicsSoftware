@@ -67,6 +67,9 @@ class MainWin(QMainWindow):
         self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减
         self.mainDataNameSetAll = set()  # 所有可能需要显示的表格名称集合，里面全是字符串，只增不减
         self.mainNeedCover = False
+        # 主界面生成图形后的图形名称列表，读入相同名称的图片名称时，需要确认是否覆盖
+        self.mainPlotNameSetAll = set()  # 所有可能需要显示的图片名称集合，里面全是字符串，只增不减
+        self.mainPlotNeedCover = False
         # 创建文件夹
         newDirectory = CreateDirectory("", "./intermediateFiles", "/_7_plot")
 
@@ -130,26 +133,26 @@ class MainWin(QMainWindow):
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
         self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
 
-        titleList = ["people.png", "dandelion.png"]
-        imagePathList = ["./images/people.png", "./images/dandelion.png"]
-        self.tabWidget1 = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
-        self.plotStack.addWidget(self.tabWidget1)  # 添加 QTabWidget，2
+        titleList = ["people.png", "dandelion.png", "feather.png"]
+        imagePathList = ["./images/people.png", "./images/dandelion.png", "./images/feather.png"]
+        globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
+        self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
         self.mainTreeChild8_1.setText(0, "initShow")
         self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8_1.setSelected(True)
-        self.plotStack.setCurrentWidget(self.tabWidget1)
+        self.plotStack.setCurrentWidget(globals()["Plot_" + "initShow"])
 
-        # TODO:右侧添加内容，测试
-        self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget("./images/feather.png")  # 创建 QTabWidget
-        self.plotStack.addWidget(self.tabWidget2)  # 添加 QTabWidget，3
-        self.mainTreeChild8_2 = QTreeWidgetItem(self.mainTreeChild8)
-        self.mainTreeChild8_2.setText(0, "TODO")
-        self.mainTreeChild8_2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
-
-        # 右键处理
-        self.tabWidgetLabel2.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tabWidgetLabel2.customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
+        # # TODO:右侧添加内容，测试
+        # self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget("./images/feather.png")  # 创建 QTabWidget
+        # self.plotStack.addWidget(self.tabWidget2)  # 添加 QTabWidget，3
+        # self.mainTreeChild8_2 = QTreeWidgetItem(self.mainTreeChild8)
+        # self.mainTreeChild8_2.setText(0, "TODO")
+        # self.mainTreeChild8_2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
+        #
+        # # 右键处理
+        # self.tabWidgetLabel2.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.tabWidgetLabel2.customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
 
         # 树控件设置字体大小
         item = QTreeWidgetItemIterator(self.mainTreeWidget)
@@ -168,7 +171,7 @@ class MainWin(QMainWindow):
             return
         treeWidgetName = item.parent().text(0)
         indexRow = index.row()
-
+        myName = item.text(0)
         if treeWidgetName == ConstValues.PsTreeInputFiles \
                 or treeWidgetName == ConstValues.PsTreeDeleteBlank \
                 or treeWidgetName == ConstValues.PsTreeGDB \
@@ -176,13 +179,14 @@ class MainWin(QMainWindow):
                 or treeWidgetName == ConstValues.PsTreePeakDis \
                 or treeWidgetName == ConstValues.PsTreeRemoveFP \
                 or treeWidgetName == ConstValues.PsTreePeakDiv:
-            myName = item.text(0)
+
             if myName not in self.mainDataNameSet:  # 如果当前tab没显示在主界面上，添加到主界面
                 self.tabWidgetShowData.addTab(globals()["tableWidget_" + myName], myName)
             self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + myName])  # 切换到当前tab
             self.plotStack.setCurrentIndex(0)
         elif treeWidgetName == ConstValues.PsTreePlot:  # 画图结果
-            self.plotStack.setCurrentIndex(indexRow + 1)
+            self.plotStack.setCurrentWidget(globals()["Plot_" + myName])
+
 
         if ConstValues.PsIsDebug:
             print(indexRow)
@@ -210,7 +214,9 @@ class MainWin(QMainWindow):
             tb.setAlignment(Qt.AlignCenter)
             tb.setStyleSheet("background-color: #FFFFFF;")
             label = QLabel()  # 创建Label
-            label.setPixmap(QPixmap(imagePath))
+            pixmap = QPixmap(imagePath)
+            pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth*95/120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
+            label.setPixmap(pixmap)
             tb.setWidget(label)
 
             tabWidget.addTab(tb, title)
@@ -218,7 +224,7 @@ class MainWin(QMainWindow):
         return tabWidget
 
     # 创建选项卡控件
-    def CreateQTabWidget(self,imagePath):
+    def CreateQTabWidget(self, imagePath, rawData=None):
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
@@ -232,14 +238,17 @@ class MainWin(QMainWindow):
         tb1.setAlignment(Qt.AlignCenter)
         tb1.setStyleSheet("background-color: #FFFFFF;")
         label = QLabel()  # 创建Label
-        label.setPixmap(QPixmap(imagePath))
+        pixmap = QPixmap(imagePath)
+        pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth * 90 / 120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
+        label.setPixmap(pixmap)
         tb1.setWidget(label)
 
         # tb2相关内容
-        tb2 = QWidget()
+        tb2 = self.CreateQTableWidget(rawData)
 
         tabWidget.addTab(tb1, "图形")
-        tabWidget.addTab(tb2, "原始数据")
+        if tb2 is not None:
+            tabWidget.addTab(tb2, "原始数据")
 
         return tabWidget, label
 
@@ -262,9 +271,6 @@ class MainWin(QMainWindow):
         """
         tableWidget = QTableWidget()
         tableWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
-        # 调整列和行
-        tableWidget.resizeColumnsToContents()
-        tableWidget.resizeRowsToContents()
 
         # 合法性检查,同时获取行数、列数
         if data is None:
@@ -291,12 +297,15 @@ class MainWin(QMainWindow):
                 item = str(item)
                 nameItem = QTableWidgetItem(item)
                 tableWidget.setItem(i, j, nameItem)
+        # 调整列和行
+        tableWidget.resizeColumnsToContents()
+        tableWidget.resizeRowsToContents()
         # 禁止编辑
         tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         return tableWidget
 
-    # 读入文件后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
+    # 读入    文件    后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
     def AddTreeItemShowData(self, parent, name, data, promptBox, icon, functionStr=""):
         # 判断是否需要覆盖原本文件，并进行相应的操作
         if self.mainNeedCover:
@@ -306,9 +315,9 @@ class MainWin(QMainWindow):
         self.mainDataNameSetAll.add(name)
         # 树控件创建对应项
         if not self.mainNeedCover:
-            mainTreeChild1_ = QTreeWidgetItem(parent)
-            mainTreeChild1_.setText(0, name)
-            mainTreeChild1_.setIcon(0, qtawesome.icon(icon, color=ConstValues.PsqtaIconFolderColor))
+            mainTreeChild_ = QTreeWidgetItem(parent)
+            mainTreeChild_.setText(0, name)
+            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=ConstValues.PsqtaIconFolderColor))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
@@ -322,7 +331,7 @@ class MainWin(QMainWindow):
                 # 到下一个节点
                 item += 1
             # 光标选择到当前导入的文件
-            mainTreeChild1_.setSelected(True)
+            mainTreeChild_.setSelected(True)
         # 创建 QTableWidget
         globals()["tableWidget_" + name] = self.CreateQTableWidget(data)
         # self.tabWidgetShowData 添加该项内容
@@ -340,8 +349,60 @@ class MainWin(QMainWindow):
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
             PromptBox().warningMessage(message)
 
+    # 生成    图形    后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
+    def AddTreeItemPlot(self, plotImagePath, rawData, functionStr=""):
+        # 提取名称
+        treeItemName = plotImagePath.split("/")[-1]
+        # 判断是否需要覆盖原本图片，并进行相应的操作
+        if self.mainPlotNeedCover:
+            self.plotStack.removeWidget(globals()["Plot_" + treeItemName])
+        # 记录导入图片的名称
+        self.mainPlotNameSetAll.add(treeItemName[:-4])  # 后缀为.png，需要去掉
+        # 树控件创建对应项
+        if not self.mainPlotNeedCover:
+            mainTreeChild8_ = QTreeWidgetItem(self.mainTreeChild8)
+            mainTreeChild8_.setText(0, treeItemName)
+            mainTreeChild8_.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
+            # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
+            item = QTreeWidgetItemIterator(self.mainTreeWidget)
+            while item.value():
+                treeWidgetItem = item.value()
+                if ConstValues.PsIsDebug:
+                    print(treeWidgetItem)
+                    print(treeWidgetItem.text(0))
+                if treeWidgetItem.isSelected():
+                    treeWidgetItem.setSelected(False)
+                treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
+                # 到下一个节点
+                item += 1
+            # 光标选择到当前导入的文件
+            mainTreeChild8_.setSelected(True)
+        # 创建 QTabWidget
+        globals()["Plot_" + treeItemName], globals()["PlotLabel_" + treeItemName] = self.CreateQTabWidget(plotImagePath, rawData)
+        # self.plotStack 添加并显示该项内容
+        self.plotStack.addWidget(globals()["Plot_" + treeItemName])
+        self.plotStack.setCurrentWidget(globals()["Plot_" + treeItemName])
+        self.mainPlotNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
+        # 右键处理
+        globals()["PlotLabel_" + treeItemName].setContextMenuPolicy(Qt.CustomContextMenu)
+        globals()["PlotLabel_" + treeItemName].customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
+        # 更新状态栏消息
+        self.statusSetup(ConstValues.PsMainWindowStatusMessage, functionStr)
+
     # 右击选项菜单（Plot / Raw Plot Data）
     def rightMenuShow(self):
+        sender = self.sender()
+        # 获取当前图片
+        self.currentPixmap = sender.pixmap()
+        self.currentPixmapName = "plot.png"
+        # 获取当前图片名称
+        item = QTreeWidgetItemIterator(self.mainTreeWidget)
+        while item.value():
+            treeWidgetItem = item.value()
+            if treeWidgetItem.isSelected():
+                self.currentPixmapName = treeWidgetItem.text(0)
+                break
+            item += 1  # 到下一个节点
         menu = QMenu()
         menu.addAction(QAction("导出到", menu))
         menu.triggered.connect(self.MenuSlot)
@@ -349,7 +410,14 @@ class MainWin(QMainWindow):
 
     # 右击后处理函数
     def MenuSlot(self, act):
-        print(act.text())
+        if ConstValues.PsIsDebug:
+            print(act.text())
+        if act.text() == "导出到":
+            outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
+            if ConstValues.PsIsDebug:
+                print(outputImagePath)
+            if outputImagePath != "":
+                self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
@@ -434,8 +502,8 @@ class MainWin(QMainWindow):
                                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
                                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
                            ]
-        self.DelIsoResult = None  # 去同位素：最终返回的结果（格式：list二维数组，有表头）
-        self.DelIsoIsFinished = False   # 去同位素：记录去同位素过程是否完成
+        self.DelIsoResult = None  # 搜同位素：最终返回的结果（格式：list二维数组，有表头）
+        self.DelIsoIsFinished = False   # 搜同位素：记录去同位素过程是否完成
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径，第一部分
@@ -520,6 +588,10 @@ class MainWin(QMainWindow):
         self.PlotXAxisColor = ConstValues.PsPlotXAxisColor  # x轴颜色
         self.PlotYAxisName = ConstValues.PsPlotYAxisName  # y轴名称
         self.PlotYAxisColor = ConstValues.PsPlotYAxisColor  # y轴颜色
+        # 输出文件路径
+        self.PlotImagePath = ""
+        # 画图原始数据
+        self.PlotRawData = []
 
         self.PlotList = [
                             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
@@ -928,7 +1000,7 @@ class MainWin(QMainWindow):
         self.StartRunning("GenerateDataBase")
         self.AfterRunning("GenerateDataBase")
 
-    # 去同位素
+    # 搜同位素
     def DeleteIsotope(self):
         if not self.BeforeRunning("DeleteIsotope"):
             return
@@ -958,7 +1030,10 @@ class MainWin(QMainWindow):
 
     # 画图
     def Plot(self):
-        pass
+        if not self.BeforeRunning("Plot"):
+            return
+        self.StartRunning("Plot")
+        self.AfterRunning("Plot")  # 暂时不需要使用
 
     # 全部开始
     def StartAll(self):
@@ -1001,7 +1076,7 @@ class MainWin(QMainWindow):
                 data = self.DelIsoResult
                 promptBox = self.DelIsoPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "找同位素处理完毕！"
+                functionStr = "搜同位素处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
             elif retList[0] == "ClassPeakDistinguish":
                 self.PeakDisResult = retList[1]  # 列表，有三个数据
@@ -1040,6 +1115,16 @@ class MainWin(QMainWindow):
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "峰检测处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+            elif retList[0] == "ClassPlot":
+                # 输出文件路径
+                self.PlotImagePath = retList[1]
+                # 画图原始数据
+                self.PlotRawData = retList[2]  # 必须为二维列表，并且第二个维度必须相同
+                if ConstValues.PsIsDebug:
+                    print(self.PlotImagePath)
+                    print(self.PlotRawData)
+                # 将数据展示到界面上
+                self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
             elif retList[0] == "StartAll":
                 # 更新状态
                 self.StartAllPromptBox.closeGif()
@@ -1450,6 +1535,26 @@ class MainWin(QMainWindow):
             if ConstValues.PsNamePeakDivision in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
+        elif Type == "Plot":
+            # 更新数据
+            self.PlotList = [
+                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+                self.PlotType,  # 绘图类型
+                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                self.PlotTitleName,
+                self.PlotTitleColor,
+                self.PlotXAxisName,
+                self.PlotXAxisColor,
+                self.PlotYAxisName,
+                self.PlotYAxisColor
+            ]
+            # 更新过参数后，检查是否重名
+            if self.PlotTitleName in self.mainPlotNameSetAll:
+                self.mainPlotNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
+                return self.mainPlotNeedCover
+            pass
         elif Type == "StartAll":
             if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
                 PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
@@ -1478,7 +1583,7 @@ class MainWin(QMainWindow):
                     self.GDB_MNegative  # 格式：bool
                 ],
                 [
-                    # 去同位素
+                    # 搜同位素
                     self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
                     self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
                     self.deleteBlankIntensity,
@@ -1530,6 +1635,10 @@ class MainWin(QMainWindow):
                 return False
             # # 读入文件合法性检查（是否重名）
             name = self.sampleFilePath.split("/")[-1]
+            # 用户确认是否为样本文件
+            isSampleFile = PromptBox().questionMessage("确定文件" + name + "是样本文件？")
+            if not isSampleFile:
+                return False
             if name in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1543,6 +1652,10 @@ class MainWin(QMainWindow):
                 return False
             # # 读入文件合法性检查（是否重名）
             name = self.blankFilePath.split("/")[-1]
+            # 用户确认是否为空白文件
+            isBlankFile = PromptBox().questionMessage("确定文件" + name + "是空白文件？")
+            if not isBlankFile:
+                return False
             if name in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1556,6 +1669,10 @@ class MainWin(QMainWindow):
                 return False
             # # 读入文件合法性检查（是否重名）
             name = self.TICFilePath.split("/")[-1]
+            # 用户确认是否为空白文件
+            isTICFile = PromptBox().questionMessage("确定文件" + name + "是总离子图文件文件？")
+            if not isTICFile:
+                return False
             if name in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1588,6 +1705,10 @@ class MainWin(QMainWindow):
             self.PeakDivMt = MultiThread("ClassPeakDivision", self.PeakDivList, self.outputFilesPath)
             self.PeakDivMt.signal.connect(self.HandleData)
             self.PeakDivMt.start()
+        elif Type == "Plot":
+            self.PlotMt = MultiThread("ClassPlot", self.PlotList, self.outputFilesPath)
+            self.PlotMt.signal.connect(self.HandleData)
+            self.PlotMt.start()
         elif Type == "StartAll":
             self.StartAllMt = MultiThread("StartAll", self.AllData, self.outputFilesPath)
             self.StartAllMt.signal.connect(self.HandleData)
@@ -1671,5 +1792,7 @@ class MainWin(QMainWindow):
 
     # 画图
     def SetupAndPlot(self):
+        # 参数设置
         self.PlotSetup()
+        # 绘图
         self.Plot()

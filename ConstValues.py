@@ -10,13 +10,15 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
+    # 主窗口单位长度
+    PsMainWindowLength = 100
     # 主窗口宽度
-    PsMainWindowWidth = 1200
+    PsMainWindowWidth = PsMainWindowLength * 12
     # 主窗口高度
-    PsMainWindowHeight = 800
+    PsMainWindowHeight = PsMainWindowLength * 8
     # 主窗口底部状态栏显示的信息
     PsMainWindowStatusMessage = "欢迎使用！"
     # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
@@ -68,7 +70,7 @@ class ConstValues:
     PsqtaIconOpenFileOut = 'fa.folder-open-o'  # 输出到文件夹图标
     PsqtaIconExit = 'fa.window-close-o'  # 退出软件图标
     PsqtaIconDeleteBlank = 'fa.trash-o'  # 删空白图标
-    PsqtaIconGDB = 'fa.cab'  # 数据库生成图标
+    PsqtaIconGDB = 'fa.database'  # 数据库生成图标
     PsqtaIcondelIso = 'fa.search'  # 去同位素图标
     PsqtaIconpeakDis = 'fa.wheelchair'  # 峰识别图标
     PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
@@ -123,8 +125,8 @@ class ConstValues:
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
-    PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
     PsSetupStyleEnabled = False  # 默认颜色是否使能
+    PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
     # PsSetupStyle = "background-color: #F5F5F5;"
 
     # 扣空白设置默认参数

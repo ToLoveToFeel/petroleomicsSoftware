@@ -7,10 +7,12 @@ from ClassDeleteIsotope import ClassDeleteIsotope
 from ClassPeakDistinguish import ClassPeakDistinguish
 from ClassRemoveFalsePositive import ClassRemoveFalsePositive
 from ClassPeakDivision import ClassPeakDivision
+from ClassPlot import ClassPlot
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 import numpy as np
 import pandas as pd
+import traceback
 
 
 class MultiThread(QThread):
@@ -98,6 +100,19 @@ class MultiThread(QThread):
                 if ConstValues.PsIsDebug:
                     print("MultiThread ClassPeakDivision Error : ", e)
                 self.signal.emit(["ClassPeakDivision Error"])
+        elif self.__function == "ClassPlot":
+            try:
+                retList = ["ClassPlot"]
+                cp = ClassPlot(self.__parameters, self.outputFilesPath)
+                PlotImagePath, PlotRawData = cp.Plot()
+                retList.append(PlotImagePath)
+                retList.append(PlotRawData)
+                self.signal.emit(retList)
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread ClassPlot Error : ", e)
+                    traceback.print_exc()
+                # self.signal.emit(["Plot Error"])
         elif self.__function == "StartAll":
             try:
                 retList = ["StartAll"]

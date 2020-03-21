@@ -69,6 +69,7 @@ class MultiThread(QThread):
                 cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
                 # cpd.PeakDisPlotPeak()
                 PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
+                time.sleep(5)  # 认为睡眠20s
                 retList.append(PeakDisResult)
                 retList.append(PeakDisIsFinished)
                 self.signal.emit(retList)
@@ -157,7 +158,7 @@ class MultiThread(QThread):
                 RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
                 retList.append(RemoveFPResult)
                 retList.append(RemoveFPIsFinished)
-                self.signal.emit(["RemoveFPFinished"])
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
                 if ConstValues.PsIsDebug:
                     print("去假阳性完成！")
                 # 峰检测

@@ -77,6 +77,11 @@ class ClassPeakDistinguish:
         # # 第二部分需要处理的数据，将图像输出到文件中
         # self.PeakDisPlotPeak()
 
+        # # 为了录屏演示用，直接从文件读取
+        # self.resultPart1 = ReadExcelToList("./intermediateFiles/_4_peakDistinguish/" + ConstValues.PsNamePeakDistinguish)
+        # self.resultPart1Detail = ReadExcelToList("./intermediateFiles/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx", hasNan=False)
+        # sortedRTValue = ReadExcelToList("./intermediateFiles/_4_peakDistinguish/sortedRTValue.xlsx", hasNan=False)[0]
+
         return [self.resultPart1, self.resultPart1Detail, sortedRTValue], True
 
     # 负责判断某个扣同位素后的样本是否能成功在总离子流图文件(txt)查到符合条件的记录集合

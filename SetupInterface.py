@@ -65,7 +65,7 @@ class SetupInterface():
         self.PeakDisClass = None
 
         # 去同位素所需要返回的数据，数据初值无所谓
-        self.RemoveFPId = None  # 1：去同位素之后的内容，2：峰识别之后的内容
+        self.RemoveFPId = None  # 1：去同位素之后的内容，2：峰提取之后的内容
         # 0~100（整数）
         self.RemoveFPContinue_CNum = None  # 连续碳数
         # 0~100（整数）
@@ -637,13 +637,13 @@ class SetupInterface():
 
     #################################################################################################################
     def PeakDistinguishSetup(self, parameters):
-        # 峰识别设置对话框
+        # 峰提取设置对话框
         # 设置默认参数
         self.PeakDistinguishDefaultParameters(parameters)
 
         # 创建QDialog
         self.peakDistinguishDialog = QDialog()
-        self.peakDistinguishDialog.setWindowTitle("峰识别参数设置")
+        self.peakDistinguishDialog.setWindowTitle("峰提取参数设置")
         self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 40, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
         if ConstValues.PsIconType == 1:
             self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
@@ -817,7 +817,7 @@ class SetupInterface():
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
         RemoveFPQRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         RemoveFPQRadioButton1.toggled.connect(lambda: self.RemoveFalsePositiveQRadioButton(RemoveFPQRadioButton1))
-        RemoveFPQRadioButton2 = QRadioButton("峰识别后的文件")
+        RemoveFPQRadioButton2 = QRadioButton("峰提取后的文件")
         RemoveFPQRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         RemoveFPQRadioButton2.toggled.connect(lambda: self.RemoveFalsePositiveQRadioButton(RemoveFPQRadioButton2))
         if self.RemoveFPId == 1:
@@ -1042,7 +1042,7 @@ class SetupInterface():
 
     #################################################################################################################
     def PlotSetup(self, parameters):
-        # 画图需要清楚数据来源，因为设置界面需要 3.搜同位素 或者 4.峰识别 去假阳性后的数据，因此设置中需要将去假阳性后的数据传进来
+        # 画图需要清楚数据来源，因为设置界面需要 3.搜同位素 或者 4.峰提取 去假阳性后的数据，因此设置中需要将去假阳性后的数据传进来
         self.RemoveFPId = parameters[0]  # 判断选择了哪一个文件：self.DelIsoResult(1) 或者 self.PeakDisResult(2)
         self.RemoveFPResult = parameters[1]  # 所有类别去假阳性的结果，二维列表，有表头
         self.RemoveFPResult = self.RemoveFPResult[1:]  # 去掉表头
@@ -1054,7 +1054,7 @@ class SetupInterface():
         # 获取需要绘图的类别
         self.PlotClass = set()
         ClassIndex = 2  # ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-        if self.RemoveFPId == 2:  # 4.峰识别 去假阳性后的数据
+        if self.RemoveFPId == 2:  # 4.峰提取 去假阳性后的数据
             # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian",
             # "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
             ClassIndex = 7

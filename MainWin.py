@@ -133,8 +133,24 @@ class MainWin(QMainWindow):
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
         self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
 
-        titleList = ["people.png", "dandelion.png", "feather.png"]
-        imagePathList = ["./images/people.png", "./images/dandelion.png", "./images/feather.png"]
+        titleList = [
+            "sky.png",
+            "people.png",
+            "dandelion.png",
+            "feather.png",
+            "w1.jpg",
+            "w2.jpg",
+            "w3.jpg",
+        ]
+        imagePathList = [
+            "./images/show/sky.png",
+            "./images/show/people.png",
+            "./images/show/dandelion.png",
+            "./images/show/feather.png",
+            "./images/windows/w1.jpg",
+            "./images/windows/w2.jpg",
+            "./images/windows/w3.jpg",
+        ]
         globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
         self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
@@ -186,7 +202,6 @@ class MainWin(QMainWindow):
             self.plotStack.setCurrentIndex(0)
         elif treeWidgetName == ConstValues.PsTreePlot:  # 画图结果
             self.plotStack.setCurrentWidget(globals()["Plot_" + myName])
-
 
         if ConstValues.PsIsDebug:
             print(indexRow)
@@ -657,7 +672,7 @@ class MainWin(QMainWindow):
         set.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotopeSetup)
 
-        peakDistinguish = QAction("峰识别", self)  # 添加二级菜单
+        peakDistinguish = QAction("峰提取", self)  # 添加二级菜单
         set.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguishSetup)
 
@@ -670,7 +685,7 @@ class MainWin(QMainWindow):
         peakDivision.triggered.connect(self.PeakDivisionSetup)
 
         # 创建第三个主菜单
-        plot = bar.addMenu("画图")
+        plot = bar.addMenu("绘图")
         addPlot = QAction("添加", self)  # 添加二级菜单
         plot.addAction(addPlot)
         addPlot.triggered.connect(self.SetupAndPlot)
@@ -766,7 +781,7 @@ class MainWin(QMainWindow):
         tb2.addAction(deleteIsotope)
         deleteIsotope.triggered.connect(self.DeleteIsotope)
 
-        peakDistinguish = QAction("峰识别", self)
+        peakDistinguish = QAction("峰提取", self)
         tb2.addAction(peakDistinguish)
         peakDistinguish.triggered.connect(self.PeakDistinguish)
 
@@ -779,7 +794,7 @@ class MainWin(QMainWindow):
         self.TBpeakDivision.triggered.connect(self.PeakDivision)
         self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
 
-        plot = QAction("画图", self)
+        plot = QAction("绘图", self)
         tb2.addAction(plot)
         plot.triggered.connect(self.SetupAndPlot)
 
@@ -965,7 +980,7 @@ class MainWin(QMainWindow):
         # 画图前前需要先读入数据
         if not self.RemoveFPIsFinished:
             PromptBox().warningMessage(ConstValues.PsPlotErrorMessage)  # 弹出错误提示
-            return
+            return False
         # 更新数据
         self.PlotList = [
             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
@@ -982,6 +997,8 @@ class MainWin(QMainWindow):
         ]
         newParameters = SetupInterface().PlotSetup(self.PlotList)
         self.UpdateData("PlotSetup", newParameters)
+
+        return True
 
     # 去空白 #######################################
     def DeleteBlank(self):
@@ -1085,7 +1102,7 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild5
                 name = ConstValues.PsNamePeakDistinguish
                 data = self.PeakDisResult[0]
-                promptBox = self.DelIsoPromptBox
+                promptBox = self.PeakDisPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "峰识别处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
@@ -1123,6 +1140,9 @@ class MainWin(QMainWindow):
                 if ConstValues.PsIsDebug:
                     print(self.PlotImagePath)
                     print(self.PlotRawData)
+                # 检查数据合法性
+                if self.PlotImagePath is None:
+                    return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
             elif retList[0] == "StartAll":
@@ -1793,6 +1813,6 @@ class MainWin(QMainWindow):
     # 画图
     def SetupAndPlot(self):
         # 参数设置
-        self.PlotSetup()
-        # 绘图
-        self.Plot()
+        if self.PlotSetup():
+            # 绘图
+            self.Plot()

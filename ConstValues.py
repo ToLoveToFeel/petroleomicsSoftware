@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -87,10 +87,10 @@ class ConstValues:
     PsTreeDeleteBlank = "去空白结果"
     PsTreeGDB = "数据库生成结果"
     PsTreeDelIso = "搜同位素结果"
-    PsTreePeakDis = "峰识别结果"
+    PsTreePeakDis = "峰提取结果"
     PsTreeRemoveFP = "去假阳性结果"
     PsTreePeakDiv = "峰检测结果"
-    PsTreePlot = "画图结果"
+    PsTreePlot = "绘图结果"
     # 生成的文件名称
     PsNameDeleteBlank = "__DeleteBlank.xlsx"
     PsNameGDB = "__GDB.xlsx"
@@ -120,7 +120,7 @@ class ConstValues:
     # 主页面最多显示的表格行数
     PsMainMaxRowNum = 200000
     # 读入文件默认目录
-    PsReadFileDefaultDirectoy = "./inputdata/350"
+    PsReadFileDefaultDirectoy = "./inputdata"
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
@@ -144,7 +144,8 @@ class ConstValues:
     PsDeleteBlankPercentageMax = 100
 
     # 数据库生成设置默认参数
-    PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
+    # PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
+    PsGDBClass = ["N1", "N1O1", "CH", "N2", "N1S1", "N1O2", "O1S1", "O1", "O2", "O3"]  # 四组需要测试的数据
     # 1~100（整数）
     PsGDBCarbonRangeLow = 1  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
     PsGDBCarbonRangeHigh = 100  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
@@ -156,8 +157,8 @@ class ConstValues:
     PsGDBDBERageMin = 0
     PsGDBDBERageMax = 50
     # 50~1500(整数)
-    PsGDBM_ZRageLow = 50  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
-    PsGDBM_ZRageHigh = 1000  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+    PsGDBM_ZRageLow = 150  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+    PsGDBM_ZRageHigh = 2000  # 数据库生成(参数)：m/z rage(质荷比范围)最大值(包含)
     PsGDBM_ZRageMin = 50
     PsGDBM_ZRageMax = 5000
     # 离子类型
@@ -204,7 +205,8 @@ class ConstValues:
     PsPeakDisDiscontinuityPointNumMax = 30
     # 输入字符串
     PsPeakDisClassIsNeed = True  # 第二部分，是否需要峰检测与分割，即将多个峰分开输出
-    PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
+    # PsPeakDisClass = ["N1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
+    PsPeakDisClass = ["N1", "N1O1"]  # PsPeakDisClassIsNeed为False是此字段不起作用
 
     # 去假阳性设置默认参数
     PsRemoveFPId = 2  # 默认处理的内容

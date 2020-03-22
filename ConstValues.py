@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -235,14 +235,17 @@ class ConstValues:
     PsPeakDivNeedGenImage = True
 
     # 峰检测全过程所需要的数据
-    PsPlotHasEnter = False
-    PsPlotType = 1  # 1~6(整数)
-    PsPlotClassList = []  # 需要绘制的类型
     PsPlotTitleName = "plot"  # 标题名称
     PsPlotTitleColor = (255, 0, 0, 255)  # 标题颜色，(R, G, B, Alpha)
     PsPlotXAxisName = "x"  # x轴名称
     PsPlotXAxisColor = (0, 0, 255, 255)  # x轴颜色，(R, G, B, Alpha)
     PsPlotYAxisName = "y"  # y轴名称
     PsPlotYAxisColor = (0, 0, 255, 255)  # y轴颜色，(R, G, B, Alpha)
+    PsPlotHasEnter = False  # 记录是否进入过PlotSetup()函数，并且确认
+    PsPlotType = 1  # 1~6(整数)
+    PsPlotClassList = []  # 需要绘制的类型，多选
+    PsPlotClassItem = []  # 需要绘制的类型，单选
+    PsPlotDBENum = -1
+    PsPlotConfirm = False  # 用户是否确认要画图
 
 

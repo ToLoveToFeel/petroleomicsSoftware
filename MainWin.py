@@ -70,8 +70,6 @@ class MainWin(QMainWindow):
         # 主界面生成图形后的图形名称列表，读入相同名称的图片名称时，需要确认是否覆盖
         self.mainPlotNameSetAll = set()  # 所有可能需要显示的图片名称集合，里面全是字符串，只增不减
         self.mainPlotNeedCover = False
-        # 创建文件夹
-        newDirectory = CreateDirectory("", "./intermediateFiles", "/_7_plot")
 
         self.centralwidget = QWidget()
         self.setCentralWidget(self.centralwidget)
@@ -592,17 +590,22 @@ class MainWin(QMainWindow):
         self.PeakDivResult = None
         self.PeakDivIsFinished = False
 
-        # 绘图全过程所需要的数据  记录是否进入过PlotSetup()函数
-        self.PlotHasEnter = ConstValues.PsPlotHasEnter
-        # 1~6(整数)
-        self.PlotType = ConstValues.PsPlotType  # 绘图类型
-        self.PlotClassList = ConstValues.PsPlotClassList  # 列表，需要绘制的类型，例子：["CH", "N1"]
+        # 绘图全过程所需要的数据
         self.PlotTitleName = ConstValues.PsPlotTitleName  # 标题名称
         self.PlotTitleColor = ConstValues.PsPlotTitleColor  # 标题颜色
         self.PlotXAxisName = ConstValues.PsPlotXAxisName  # x轴名称
         self.PlotXAxisColor = ConstValues.PsPlotXAxisColor  # x轴颜色
         self.PlotYAxisName = ConstValues.PsPlotYAxisName  # y轴名称
         self.PlotYAxisColor = ConstValues.PsPlotYAxisColor  # y轴颜色
+        # 记录是否进入过PlotSetup()函数
+        self.PlotHasEnter = ConstValues.PsPlotHasEnter
+        # 1~6(整数)
+        self.PlotType = ConstValues.PsPlotType  # 绘图类型
+        self.PlotClassList = ConstValues.PsPlotClassList  # 列表，需要绘制的类型，例子：["CH", "N1"]，对应多选按钮
+        self.PlotClassItem = ConstValues.PsPlotClassItem  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+        self.PlotDBENum = ConstValues.PsPlotDBENum  # 整数，记录用户选择的DBE数目
+        # 用户是否确认要画图
+        self.PlotConfirm = ConstValues.PsPlotConfirm
         # 输出文件路径
         self.PlotImagePath = ""
         # 画图原始数据
@@ -611,15 +614,18 @@ class MainWin(QMainWindow):
         self.PlotList = [
                             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                            self.PlotType,  # 绘图类型
-                            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                             self.PlotTitleName,
                             self.PlotTitleColor,
                             self.PlotXAxisName,
                             self.PlotXAxisColor,
                             self.PlotYAxisName,
-                            self.PlotYAxisColor
+                            self.PlotYAxisColor,
+                            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+                            self.PlotType,  # 绘图类型
+                            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+                            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+                            self.PlotConfirm
                         ]
 
     # 使窗口居中
@@ -985,20 +991,24 @@ class MainWin(QMainWindow):
         self.PlotList = [
             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-            self.PlotType,  # 绘图类型
-            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
             self.PlotTitleName,
             self.PlotTitleColor,
             self.PlotXAxisName,
             self.PlotXAxisColor,
             self.PlotYAxisName,
-            self.PlotYAxisColor
+            self.PlotYAxisColor,
+            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+            self.PlotType,  # 绘图类型
+            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+            self.PlotConfirm
         ]
         newParameters = SetupInterface().PlotSetup(self.PlotList)
         self.UpdateData("PlotSetup", newParameters)
 
-        return True
+        # 判断是否要绘图
+        return self.PlotConfirm
 
     # 去空白 #######################################
     def DeleteBlank(self):
@@ -1393,27 +1403,33 @@ class MainWin(QMainWindow):
             if ConstValues.PsIsDebug:
                 print(self.PeakDivList[3:])
         elif Type == "PlotSetup":
-            self.PlotHasEnter = newParameters[0]  # 记录是否进入过PlotSetup()函数
-            self.PlotType =newParameters[1]  # 绘图类型
-            self.PlotClassList = newParameters[2]  # 列表，需要绘制的类型，例子：["CH", "N1"]
-            self.PlotTitleName = newParameters[3]  # 标题名称
-            self.PlotTitleColor = newParameters[4]  # 标题颜色
-            self.PlotXAxisName = newParameters[5]  # x轴名称
-            self.PlotXAxisColor = newParameters[6]  # x轴颜色
-            self.PlotYAxisName = newParameters[7]  # y轴名称
-            self.PlotYAxisColor = newParameters[8]  # y轴颜色
+            self.PlotTitleName = newParameters[0]  # 标题名称
+            self.PlotTitleColor = newParameters[1]  # 标题颜色
+            self.PlotXAxisName = newParameters[2]  # x轴名称
+            self.PlotXAxisColor = newParameters[3]  # x轴颜色
+            self.PlotYAxisName = newParameters[4]  # y轴名称
+            self.PlotYAxisColor = newParameters[5]  # y轴颜色
+            self.PlotHasEnter = newParameters[6]  # 记录是否进入过PlotSetup()函数
+            self.PlotType = newParameters[7]  # 绘图类型
+            self.PlotClassList = newParameters[8]  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotClassItem = newParameters[9]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+            self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
+            self.PlotConfirm = newParameters[11]
             self.PlotList = [
                 self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                 self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                 self.PlotTitleName,
                 self.PlotTitleColor,
                 self.PlotXAxisName,
                 self.PlotXAxisColor,
                 self.PlotYAxisName,
-                self.PlotYAxisColor
+                self.PlotYAxisColor,
+                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+                self.PlotType,  # 绘图类型
+                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+                self.PlotConfirm
             ]
 
             if ConstValues.PsIsDebug:
@@ -1560,15 +1576,18 @@ class MainWin(QMainWindow):
             self.PlotList = [
                 self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                 self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                 self.PlotTitleName,
                 self.PlotTitleColor,
                 self.PlotXAxisName,
                 self.PlotXAxisColor,
                 self.PlotYAxisName,
-                self.PlotYAxisColor
+                self.PlotYAxisColor,
+                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+                self.PlotType,  # 绘图类型
+                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+                self.PlotConfirm
             ]
             # 更新过参数后，检查是否重名
             if self.PlotTitleName in self.mainPlotNameSetAll:
@@ -1812,7 +1831,12 @@ class MainWin(QMainWindow):
 
     # 画图
     def SetupAndPlot(self):
-        # 参数设置
-        if self.PlotSetup():
-            # 绘图
-            self.Plot()
+        try:
+            # 参数设置
+            if self.PlotSetup():
+                # 绘图
+                self.Plot()
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("HandleData Error : ", e)
+                traceback.print_exc()

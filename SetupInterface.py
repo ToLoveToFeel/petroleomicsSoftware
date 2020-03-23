@@ -1970,8 +1970,8 @@ class SetupInterface():
     # HBC：HandleButtonClicked 用户点击 Finished/Cancel后，会进入这个函数处理
     def HBCPlot(self, isOK):
         if not isOK:  # 点击取消按钮
-            self.PlotConfirm = False
             self.PlotDefaultParameters(self.PlotNewParameters)
+            self.PlotConfirm = False
             self.PlotDialog.close()
         else:  # 点击确认按钮
             self.PlotHasEnter = True

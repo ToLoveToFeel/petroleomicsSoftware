@@ -263,7 +263,7 @@ class MainWin(QMainWindow):
         if tb2 is not None:
             tabWidget.addTab(tb2, "原始数据")
 
-        return tabWidget, label
+        return tabWidget, tb2, label
 
     # 关闭 self.tabWidgetShowData 中的一个tab
     def TabWidgetCloseTab(self, index):
@@ -315,6 +315,7 @@ class MainWin(QMainWindow):
         tableWidget.resizeRowsToContents()
         # 禁止编辑
         tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        tableWidget.item(1,1).text()
 
         return tableWidget
 
@@ -391,22 +392,24 @@ class MainWin(QMainWindow):
             # 光标选择到当前导入的文件
             mainTreeChild8_.setSelected(True)
         # 创建 QTabWidget
-        globals()["Plot_" + treeItemName], globals()["PlotLabel_" + treeItemName] = self.CreateQTabWidget(plotImagePath, rawData)
+        globals()["Plot_" + treeItemName], globals()["PlotTB_" + treeItemName], globals()["PlotLabel_" + treeItemName] = self.CreateQTabWidget(plotImagePath, rawData)
         # self.plotStack 添加并显示该项内容
         self.plotStack.addWidget(globals()["Plot_" + treeItemName])
         self.plotStack.setCurrentWidget(globals()["Plot_" + treeItemName])
         self.mainPlotNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
         # 右键处理
         globals()["PlotLabel_" + treeItemName].setContextMenuPolicy(Qt.CustomContextMenu)
-        globals()["PlotLabel_" + treeItemName].customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
+        globals()["PlotLabel_" + treeItemName].customContextMenuRequested.connect(lambda: self.rightMenuShow(1))  # 开放右键策略
+        globals()["PlotTB_" + treeItemName].setContextMenuPolicy(Qt.CustomContextMenu)
+        globals()["PlotTB_" + treeItemName].customContextMenuRequested.connect(lambda: self.rightMenuShow(2))  # 开放右键策略
         # 更新状态栏消息
         self.statusSetup(ConstValues.PsMainWindowStatusMessage, functionStr)
 
     # 右击选项菜单（Plot / Raw Plot Data）
-    def rightMenuShow(self):
+    def rightMenuShow(self, Type):
         sender = self.sender()
-        # 获取当前图片
-        self.currentPixmap = sender.pixmap()
+        self.currentFunction = Type
+
         self.currentPixmapName = "plot.png"
         # 获取当前图片名称
         item = QTreeWidgetItemIterator(self.mainTreeWidget)
@@ -416,6 +419,23 @@ class MainWin(QMainWindow):
                 self.currentPixmapName = treeWidgetItem.text(0)
                 break
             item += 1  # 到下一个节点
+
+        if Type == 1:
+            # 获取当前图片
+            self.currentPixmap = sender.pixmap()
+        elif Type == 2:
+            # 从QTableWigget获取数据
+            rowNum = sender.rowCount()  # 获取行数
+            columnNum = sender.columnCount()  # 获取列数
+            self.currentPixmapData = []
+            for i in range(rowNum):
+                tempList = []
+                for j in range(columnNum):
+                    if i != 0:
+                        tempList.append(float(sender.item(i, j).text()))
+                    else:
+                        tempList.append(sender.item(i, j).text())
+                self.currentPixmapData.append(tempList)
         menu = QMenu()
         menu.addAction(QAction("导出到", menu))
         menu.triggered.connect(self.MenuSlot)
@@ -429,8 +449,11 @@ class MainWin(QMainWindow):
             outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
             if ConstValues.PsIsDebug:
                 print(outputImagePath)
-            if outputImagePath != "":
-                self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
+            if self.currentFunction == 1:
+                if outputImagePath != "":
+                    self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
+            elif self.currentFunction == 2:
+                WriteDataToExcel(self.currentPixmapData, outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
@@ -988,6 +1011,7 @@ class MainWin(QMainWindow):
             PromptBox().warningMessage(ConstValues.PsPlotErrorMessage)  # 弹出错误提示
             return False
         # 更新数据
+        self.PlotConfirm = False  # 每次绘图前需要重置
         self.PlotList = [
             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
             self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头

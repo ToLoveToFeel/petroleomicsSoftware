@@ -26,6 +26,9 @@ class ClassPlot:
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
 
+        # 去掉表头
+        self.RemoveFPResult = self.RemoveFPResult[1:]
+
     # 主逻辑，画图
     def Plot(self):
         # 添加坐标名称，标题
@@ -79,7 +82,7 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [self.PlotClassList, [num/100 for num in sumList]]
+            return imagePath + ".png", [[self.PlotXAxisName]+self.PlotClassList, [self.PlotYAxisName]+[num/100 for num in sumList]]
         elif self.PlotType == 2:  # DBE distribution by class
             if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -112,7 +115,7 @@ class ClassPlot:
             yList = [num * 100 / sum for num in yList]  # 计算比例
 
             # 添加标题
-            title = self.PlotTitleName + "_" + str(self.PlotClassItem[0])
+            title = self.PlotTitleName + "_(" + str(self.PlotClassItem[0]) + ")"
             plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：xList，纵坐标：yList
             plt.bar(xList, yList)
@@ -121,9 +124,9 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [xList, [num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
         elif self.PlotType == 3:  # Carbon number distribution by class and DBE
-            if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
                 plt.close()
                 return None, []
 
@@ -155,7 +158,7 @@ class ClassPlot:
             yList = [num * 100 / sum for num in yList]  # 计算比例
 
             # 添加标题
-            title = self.PlotTitleName + "_" + str(self.PlotClassItem[0]) + "_DBE_" + str(self.PlotDBENum)
+            title = self.PlotTitleName + "_(" + str(self.PlotClassItem[0]) + "_DBE_" + str(self.PlotDBENum) + ")"
             plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：xList，纵坐标：yList
             plt.bar(xList, yList)
@@ -164,14 +167,122 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [xList, [num / 100 for num in yList]]
-        elif self.PlotType == 4:  # van Krevelen by class
-            pass
-        elif self.PlotType == 5:  # DBE vs. carbon number by class
-            pass
-        elif self.PlotType == 6:  # Kendrick mass defect vs. m/z
-            pass
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+        elif self.PlotType == 4:  # DBE vs carbon number by class
+            if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
+                plt.close()
+                return None, []
 
+            # 计算所需要的数据
+            DBECDictionary = {}  # key : (DBE, CNum),   value : 总量
+
+            for item in self.RemoveFPResult:
+                if len(item) != 0:
+                    itemClass = item[ClassIndex]  # 获取类别
+                    itemDBE = item[DBEIndex]  # DBE数目
+                    itemCNum = item[CIndex]
+                    if itemClass in self.PlotClassItem:  # 是需要绘制的类别
+                        if (itemDBE, itemCNum) not in DBECDictionary:
+                            DBECDictionary[(itemDBE, itemCNum)] = item[sumIndex]
+                        else:
+                            DBECDictionary[(itemDBE, itemCNum)] += item[sumIndex]
+
+            # 提取出横纵坐标，气泡图的大小
+            xList = []
+            yList = []
+            sizeList = []
+            for key in sorted(DBECDictionary):
+                value = DBECDictionary[key]
+                xList.append(key[1])  # CNum
+                yList.append(key[0])  # DBE
+                sizeList.append(value)
+
+            sum = 0  # 计算总和
+            for num in sizeList:
+                sum += num
+            scaledSizeList = [num * 10000 / sum for num in sizeList]  # 计算比例
+
+            # 添加标题
+            title = self.PlotTitleName + "_(" + str(self.PlotClassItem[0]) + ")"
+            plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            # 可以绘制图形，横坐标：xList，纵坐标：yList
+            plt.scatter(xList, yList, s=scaledSizeList, c="red", alpha=0.6)
+            imagePath = newDirectory + "/" + title
+            plt.savefig(fname=imagePath, dpi=150)
+            # 关闭绘图
+            plt.close()
+            # 返回图片路径
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList, ["Size"]+sizeList]
+        elif self.PlotType == 5:  # Kendrick mass defect （KMD）
+            def round_up(num):
+                # 默认num大于0，用round函数会造成数据错误，如：round(2.5) --> 2
+                integer = int(num)
+                decimalNum = num - integer
+                if decimalNum >= 0.5:
+                    return integer + 1
+                else:
+                    return integer
+
+            sampleMassIndex = 0
+            sampleMassSet = set()  # 记录不同的 sampleMass
+            xList = []  # KM
+            yList = []  # KMD
+            for item in self.RemoveFPResult:
+                if len(item) != 0:
+                    # 获取sampleMass
+                    sampleMass = item[sampleMassIndex]
+                    # 记录数据
+                    if sampleMass not in sampleMassSet:
+                        KM = (sampleMass * 14.0) / 14.01565
+                        NKM = round_up(KM)
+                        KMD = NKM - KM
+                        xList.append(NKM)
+                        yList.append(KMD)
+                    # 集合中添加元素
+                    sampleMassSet.add(sampleMass)
+
+            # 添加标题
+            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            # 可以绘制图形，横坐标：xList，纵坐标：yList
+            plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
+            imagePath = newDirectory + "/" + self.PlotTitleName
+            plt.savefig(fname=imagePath, dpi=150)
+            # 关闭绘图
+            plt.close()
+            # 返回图片路径
+            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
+        elif self.PlotType == 6:  # Retention time vs carbon number
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
+                plt.close()
+                return None, []
+
+            # startRTValue 位置
+            startRTValueIndex = 3
+            # 计算所需要的数据
+            xList = []  # CNum
+            yList = []  # startRTValue
+
+            for item in self.RemoveFPResult:
+                if len(item) != 0:
+                    itemClass = item[ClassIndex]  # 获取类别
+                    itemDBE = item[DBEIndex]  # DBE数目
+                    itemCNum = item[CIndex]  # C的数目
+                    itemStartRTValue = item[startRTValueIndex]
+                    if (itemClass in self.PlotClassItem) and (self.PlotDBENum == itemDBE):
+                        xList.append(itemCNum)
+                        yList.append(itemStartRTValue)
+
+            # 添加标题
+            title = self.PlotTitleName + "_(" + str(self.PlotClassItem[0]) + "_DBE_" + str(self.PlotDBENum) + ")"
+            plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            # 可以绘制图形，横坐标：xList，纵坐标：yList
+            plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
+            imagePath = newDirectory + "/" + title
+            plt.savefig(fname=imagePath, dpi=150)
+            # 关闭绘图
+            plt.close()
+            # 返回图片路径
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
 
 
 

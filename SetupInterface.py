@@ -1086,9 +1086,12 @@ class SetupInterface():
             globals()["checkBox_1" + item] = None
             globals()["radioBox_2" + item] = None
             globals()["radioBox_3_1" + item] = None
+            globals()["radioBox_4" + item] = None
+            globals()["radioBox_6_1" + item] = None
         for key in self.PlotDictionary:  # 用户带勾选DBE初始化
             for num in self.PlotDictionary[key]:
                 globals()["radioBox_3_2" + str(key) + str(num)] = None
+                globals()["radioBox_6_2" + str(key) + str(num)] = None
         if not self.PlotHasEnter:  # 第一次进入，需要更新self.PlotClassList，在函数HBCPlot()中该值被置为True
             self.PlotClassList = self.PlotClass
         # 单选按钮
@@ -1117,6 +1120,9 @@ class SetupInterface():
         self.PlotSubUI_1List = self.PlotSubUI_1CreateWidget()  # SubUI_1控件
         self.PlotSubUI_2List = self.PlotSubUI_2CreateWidget()  # SubUI_2控件
         self.PlotSubUI_3List = self.PlotSubUI_3CreateWidget()  # SubUI_3控件
+        self.PlotSubUI_4List = self.PlotSubUI_4CreateWidget()  # SubUI_4控件
+        self.PlotSubUI_5List = self.PlotSubUI_5CreateWidget()  # SubUI_5控件
+        self.PlotSubUI_6List = self.PlotSubUI_6CreateWidget()  # SubUI_6控件
 
         self.PlotSubUINameList = self.PlotSubUINameCreateWidget()  # 命名控件
 
@@ -1152,6 +1158,12 @@ class SetupInterface():
             destoryList = self.PlotSubUI_2List
         elif IdStr == "SubUI_3":
             destoryList = self.PlotSubUI_3List
+        elif IdStr == "SubUI_4":
+            destoryList = self.PlotSubUI_4List
+        elif IdStr == "SubUI_5":
+            destoryList = self.PlotSubUI_5List
+        elif IdStr == "SubUI_6":
+            destoryList = self.PlotSubUI_6List
         elif IdStr == "SubUIName":
             destoryList = self.PlotSubUINameList
         for item in destoryList:
@@ -1167,6 +1179,12 @@ class SetupInterface():
             self.PlotSubUI_2AddWidget()
         elif IdStr == "SubUI_3":
             self.PlotSubUI_3AddWidget()
+        elif IdStr == "SubUI_4":
+            self.PlotSubUI_4AddWidget()
+        elif IdStr == "SubUI_5":
+            self.PlotSubUI_5AddWidget()
+        elif IdStr == "SubUI_6":
+            self.PlotSubUI_6AddWidget()
         elif IdStr == "SubUIName":
             self.PlotSubUINameAddWidget()
 
@@ -1183,9 +1201,9 @@ class SetupInterface():
         self.PlotMainUIRadioButton1 = QRadioButton("Class distribution")
         self.PlotMainUIRadioButton2 = QRadioButton("DBE distribution by class")
         self.PlotMainUIRadioButton3 = QRadioButton("Carbon number distribution by class and DBE")
-        self.PlotMainUIRadioButton4 = QRadioButton("van Krevelen by class")
-        self.PlotMainUIRadioButton5 = QRadioButton("DBE vs. carbon number by class")
-        self.PlotMainUIRadioButton6 = QRadioButton("Kendrick mass defect vs. m/z")
+        self.PlotMainUIRadioButton4 = QRadioButton("DBE vs carbon number by class")
+        self.PlotMainUIRadioButton5 = QRadioButton("Kendrick mass defect （KMD）")
+        self.PlotMainUIRadioButton6 = QRadioButton("Retention time vs carbon number")
         self.PlotMainUIRadioButton1.setChecked(True)
         self.PlotMainUIRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         self.PlotMainUIRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
@@ -1268,23 +1286,12 @@ class SetupInterface():
             self.PlotType = Id
             if ConstValues.PsIsDebug:
                 print("PlotMainUIRadioButtonState self.PlotType : ", self.PlotType)
+
     # -------------------------------------- 一级子界面
     def PlotMainToSubUI(self):
         # 根据选择绘制一级子界面
         subUI = "SubUI_" + str(self.PlotType)
         self.PlotRemoveAddWidget("MainUI", subUI)
-        # if self.PlotType == 1:  # Class distribution
-        #     self.PlotRemoveAddWidget("MainUI", "SubUI_1")
-        # elif self.PlotType == 2:  # DBE distribution by class
-        #     self.PlotRemoveAddWidget("MainUI", "SubUI_2")
-        # elif self.PlotType == 3:  # Carbon number distribution by class and DBE
-        #     pass
-        # elif self.PlotType == 4:  # van Krevelen by class
-        #     pass
-        # elif self.PlotType == 5:  # DBE vs. carbon number by class
-        #     pass
-        # elif self.PlotType == 6:  # Kendrick mass defect vs. m/z
-        #     pass
 
     # -------------------------------------- 一级界面下右六个不同的设置界面，第一个：Class distribution，创建控件
     def PlotSubUI_1CreateWidget(self):
@@ -1556,6 +1563,232 @@ class SetupInterface():
                     print(self.PlotDBENum)
                 break
 
+    # -------------------------------------- 第四个：DBE vs carbon number by class，创建控件
+    def PlotSubUI_4CreateWidget(self):
+        # 返回上一个界面按钮
+        self.PlotSubUI_4ButtonPrev = QPushButton("back")
+        self.PlotSubUI_4ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        if ConstValues.PsIconType == 1:
+            self.PlotSubUI_4ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+        elif ConstValues.PsIconType == 2:
+            self.PlotSubUI_4ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
+        self.PlotSubUI_4LabelPrev = self.GetQLabel("")  # 标签
+        # 单选按钮
+        self.PlotSubUI_4ListWidget = QListWidget()  # 列表控件
+        self.PlotSubUI_4ListWidget.setStyleSheet("background-color: white;")
+        for item in self.PlotClass:
+            if globals()["radioBox_4" + item] is None:
+                globals()["radioBox_4" + item] = QRadioButton(item)
+            listWidgetItem = QListWidgetItem()
+            self.PlotSubUI_4ListWidget.addItem(listWidgetItem)
+            self.PlotSubUI_4ListWidget.setItemWidget(listWidgetItem, globals()["radioBox_4" + item])
+        if len(self.PlotClassItem) != 0:
+            item = self.PlotClassItem[0]
+            globals()["radioBox_4" + item].setChecked(True)
+        # Next/Cancel
+        self.PlotSubUI_4Button1 = QPushButton("Next")
+        self.PlotSubUI_4Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_4Button2 = QPushButton("Cancel")
+        self.PlotSubUI_4Button2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+
+        # 绑定槽函数
+        self.PlotSubUI_4ButtonPrev.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_4", "MainUI"))  # 返回按钮
+        self.PlotSubUI_4Button1.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_4", "SubUIName"))  # next按钮
+        self.PlotSubUI_4Button2.clicked.connect(lambda: self.HBCPlot(False))  # 取消按钮
+
+        for item in self.PlotClass:
+            globals()["radioBox_4" + item].clicked.connect(self.PlotSubUI_4RadioButton)
+
+        return [
+            self.PlotSubUI_4ButtonPrev,
+            self.PlotSubUI_4LabelPrev,
+            self.PlotSubUI_4ListWidget,
+            self.PlotSubUI_4Button1,
+            self.PlotSubUI_4Button2,
+        ]
+
+    # 添加控件
+    def PlotSubUI_4AddWidget(self):
+        self.PlotLayout.setVerticalSpacing(20)
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotSubUI_4ButtonPrev, 0, 0, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_4LabelPrev, 0, 1, 1, 4)
+        # 第二行
+        self.PlotLayout.addWidget(self.PlotSubUI_4ListWidget, 1, 0, 1, 5)
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotSubUI_4Button1, 8, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_4Button2, 8, 4, 1, 1)
+
+    # 一级子界面第四个界面 选择需要绘制的Class
+    def PlotSubUI_4RadioButton(self):
+        for item in self.PlotClass:
+            if globals()["radioBox_4" + item].isChecked():
+                self.PlotClassItem[0] = globals()["radioBox_4" + item].text()
+                if ConstValues.PsIsDebug:
+                    print(self.PlotClassItem[0])
+                break
+
+    # -------------------------------------- 第五个：Kendrick mass defect （KMD），创建控件
+    def PlotSubUI_5CreateWidget(self):
+        # 返回上一个界面按钮
+        self.PlotSubUI_5ButtonPrev = QPushButton("back")
+        self.PlotSubUI_5ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        if ConstValues.PsIconType == 1:
+            self.PlotSubUI_5ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+        elif ConstValues.PsIconType == 2:
+            self.PlotSubUI_5ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
+        self.PlotSubUI_5LabelPrev = self.GetQLabel("")  # 标签
+        # 单选按钮
+        self.PlotSubUI_5ListWidget = QListWidget()  # 列表控件
+        self.PlotSubUI_5ListWidget.setStyleSheet("background-color: white;")
+        listWidgetItem = QListWidgetItem()
+        self.PlotSubUI_5ListWidget.addItem(listWidgetItem)
+        self.PlotSubUI_5ListWidget.setItemWidget(listWidgetItem, self.GetQLabel("请直接下一步"))
+        # Next/Cancel
+        self.PlotSubUI_5Button1 = QPushButton("Next")
+        self.PlotSubUI_5Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_5Button2 = QPushButton("Cancel")
+        self.PlotSubUI_5Button2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+
+        # 绑定槽函数
+        self.PlotSubUI_5ButtonPrev.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_5", "MainUI"))  # 返回按钮
+        self.PlotSubUI_5Button1.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_5", "SubUIName"))  # next按钮
+        self.PlotSubUI_5Button2.clicked.connect(lambda: self.HBCPlot(False))  # 取消按钮
+
+
+        return [
+            self.PlotSubUI_5ButtonPrev,
+            self.PlotSubUI_5LabelPrev,
+            self.PlotSubUI_5ListWidget,
+            self.PlotSubUI_5Button1,
+            self.PlotSubUI_5Button2,
+        ]
+
+    # 添加控件
+    def PlotSubUI_5AddWidget(self):
+        self.PlotLayout.setVerticalSpacing(20)
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotSubUI_5ButtonPrev, 0, 0, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_5LabelPrev, 0, 1, 1, 4)
+        # 第二行
+        self.PlotLayout.addWidget(self.PlotSubUI_5ListWidget, 1, 0, 1, 5)
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotSubUI_5Button1, 8, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_5Button2, 8, 4, 1, 1)
+
+    # -------------------------------------- 第六个：Retention time vs carbon number，创建控件
+    def PlotSubUI_6CreateWidget(self):
+        # 返回上一个界面按钮
+        self.PlotSubUI_6ButtonPrev = QPushButton("back")
+        self.PlotSubUI_6ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        if ConstValues.PsIconType == 1:
+            self.PlotSubUI_6ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+        elif ConstValues.PsIconType == 2:
+            self.PlotSubUI_6ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
+        self.PlotSubUI_6LabelPrev = self.GetQLabel("")  # 标签
+        # 单选按钮
+        self.PlotSubUI_6ListWidget1 = QListWidget()  # 列表控件1
+        self.PlotSubUI_6ListWidget1.setStyleSheet("background-color: white;")
+        for item in self.PlotClass:
+            if globals()["radioBox_6_1" + item] is None:
+                globals()["radioBox_6_1" + item] = QRadioButton(item)
+            listWidgetItem = QListWidgetItem()
+            self.PlotSubUI_6ListWidget1.addItem(listWidgetItem)
+            self.PlotSubUI_6ListWidget1.setItemWidget(listWidgetItem, globals()["radioBox_6_1" + item])
+        if len(self.PlotClass) != 0:
+            item = self.PlotClass[0]
+            globals()["radioBox_6_1" + item].setChecked(True)
+
+        # 单选按钮
+        self.PlotSubUI_6ListWidget2 = QListWidget()  # 列表控件1
+        self.PlotSubUI_6ListWidget2.setStyleSheet("background-color: white;")
+        key = self.PlotClass[0]
+        for num in self.PlotDictionary[key]:
+            if globals()["radioBox_6_2" + str(key) + str(num)] is None:
+                globals()["radioBox_6_2" + str(key) + str(num)] = QRadioButton(str(num))
+            listWidgetItem = QListWidgetItem()
+            self.PlotSubUI_6ListWidget2.addItem(listWidgetItem)
+            self.PlotSubUI_6ListWidget2.setItemWidget(listWidgetItem,
+                                                      globals()["radioBox_6_2" + str(key) + str(num)])
+            # 关联槽函数
+            globals()["radioBox_6_2" + str(key) + str(num)].clicked.connect(
+                lambda: self.PlotSubUI_3RadioButtonDBE(key))
+        # 默认勾选C数赋初值
+        self.PlotDBENum = self.PlotDictionary[key][0]
+        # 默认勾选第一个
+        globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
+        # Next/Cancel
+        self.PlotSubUI_6Button1 = QPushButton("Next")
+        self.PlotSubUI_6Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_6Button2 = QPushButton("Cancel")
+        self.PlotSubUI_6Button2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+
+        # 绑定槽函数
+        self.PlotSubUI_6ButtonPrev.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_6", "MainUI"))  # 返回按钮
+        self.PlotSubUI_6Button1.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_6", "SubUIName"))  # next按钮
+        self.PlotSubUI_6Button2.clicked.connect(lambda: self.HBCPlot(False))  # 取消按钮
+
+        for item in self.PlotClass:
+            globals()["radioBox_6_1" + item].clicked.connect(self.PlotSubUI_6RadioButtonClass)
+
+        return [
+            self.PlotSubUI_6ButtonPrev,
+            self.PlotSubUI_6LabelPrev,
+            self.PlotSubUI_6ListWidget1,
+            self.PlotSubUI_6ListWidget2,
+            self.PlotSubUI_6Button1,
+            self.PlotSubUI_6Button2,
+        ]
+
+    # 添加控件
+    def PlotSubUI_6AddWidget(self):
+        self.PlotLayout.setVerticalSpacing(20)
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotSubUI_6ButtonPrev, 0, 0, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_2LabelPrev, 0, 1, 1, 4)
+        # 第二行
+        self.PlotLayout.addWidget(self.PlotSubUI_6ListWidget1, 1, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_6ListWidget2, 1, 2, 1, 2)
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotSubUI_6Button1, 8, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_6Button2, 8, 4, 1, 1)
+
+    # 一级子界面第三个界面 选择需要绘制的Class
+    def PlotSubUI_6RadioButtonClass(self):
+        # 清除 DBE 显示
+        self.PlotSubUI_6ListWidget2.clear()  # 会导致C++回收QRadioButton，因此下面必须创建新globals变量
+        # 寻找需要显示的 DBE
+        for item in self.PlotClass:
+            if globals()["radioBox_6_1" + item].isChecked():
+                key = item
+                for num in self.PlotDictionary[key]:
+                    # print(globals()["radioBox_6_2" + str(key) + str(num)])
+                    # if globals()["radioBox_6_2" + str(key) + str(num)] is None:
+                    globals()["radioBox_6_2" + str(key) + str(num)] = QRadioButton(str(num))
+                    listWidgetItem = QListWidgetItem()
+                    self.PlotSubUI_6ListWidget2.addItem(listWidgetItem)
+                    self.PlotSubUI_6ListWidget2.setItemWidget(listWidgetItem, globals()["radioBox_6_2" + str(key) + str(num)])
+                    # 关联槽函数
+                    globals()["radioBox_6_2" + str(key) + str(num)].clicked.connect(lambda: self.PlotSubUI_6RadioButtonDBE(key))
+                # C数更新值
+                self.PlotDBENum = self.PlotDictionary[key][0]
+                # 默认勾选第一个
+                globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
+                if ConstValues.PsIsDebug:
+                    print("PlotSubUI_6RadioButtonClass self.PlotDBENum : ", self.PlotDBENum)
+                break
+
+    # 一级子界面第三个界面 选择需要绘制的DBE
+    def PlotSubUI_6RadioButtonDBE(self, Class):
+            for num in self.PlotDictionary[Class]:
+                if globals()["radioBox_6_2" + str(Class) + str(num)].isChecked():
+                    self.PlotClassItem[0] = Class
+                    self.PlotDBENum = num
+                    if ConstValues.PsIsDebug:
+                        print(self.PlotClassItem[0])
+                        print(self.PlotDBENum)
+                    break
+
     # -------------------------------------- 一级子界面对应的二级子界面，命名功能等
     def PlotSubUINameCreateWidget(self):
         # 返回上一个界面按钮
@@ -1675,12 +1908,19 @@ class SetupInterface():
             self.PlotTitleName = "Carbon_number_distribution_by_class_and_DBE"  # 标题名称
             self.PlotXAxisName = "Carbon number"  # x轴名称
             self.PlotYAxisName = "Relative abundance(%)"  # y轴名称
-        elif self.PlotType == 4:  # van Krevelen by class
-            pass
-        elif self.PlotType == 5:  # DBE vs. carbon number by class
-            pass
-        elif self.PlotType == 6:  # Kendrick mass defect vs. m/z
-            pass
+        elif self.PlotType == 4:  # DBE vs carbon number by class
+            self.PlotTitleName = "DBE_vs_carbon_number_by_class"  # 标题名称
+            self.PlotXAxisName = "Carbon number"  # x轴名称
+            self.PlotYAxisName = "DBE"  # y轴名称
+        elif self.PlotType == 5:  # Kendrick mass defect （KMD）
+            self.PlotTitleName = "Kendrick_mass_defect"  # 标题名称
+            self.PlotXAxisName = "NKM"  # x轴名称
+            self.PlotYAxisName = "KMD"  # y轴名称
+        elif self.PlotType == 6:  # retention time vs carbon number
+            self.PlotTitleName = "Retention_time_vs_carbon_number"  # 标题名称
+            self.PlotXAxisName = "Carbon number"  # x轴名称
+            self.PlotYAxisName = "startRTValue"  # y轴名称
+
         self.PlotSubUINameEdit1.setPlaceholderText(self.PlotTitleName)
         self.PlotSubUINameEdit2.setPlaceholderText(self.PlotXAxisName)
         self.PlotSubUINameEdit3.setPlaceholderText(self.PlotYAxisName)

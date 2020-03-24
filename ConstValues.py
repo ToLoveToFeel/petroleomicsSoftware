@@ -110,7 +110,7 @@ class ConstValues:
     PsStartMode = 1
 
     # 处理过程中是否显示弹框
-    PsIsShowGif = True
+    PsIsShowGif = False
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -130,7 +130,7 @@ class ConstValues:
     # 样本文件和空白文件header所在excel中的行数：PsHeaderLine = excel.header - 1
     PsHeaderLine = 7
     # 主页面最多显示的表格行数
-    PsMainMaxRowNum = 200000
+    PsMainMaxRowNum = 10000
     # 读入文件默认目录
     PsReadFileDefaultDirectoy = "./inputdata/350"
 

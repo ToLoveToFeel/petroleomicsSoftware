@@ -9,7 +9,7 @@ from MultiThread import MultiThread
 import qtawesome
 import math
 import traceback
-import time
+import sys
 
 
 class MainWin(QMainWindow):
@@ -61,6 +61,19 @@ class MainWin(QMainWindow):
 
     # -------------------------------------- 设置窗口显示内容
     def initShow(self):
+        # initShow 初始化数据
+        self.initShowDataInit()
+
+        # 主界面添加 QWidget，QWidget 中添加 Layout
+        self.centralwidget = QWidget()
+        self.setCentralWidget(self.centralwidget)
+        self.Layout = QGridLayout(self.centralwidget)
+
+        # self.Layout 添加控件
+        self.MainLayoutAddWidget()
+
+    # initShow 初始化数据
+    def initShowDataInit(self):
         # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
         self.tabWidgetId = 0
         # 主界面读取文件名称列表，读入相同名称的文件时，需要确认是否覆盖
@@ -71,9 +84,8 @@ class MainWin(QMainWindow):
         self.mainPlotNameSetAll = set()  # 所有可能需要显示的图片名称集合，里面全是字符串，只增不减
         self.mainPlotNeedCover = False
 
-        self.centralwidget = QWidget()
-        self.setCentralWidget(self.centralwidget)
-        self.Layout = QGridLayout(self.centralwidget)
+    # self.Layout 添加控件
+    def MainLayoutAddWidget(self):
         # 创建左右两边Widget框
         self.mainTreeWidget = QTreeWidget()  # 树控件，左边
         self.mainTreeWidget.setColumnCount(1)
@@ -88,32 +100,41 @@ class MainWin(QMainWindow):
         # 树控件设置根节点
         self.mainTreeRoot = QTreeWidgetItem(self.mainTreeWidget)
         self.mainTreeRoot.setText(0, "石油组学数据")
-        self.mainTreeRoot.setIcon(0, qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        self.mainTreeRoot.setIcon(0,
+                                  qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 树控件创建子节点
         self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild1.setText(0, ConstValues.PsTreeInputFiles)
-        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild2 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild2.setText(0, ConstValues.PsTreeDeleteBlank)
-        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild3 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild3.setText(0, ConstValues.PsTreeGDB)
-        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild4 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild4.setText(0, ConstValues.PsTreeDelIso)
-        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild5 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild5.setText(0, ConstValues.PsTreePeakDis)
-        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild6 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild6.setText(0, ConstValues.PsTreeRemoveFP)
-        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild7 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild7.setText(0, ConstValues.PsTreePeakDiv)
-        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild8.setText(0, ConstValues.PsTreePlot)
-        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
+                                                      color=ConstValues.PsqtaIconFolderColor))
 
         # 展开所有树控件
         self.mainTreeWidget.expandAll()
@@ -123,9 +144,9 @@ class MainWin(QMainWindow):
         # 创建一个QTabWidget，专门用于存放用于显示的数据(包括excel,txt以及中间生成的数据)
         self.tabWidgetShowData = QTabWidget()
         self.tabWidgetShowData.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
-        self.tabWidgetShowData.setFixedWidth(ConstValues.PsMainWindowWidth*8/10)
+        self.tabWidgetShowData.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
-              "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
+                "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
         self.tabWidgetShowData.setStyleSheet(style)
         self.tabWidgetShowData.setTabsClosable(True)  # 可以关闭
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
@@ -153,20 +174,10 @@ class MainWin(QMainWindow):
         self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
         self.mainTreeChild8_1.setText(0, "initShow")
-        self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
+                                                        color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8_1.setSelected(True)
         self.plotStack.setCurrentWidget(globals()["Plot_" + "initShow"])
-
-        # # TODO:右侧添加内容，测试
-        # self.tabWidget2, self.tabWidgetLabel2 = self.CreateQTabWidget("./images/feather.png")  # 创建 QTabWidget
-        # self.plotStack.addWidget(self.tabWidget2)  # 添加 QTabWidget，3
-        # self.mainTreeChild8_2 = QTreeWidgetItem(self.mainTreeChild8)
-        # self.mainTreeChild8_2.setText(0, "TODO")
-        # self.mainTreeChild8_2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
-        #
-        # # 右键处理
-        # self.tabWidgetLabel2.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.tabWidgetLabel2.customContextMenuRequested.connect(self.rightMenuShow)  # 开放右键策略
 
         # 树控件设置字体大小
         item = QTreeWidgetItemIterator(self.mainTreeWidget)
@@ -360,7 +371,7 @@ class MainWin(QMainWindow):
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
-            PromptBox().warningMessage(message)
+            PromptBox().informationMessageAutoClose(message, 2)
 
     # 生成    图形    后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
     def AddTreeItemPlot(self, plotImagePath, rawData, functionStr=""):
@@ -733,48 +744,31 @@ class MainWin(QMainWindow):
         plot.addAction(addPlot)
         addPlot.triggered.connect(self.SetupAndPlot)
 
-        # 设置字体大小
+        # 设置字体，图标等
+        elementList = [
+            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
+            peakDivision, addPlot
+        ]
+        IconFromImage = [
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot
+        ]
+        IconFromQta = [
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot
+        ]
         bar.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        importSampleFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        importBlankFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        TICFile.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        OutFilesPath.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        exitProgram.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        deleteBlank.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        DBSearch.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        deleteIsotope.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        peakDistinguish.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        RemoveFP.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        peakDivision.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-        plot.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
-
-        # 设置图标
-        if ConstValues.PsIconType == 1:  # 从图片读取
-            importSampleFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            importBlankFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            TICFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            OutFilesPath.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            exitProgram.setIcon(QIcon(ConstValues.PsIconExit))
-            deleteBlank.setIcon(QIcon(ConstValues.PsIconDeleteBlank))
-            DBSearch.setIcon(QIcon(ConstValues.PsIconGDB))
-            deleteIsotope.setIcon(QIcon(ConstValues.PsIcondelIso))
-            peakDistinguish.setIcon(QIcon(ConstValues.PsIconpeakDis))
-            RemoveFP.setIcon(QIcon(ConstValues.PsIconRemoveFP))
-            peakDivision.setIcon(QIcon(ConstValues.PsIconpeakDiv))
-            addPlot.setIcon(QIcon(ConstValues.PsIconPlot))
-        elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-            importSampleFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
-            importBlankFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
-            TICFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileTxt, color=ConstValues.PsqtaColor))
-            OutFilesPath.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileOut, color=ConstValues.PsqtaColor))
-            exitProgram.setIcon(qtawesome.icon(ConstValues.PsqtaIconExit, color=ConstValues.PsqtaColor))
-            deleteBlank.setIcon(qtawesome.icon(ConstValues.PsqtaIconDeleteBlank, color=ConstValues.PsqtaColor))
-            DBSearch.setIcon(qtawesome.icon(ConstValues.PsqtaIconGDB, color=ConstValues.PsqtaColor))
-            deleteIsotope.setIcon(qtawesome.icon(ConstValues.PsqtaIcondelIso, color=ConstValues.PsqtaColor))
-            peakDistinguish.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDis, color=ConstValues.PsqtaColor))
-            RemoveFP.setIcon(qtawesome.icon(ConstValues.PsqtaIconRemoveFP, color=ConstValues.PsqtaColor))
-            peakDivision.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDiv, color=ConstValues.PsqtaColor))
-            addPlot.setIcon(qtawesome.icon(ConstValues.PsqtaIconPlot, color=ConstValues.PsqtaColor))
+        for i in range(len(elementList)):
+            # 设置字体大小
+            elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+            # 设置图标
+            if ConstValues.PsIconType == 1:  # 从图片读取
+                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+            elif ConstValues.PsIconType == 2:  # 来自 qtawesome
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
 
     # 设置工具栏
     def toolbar(self):
@@ -854,52 +848,30 @@ class MainWin(QMainWindow):
         tb4.addAction(allReset)
         allReset.triggered.connect(self.ResetProgram)
 
-        # 设置字体大小
-        importSampleFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        importBlankFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        TICFile.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        OutFilesPath.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        exitProgram.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        deleteBlank.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        DBSearch.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        deleteIsotope.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        peakDistinguish.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        RemoveFP.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        self.TBpeakDivision.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        allStart.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-        allReset.setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
-
-        # 设置图标
-        if ConstValues.PsIconType == 1:  # 从图片读取
-            importSampleFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            importBlankFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            TICFile.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            OutFilesPath.setIcon(QIcon(ConstValues.PsIconOpenFile))
-            exitProgram.setIcon(QIcon(ConstValues.PsIconExit))
-            deleteBlank.setIcon(QIcon(ConstValues.PsIconDeleteBlank))
-            DBSearch.setIcon(QIcon(ConstValues.PsIconGDB))
-            deleteIsotope.setIcon(QIcon(ConstValues.PsIcondelIso))
-            peakDistinguish.setIcon(QIcon(ConstValues.PsIconpeakDis))
-            RemoveFP.setIcon(QIcon(ConstValues.PsIconRemoveFP))
-            self.TBpeakDivision.setIcon(QIcon(ConstValues.PsIconpeakDiv))
-            plot.setIcon(QIcon(ConstValues.PsIconPlot))
-            allStart.setIcon(QIcon(ConstValues.PsIconAllStart))
-            allReset.setIcon(QIcon(ConstValues.PsIconAllReset))
-        elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-            importSampleFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
-            importBlankFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileExcel, color=ConstValues.PsqtaColor))
-            TICFile.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileTxt, color=ConstValues.PsqtaColor))
-            OutFilesPath.setIcon(qtawesome.icon(ConstValues.PsqtaIconOpenFileOut, color=ConstValues.PsqtaColor))
-            exitProgram.setIcon(qtawesome.icon(ConstValues.PsqtaIconExit, color=ConstValues.PsqtaColor))
-            deleteBlank.setIcon(qtawesome.icon(ConstValues.PsqtaIconDeleteBlank, color=ConstValues.PsqtaColor))
-            DBSearch.setIcon(qtawesome.icon(ConstValues.PsqtaIconGDB, color=ConstValues.PsqtaColor))
-            deleteIsotope.setIcon(qtawesome.icon(ConstValues.PsqtaIcondelIso, color=ConstValues.PsqtaColor))
-            peakDistinguish.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDis, color=ConstValues.PsqtaColor))
-            RemoveFP.setIcon(qtawesome.icon(ConstValues.PsqtaIconRemoveFP, color=ConstValues.PsqtaColor))
-            self.TBpeakDivision.setIcon(qtawesome.icon(ConstValues.PsqtaIconpeakDiv, color=ConstValues.PsqtaColor))
-            plot.setIcon(qtawesome.icon(ConstValues.PsqtaIconPlot, color=ConstValues.PsqtaColor))
-            allStart.setIcon(qtawesome.icon(ConstValues.PsqtaIconAllStart, color=ConstValues.PsqtaColor))
-            allReset.setIcon(qtawesome.icon(ConstValues.PsqtaIconAllReset, color=ConstValues.PsqtaColor))
+        # 设置字体，图标等
+        elementList = [
+            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
+            self.TBpeakDivision, plot, allStart, allReset
+        ]
+        IconFromImage = [
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconAllStart,ConstValues.PsIconAllReset
+        ]
+        IconFromQta = [
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconAllReset
+        ]
+        for i in range(len(elementList)):
+            # 设置字体大小
+            elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+            # 设置图标
+            if ConstValues.PsIconType == 1:  # 从图片读取
+                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+            elif ConstValues.PsIconType == 2:  # 来自 qtawesome
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
 
     # 设置主窗口底部状态栏
     def status(self):
@@ -974,12 +946,18 @@ class MainWin(QMainWindow):
 
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
-        pass
+        self.Layout.removeWidget(self.mainTreeWidget)
+        self.Layout.removeWidget(self.plotStack)
+        # initShow 初始化数据
+        self.initShowDataInit()
+        # self.Layout 添加控件
+        self.MainLayoutAddWidget()
 
     # 退出程序
     @staticmethod
     def QuitApplication(self):
         app = QApplication.instance()
+
         # 退出应用程序
         app.quit()
 

@@ -1,16 +1,14 @@
 # coding=utf-8
 # 此文件负责定义：各个设置参数界面
-import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 import qtawesome
-import traceback
 
 
-class SetupInterface():
+class SetupInterface:
     def __init__(self):
         # 全局变量初始化
         self.dataInit()
@@ -162,6 +160,20 @@ class SetupInterface():
             label.setAlignment(Qt.AlignRight)
         return label
 
+    # 创建Dialog
+    def CreateDialog(self, title, xNum, yNum):
+        # 创建QDialog
+        dialog = QDialog()
+        dialog.setWindowTitle(title)
+        dialog.setFixedSize(ConstValues.PsSetupFontSize * xNum, ConstValues.PsSetupFontSize * yNum)  # 固定窗口大小
+        if ConstValues.PsIconType == 1:
+            dialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            dialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        if ConstValues.PsSetupStyleEnabled:
+            dialog.setStyleSheet(ConstValues.PsSetupStyle)
+        return dialog
+
     #################################################################################################################
     def DeleteBlankSetup(self, parameters):
         # 扣空白设置对话框
@@ -169,32 +181,24 @@ class SetupInterface():
         self.DeleteBlankSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteBlankDialog = QDialog()
-        self.deleteBlankDialog.setWindowTitle("扣空白参数设置")
-        self.deleteBlankDialog.setFixedSize(ConstValues.PsSetupFontSize * 25, ConstValues.PsSetupFontSize * 16)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.deleteBlankDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.deleteBlankDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.deleteBlankDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 25, 16)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
-        deleteBlankEdit1.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Intensity", deleteBlankEdit1))
+        deleteBlankEdit1.textChanged.connect(lambda: self.HandleTextChangedDeleteBlank("Intensity", deleteBlankEdit1))
         # PPM对话框
         deleteBlankEdit2 = self.DoubleQLineEdit(int(ConstValues.PsDeleteBlankPPMMin), int(ConstValues.PsDeleteBlankPPMMax), 2, str(self.deleteBlankPPM))
-        deleteBlankEdit2.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("PPM", deleteBlankEdit2))
+        deleteBlankEdit2.textChanged.connect(lambda: self.HandleTextChangedDeleteBlank("PPM", deleteBlankEdit2))
         # Percentage对话框
         deleteBlankEdit3 = self.IntQLineEdit(ConstValues.PsDeleteBlankPercentageMin, ConstValues.PsDeleteBlankPercentageMax, str(self.deleteBlankPercentage))
-        deleteBlankEdit3.textChanged.connect(lambda : self.HandleTextChangedDeleteBlank("Percentage", deleteBlankEdit3))
+        deleteBlankEdit3.textChanged.connect(lambda: self.HandleTextChangedDeleteBlank("Percentage", deleteBlankEdit3))
         # 创建按钮
         deleteBlankButton1 = QPushButton("确定")
         deleteBlankButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
-        deleteBlankButton1.clicked.connect(lambda : self.HBCDeleteBlank(parameters, True))
+        deleteBlankButton1.clicked.connect(lambda: self.HBCDeleteBlank(parameters, True))
         deleteBlankButton2 = QPushButton("退出")
         deleteBlankButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
-        deleteBlankButton2.clicked.connect(lambda : self.HBCDeleteBlank(parameters, False))
+        deleteBlankButton2.clicked.connect(lambda: self.HBCDeleteBlank(parameters, False))
 
         # 创建栅格布局
         layout = QGridLayout(self.deleteBlankDialog)
@@ -272,20 +276,11 @@ class SetupInterface():
         self.GDBSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.GDBDialog = QDialog()
-        self.GDBDialog.setWindowTitle("数据库生成参数设置")
-        self.GDBDialog.setFixedSize(ConstValues.PsSetupFontSize * 52, ConstValues.PsSetupFontSize * 35)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.GDBDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.GDBDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.GDBDialog.setStyleSheet(ConstValues.PsSetupStyle)
-
+        self.GDBDialog = self.CreateDialog("数据库生成参数设置", 52, 35)
 
         # Class
         GDBEdit1 = self.RegExpQLineEdit("([A-Z0-9]|,)+$", ",".join(self.GDBClass))  # 注意：list需要转为str
-        GDBEdit1.textChanged.connect(lambda : self.HandleTextChangedGDB("Class", GDBEdit1))
+        GDBEdit1.textChanged.connect(lambda: self.HandleTextChangedGDB("Class", GDBEdit1))
         # carbon rage(碳数范围)：1~100（整数）
         GDBEdit2 = self.IntQLineEdit(ConstValues.PsGDBCarbonRangeMin, ConstValues.PsGDBCarbonRangeMax, str(self.GDBCarbonRangeLow))
         GDBEdit3 = self.IntQLineEdit(ConstValues.PsGDBCarbonRangeMin, ConstValues.PsGDBCarbonRangeMax, str(self.GDBCarbonRangeHigh))
@@ -516,15 +511,7 @@ class SetupInterface():
         self.DeleteIsotopeSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteIsotopeDialog = QDialog()
-        self.deleteIsotopeDialog.setWindowTitle("去同位素参数设置")
-        self.deleteIsotopeDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.deleteIsotopeDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.deleteIsotopeDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.deleteIsotopeDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 35, 25)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
@@ -657,15 +644,7 @@ class SetupInterface():
         self.PeakDistinguishDefaultParameters(parameters)
 
         # 创建QDialog
-        self.peakDistinguishDialog = QDialog()
-        self.peakDistinguishDialog.setWindowTitle("峰提取参数设置")
-        self.peakDistinguishDialog.setFixedSize(ConstValues.PsSetupFontSize * 40, ConstValues.PsSetupFontSize * 25)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.peakDistinguishDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.peakDistinguishDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.peakDistinguishDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        self.peakDistinguishDialog = self.CreateDialog("峰提取参数设置", 40, 25)
 
         # PeakDisContinuityNum对话框
         peakDistinguishEdit1 = self.IntQLineEdit(ConstValues.PsPeakDisContinuityNumMin, ConstValues.PsPeakDisContinuityNumMax, str(self.PeakDisContinuityNum))
@@ -818,15 +797,7 @@ class SetupInterface():
         self.RemoveFalsePositiveDefaultParameters(parameters)
 
         # 创建QDialog
-        self.RemoveFPDialog = QDialog()
-        self.RemoveFPDialog.setWindowTitle("去假阳性参数设置")
-        self.RemoveFPDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.RemoveFPDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.RemoveFPDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.RemoveFPDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 35, 20)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -943,15 +914,7 @@ class SetupInterface():
         self.PeakDivisionDefaultParameters(parameters)
 
         # 创建QDialog
-        self.PeakDivDialog = QDialog()
-        self.PeakDivDialog.setWindowTitle("峰检测参数设置")
-        self.PeakDivDialog.setFixedSize(ConstValues.PsSetupFontSize * 35, ConstValues.PsSetupFontSize * 20)  # 固定窗口大小
-        if ConstValues.PsIconType == 1:
-            self.PeakDivDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.PeakDivDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            self.PeakDivDialog.setStyleSheet(ConstValues.PsSetupStyle)
+        self.PeakDivDialog = self.CreateDialog("峰检测参数设置", 35, 20)
 
         # PeakDivNoiseThreshold 对话框
         PeakDivEdit1 = self.IntQLineEdit(ConstValues.PsPeakDivNoiseThresholdMin, ConstValues.PsPeakDivNoiseThresholdMax, str(self.PeakDivNoiseThreshold))
@@ -1114,15 +1077,7 @@ class SetupInterface():
         self.PlotSubUI_1_1AllNoneFlag = False
 
         # 创建QDialog
-        self.PlotDialog = QDialog()
-        self.PlotDialog.setWindowTitle("图形生成参数设置")
-        self.PlotDialog.setFixedSize(ConstValues.PsSetupFontSize * 67, ConstValues.PsSetupFontSize * 40)  # 固定窗口大小
-        if ConstValues.PsSetupStyleEnabled:
-            self.PlotDialog.setStyleSheet(ConstValues.PsSetupStyle)
-        if ConstValues.PsIconType == 1:
-            self.PlotDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
-        elif ConstValues.PsIconType == 2:
-            self.PlotDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        self.PlotDialog = self.CreateDialog("图形生成参数设置", 67, 40)
 
         # 创建栅格布局
         self.PlotLayout = QGridLayout(self.PlotDialog)
@@ -1998,7 +1953,6 @@ class SetupInterface():
         # 一定合法
         return 1
 
-
     #################################################################################################################
     def StartModeSetup(self, parameters):
         # 峰检测设置对话框，设置默认参数
@@ -2037,7 +1991,7 @@ class SetupInterface():
             StartModeListWidget.setItemWidget(listWidgetItem, globals()["mode" + str(i)])
             # 关联槽函数
             globals()["mode" + str(i)].clicked.connect(lambda: self.StartModeRadioButtonState())
-        globals()["mode" + str(0)].setChecked(True)
+        globals()["mode" + str(self.startMode-1)].setChecked(True)
 
         # 创建按钮
         StartModeButton1 = QPushButton("确定")
@@ -2089,7 +2043,5 @@ class SetupInterface():
                 if ConstValues.PsIsDebug:
                     print(self.startMode)
                 break
-
-
 
 

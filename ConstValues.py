@@ -109,6 +109,9 @@ class ConstValues:
     # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
     PsStartMode = 1
 
+    # 处理过程中是否显示弹框
+    PsIsShowGif = False
+
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
     # 去同位素错误提示信息

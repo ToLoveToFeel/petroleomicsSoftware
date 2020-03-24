@@ -355,7 +355,7 @@ class MainWin(QMainWindow):
         self.mainNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
         # 更新状态栏消息
         self.statusSetup(ConstValues.PsMainWindowStatusMessage, functionStr)
-        if promptBox is not None:
+        if (promptBox is not None) and ConstValues.PsIsShowGif:
             promptBox.closeGif()
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
@@ -1208,7 +1208,8 @@ class MainWin(QMainWindow):
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
             elif retList[0] == "StartMode":
                 # 更新状态
-                self.StartModePromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.StartModePromptBox.closeGif()
             elif retList[0] == "deleteBlankFinished":
                 self.deleteBlankResult = retList[1]
                 self.deleteBlankIsFinished = retList[2]
@@ -1274,22 +1275,28 @@ class MainWin(QMainWindow):
                 functionStr = "峰检测处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "ClassDeleteBlank Error":
-                self.deleteBlankPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.deleteBlankPromptBox.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
             elif retList[0] == "ClassGenerateDataBase Error":
-                self.GDBPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.GDBPromptBox.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
             elif retList[0] == "ClassDeleteIsotope Error":
-                self.DelIsoPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.DelIsoPromptBox.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
             elif retList[0] == "ClassPeakDistinguish Error":
-                self.PeakDisPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.PeakDisPromptBox.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
             elif retList[0] == "ClassRemoveFalsePositive Error":
-                self.RemoveFPPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.RemoveFPPromptBox.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
             elif retList[0] == "ClassPeakDivision Error":
-                self.PeakDivPromptBox.closeGif()
+                if ConstValues.PsIsShowGif:
+                    self.PeakDivPromptBox.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
             elif retList[0] == "StartMode Error":
                 # 关闭弹出的程序运行指示对话框
@@ -1928,61 +1935,71 @@ class MainWin(QMainWindow):
             # 弹出提示框
             # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
             self.deleteBlankPromptBox = PromptBox()
-            self.deleteBlankPromptBox.showGif("正在处理扣空白，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.deleteBlankPromptBox.showGif("正在处理扣空白，请稍后...", ConstValues.PsIconLoading)
         elif Type == "GenerateDataBase":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在生成数据库，请稍后...")
             # 弹出提示框
             self.GDBPromptBox = PromptBox()
-            self.GDBPromptBox.showGif("正在生成数据库，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.GDBPromptBox.showGif("正在生成数据库，请稍后...", ConstValues.PsIconLoading)
         elif Type == "DeleteIsotope":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去同位素，请稍后...")
             # 弹出提示框
             self.DelIsoPromptBox = PromptBox()
-            self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后...", ConstValues.PsIconLoading)
         elif Type == "PeakDistinguish":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去峰识别，请稍后...")
             # 弹出提示框
             self.PeakDisPromptBox = PromptBox()
-            self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后...", ConstValues.PsIconLoading)
         elif Type == "RemoveFalsePositive":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去假阳性，请稍后...")
             # 弹出提示框
             self.RemoveFPPromptBox = PromptBox()
-            self.RemoveFPPromptBox.showGif("正在处理去假阳性，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.RemoveFPPromptBox.showGif("正在处理去假阳性，请稍后...", ConstValues.PsIconLoading)
         elif Type == "PeakDivision":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理峰检测，请稍后...")
             # 弹出提示框
             self.PeakDivPromptBox = PromptBox()
-            self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", ConstValues.PsIconLoading)
         elif Type == "StartMode":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理中，请稍后...")
             # 弹出提示框
             self.StartModePromptBox = PromptBox()
-            self.StartModePromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.StartModePromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportSampleFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入样本文件，请稍后...")
             # 弹出提示框
             self.ImportSampleFilePromptBox = PromptBox()
-            self.ImportSampleFilePromptBox.showGif("正在导入样本文件，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.ImportSampleFilePromptBox.showGif("正在导入样本文件，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportBlankFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入空白文件，请稍后...")
             # 弹出提示框
             self.ImportBlankFilePromptBox = PromptBox()
-            self.ImportBlankFilePromptBox.showGif("正在导入空白文件，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.ImportBlankFilePromptBox.showGif("正在导入空白文件，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportTICFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入总离子图文件，请稍后...")
             # 弹出提示框
             self.ImportTICFilePromptBox = PromptBox()
-            self.ImportTICFilePromptBox.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
+            if ConstValues.PsIsShowGif:
+                self.ImportTICFilePromptBox.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
 
     # 画图
     def SetupAndPlot(self):

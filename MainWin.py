@@ -456,8 +456,8 @@ class MainWin(QMainWindow):
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
-        # StartMode函数运行所需要的参数，全部参数
-        self.AllData = None
+        # 专门用来弹出gif
+        self.promptGif = PromptBox()
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
         self.sampleData = []
@@ -916,7 +916,7 @@ class MainWin(QMainWindow):
         self.statusContext2 = QLabel("当前处于空闲状态.")
         self.statusContext2.setStyleSheet(style)
         # 状态栏添加显示的信息
-        self.statusBar.addPermanentWidget(self.statusContext1, stretch=3)
+        self.statusBar.addPermanentWidget(self.statusContext1, stretch=2)
         self.statusBar.addPermanentWidget(self.statusContext2, stretch=1)
 
     # 设置主窗口底部状态栏显示文字
@@ -1130,10 +1130,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild2
                 name = ConstValues.PsNameDeleteBlank
                 data = self.deleteBlankResult
-                promptBox = self.deleteBlankPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "去空白处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassGenerateDataBase":
                 self.GDBResult = retList[1]
                 self.GDBIsFinished = retList[2]
@@ -1141,10 +1140,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild3
                 name = ConstValues.PsNameGDB
                 data = self.GDBResult
-                promptBox = self.GDBPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "数据库生成处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassDeleteIsotope":
                 self.DelIsoResult = retList[1]
                 self.DelIsoIsFinished = retList[2]
@@ -1152,10 +1150,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild4
                 name = ConstValues.PsNameDeleteIsotope
                 data = self.DelIsoResult
-                promptBox = self.DelIsoPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "搜同位素处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassPeakDistinguish":
                 self.PeakDisResult = retList[1]  # 列表，有三个数据
                 self.PeakDisIsFinished = retList[2]
@@ -1163,10 +1160,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild5
                 name = ConstValues.PsNamePeakDistinguish
                 data = self.PeakDisResult[0]
-                promptBox = self.PeakDisPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "峰识别处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassRemoveFalsePositive":
                 self.RemoveFPResult = retList[1]  # 列表，有两个数据
                 self.RemoveFPIsFinished = retList[2]
@@ -1178,10 +1174,9 @@ class MainWin(QMainWindow):
                 elif self.RemoveFPId == 2:
                     name = ConstValues.PsNameRemoveFPFrom_PeakDisResult
                 data = self.RemoveFPResult[0]
-                promptBox = self.RemoveFPPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "去假阳性处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassPeakDivision":
                 self.PeakDivResult = retList[1]
                 self.PeakDivIsFinished = retList[2]
@@ -1189,10 +1184,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild7
                 name = ConstValues.PsNamePeakDivision
                 data = self.PeakDivResult
-                promptBox = self.PeakDivPromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "峰检测处理完毕！"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ClassPlot":
                 # 输出文件路径
                 self.PlotImagePath = retList[1]
@@ -1209,50 +1203,51 @@ class MainWin(QMainWindow):
             elif retList[0] == "StartMode":
                 # 更新状态
                 if ConstValues.PsIsShowGif:
-                    self.StartModePromptBox.closeGif()
+                    self.promptGif.closeGif()
             elif retList[0] == "deleteBlankFinished":
                 self.deleteBlankResult = retList[1]
                 self.deleteBlankIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild2
                 name = ConstValues.PsNameDeleteBlank
                 data = self.deleteBlankResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "去空白处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "GDBFinished":
                 self.GDBResult = retList[1]
                 self.GDBIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild3
                 name = ConstValues.PsNameGDB
                 data = self.GDBResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "数据库生成处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "DelIsoFinished":
                 self.DelIsoResult = retList[1]
                 self.DelIsoIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild4
                 name = ConstValues.PsNameDeleteIsotope
                 data = self.DelIsoResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "找同位素处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "PeakDisFinished":
                 self.PeakDisResult = retList[1]  # 列表，有三个数据
                 self.PeakDisIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild5
                 name = ConstValues.PsNamePeakDistinguish
                 data = self.PeakDisResult[0]
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "峰识别处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "RemoveFPFinished":
                 self.RemoveFPResult = retList[1]  # 列表，有两个数据
                 self.RemoveFPIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild6
                 name = "RemoveFPResult.xlsx"
@@ -1262,21 +1257,20 @@ class MainWin(QMainWindow):
                     name = ConstValues.PsNameRemoveFPFrom_PeakDisResult
                 data = self.RemoveFPResult[0]
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "去假阳性处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "PeakDivFinished":
                 self.PeakDivResult = retList[1]
                 self.PeakDivIsFinished = retList[2]
+                functionStr = retList[3]
                 # 数据显示到界面
                 parent = self.mainTreeChild7
                 name = ConstValues.PsNamePeakDivision
                 data = self.PeakDivResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "峰检测处理完毕！"
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "ClassDeleteBlank Error":
                 if ConstValues.PsIsShowGif:
-                    self.deleteBlankPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
             elif retList[0] == "ClassGenerateDataBase Error":
                 if ConstValues.PsIsShowGif:
@@ -1284,23 +1278,23 @@ class MainWin(QMainWindow):
                 PromptBox().errorMessage("数据库生成出现错误!")
             elif retList[0] == "ClassDeleteIsotope Error":
                 if ConstValues.PsIsShowGif:
-                    self.DelIsoPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
             elif retList[0] == "ClassPeakDistinguish Error":
                 if ConstValues.PsIsShowGif:
-                    self.PeakDisPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
             elif retList[0] == "ClassRemoveFalsePositive Error":
                 if ConstValues.PsIsShowGif:
-                    self.RemoveFPPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
             elif retList[0] == "ClassPeakDivision Error":
                 if ConstValues.PsIsShowGif:
-                    self.PeakDivPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
             elif retList[0] == "StartMode Error":
                 # 关闭弹出的程序运行指示对话框
-                self.StartModePromptBox.closeGif()
+                self.promptGif.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
             elif retList[0] == "ImportSampleFile":
                 # 读入数据，并显示到主界面
@@ -1311,10 +1305,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild1
                 name = self.sampleFilePath.split("/")[-1]
                 data = self.sampleData
-                promptBox = self.ImportSampleFilePromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "样本导入完成!"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ImportBlankFile":
                 # 读入数据，并显示到主界面
                 self.blankData = retList[1]
@@ -1324,10 +1317,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild1
                 name = self.blankFilePath.split("/")[-1]
                 data = self.blankData
-                promptBox = self.ImportBlankFilePromptBox
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "空白导入完成!"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "ImportTICFile":
                 # 读入数据，并显示到主界面
                 self.TICData = retList[1]
@@ -1338,10 +1330,9 @@ class MainWin(QMainWindow):
                 parent = self.mainTreeChild1
                 name = self.TICFilePath.split("/")[-1]
                 data = self.TICData
-                promptBox = self.ImportTICFilePromptBox
                 icon = ConstValues.PsqtaIconOpenFileTxt
                 functionStr = "总离子流图导入完成!"
-                self.AddTreeItemShowData(parent, name, data, promptBox, icon, functionStr)
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
         except Exception as e:
             if ConstValues.PsIsDebug:
                 print("HandleData Error : ", e)
@@ -1699,6 +1690,14 @@ class MainWin(QMainWindow):
             isSampleFile = PromptBox().questionMessage("确定文件" + name + "是样本文件？")
             if not isSampleFile:
                 return False
+            # 更新数据
+            self.deleteBlankList = [
+                self.sampleFilePath,  # 格式：字符串
+                self.blankFilePath,  # 格式：字符串
+                self.deleteBlankIntensity,  # 格式：整数
+                self.deleteBlankPPM,  # 格式：浮点数
+                self.deleteBlankPercentage  # 格式：整数
+            ]
             if name in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1716,6 +1715,14 @@ class MainWin(QMainWindow):
             isBlankFile = PromptBox().questionMessage("确定文件" + name + "是空白文件？")
             if not isBlankFile:
                 return False
+            # 更新数据
+            self.deleteBlankList = [
+                self.sampleFilePath,  # 格式：字符串
+                self.blankFilePath,  # 格式：字符串
+                self.deleteBlankIntensity,  # 格式：整数
+                self.deleteBlankPPM,  # 格式：浮点数
+                self.deleteBlankPercentage  # 格式：整数
+            ]
             if name in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1933,73 +1940,62 @@ class MainWin(QMainWindow):
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理扣空白，请稍后...")
             # 弹出提示框
-            # PromptBox().informationMessageAutoClose("即将运行......", ConstValues.PsBeforeRunningPromptBoxTime)
-            self.deleteBlankPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.deleteBlankPromptBox.showGif("正在处理扣空白，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理扣空白，请稍后...", ConstValues.PsIconLoading)
         elif Type == "GenerateDataBase":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在生成数据库，请稍后...")
             # 弹出提示框
-            self.GDBPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.GDBPromptBox.showGif("正在生成数据库，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在生成数据库，请稍后...", ConstValues.PsIconLoading)
         elif Type == "DeleteIsotope":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去同位素，请稍后...")
             # 弹出提示框
-            self.DelIsoPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.DelIsoPromptBox.showGif("正在处理去同位素，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理去同位素，请稍后...", ConstValues.PsIconLoading)
         elif Type == "PeakDistinguish":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去峰识别，请稍后...")
             # 弹出提示框
-            self.PeakDisPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.PeakDisPromptBox.showGif("正在处理峰识别，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理峰识别，请稍后...", ConstValues.PsIconLoading)
         elif Type == "RemoveFalsePositive":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理去假阳性，请稍后...")
             # 弹出提示框
-            self.RemoveFPPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.RemoveFPPromptBox.showGif("正在处理去假阳性，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理去假阳性，请稍后...", ConstValues.PsIconLoading)
         elif Type == "PeakDivision":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理峰检测，请稍后...")
             # 弹出提示框
-            self.PeakDivPromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理峰检测，请稍后...", ConstValues.PsIconLoading)
         elif Type == "StartMode":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理中，请稍后...")
             # 弹出提示框
-            self.StartModePromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.StartModePromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportSampleFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入样本文件，请稍后...")
             # 弹出提示框
-            self.ImportSampleFilePromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.ImportSampleFilePromptBox.showGif("正在导入样本文件，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在导入样本文件，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportBlankFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入空白文件，请稍后...")
             # 弹出提示框
-            self.ImportBlankFilePromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.ImportBlankFilePromptBox.showGif("正在导入空白文件，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在导入空白文件，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportTICFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入总离子图文件，请稍后...")
             # 弹出提示框
-            self.ImportTICFilePromptBox = PromptBox()
             if ConstValues.PsIsShowGif:
-                self.ImportTICFilePromptBox.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
+                self.promptGif.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
 
     # 画图
     def SetupAndPlot(self):

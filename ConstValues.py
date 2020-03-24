@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -99,6 +99,15 @@ class ConstValues:
     PsNameRemoveFPFrom_DelIsoResult = "__RemoveFPFrom_DelIsoResult.xlsx"
     PsNameRemoveFPFrom_PeakDisResult = "__RemoveFPFrom_PeakDisResult.xlsx"
     PsNamePeakDivision = "__PeakDivision.xlsx"
+
+    # 运行模式
+    # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
+    # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+    # 3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+    # 4：数据库生成 --> 搜同位素 --> 去假阳性
+    # 5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+    # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+    PsStartMode = 1
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"

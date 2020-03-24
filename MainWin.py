@@ -315,7 +315,6 @@ class MainWin(QMainWindow):
         tableWidget.resizeRowsToContents()
         # 禁止编辑
         tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        tableWidget.item(1,1).text()
 
         return tableWidget
 
@@ -457,7 +456,7 @@ class MainWin(QMainWindow):
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
-        # StartAll函数运行所需要的参数，全部参数
+        # StartMode函数运行所需要的参数，全部参数
         self.AllData = None
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
@@ -468,7 +467,6 @@ class MainWin(QMainWindow):
         if ConstValues.PsIsSingleRun:
             self.sampleFilePath = "./inputData/350/60%ACN-phenyl-kbd350-3.xlsx"
             self.blankFilePath = "./inputData/350/blank-54.xlsx"
-
 
         # 扣空白全过程需要的数据  0~10000（整数）
         self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 去空白(参数)：删除Intensity小于deleteBlankIntensity的行
@@ -651,6 +649,22 @@ class MainWin(QMainWindow):
                             self.PlotConfirm
                         ]
 
+        # 运行模式
+        # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
+        # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+        # 3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+        # 4：数据库生成 --> 搜同位素 --> 去假阳性
+        # 5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+        # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+        self.startMode = ConstValues.PsStartMode
+        # 确定开始运行
+        self.startModeConfirm = False
+
+        self.startModeList = [
+                                self.startMode,
+                                self.startModeConfirm
+                              ]
+
     # 使窗口居中
     def center(self):
         # 获取屏幕坐标系
@@ -828,12 +842,12 @@ class MainWin(QMainWindow):
         plot.triggered.connect(self.SetupAndPlot)
 
         # 添加第三个工具栏
-        tb4 = self.addToolBar("全部开始按钮")
+        tb4 = self.addToolBar("模式选择重置软件")
         tb4.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)  # 设置图标下显示功能
         # 为第三个工具栏添加按钮
-        allStart = QAction("全部开始", self)
+        allStart = QAction("模式选择", self)
         tb4.addAction(allStart)
-        allStart.triggered.connect(self.StartAll)
+        allStart.triggered.connect(self.SetupAndStartMode)
 
         allReset = QAction("重置软件", self)
         allReset.setToolTip("重置所有参数为默认参数")
@@ -1034,6 +1048,19 @@ class MainWin(QMainWindow):
         # 判断是否要绘图
         return self.PlotConfirm
 
+    def StartModeSetup(self):
+
+        self.startModeConfirm = False  # 每次运行前需要重置
+        self.startModeList = [
+            self.startMode,
+            self.startModeConfirm
+        ]
+
+        newParameters = SetupInterface().StartModeSetup(self.startModeList)
+        self.UpdateData("StartModeSetup", newParameters)
+
+        return self.startModeConfirm
+
     # 去空白 #######################################
     def DeleteBlank(self):
         # 程序运行前准备工作
@@ -1087,11 +1114,11 @@ class MainWin(QMainWindow):
         self.AfterRunning("Plot")  # 暂时不需要使用
 
     # 全部开始
-    def StartAll(self):
-        if not self.BeforeRunning("StartAll"):
+    def StartMode(self):
+        if not self.BeforeRunning("StartMode"):
             return
-        self.StartRunning("StartAll")
-        self.AfterRunning("StartAll")
+        self.StartRunning("StartMode")
+        self.AfterRunning("StartMode")
 
     # 辅助函数 ####################################### 多进程数据返回接收
     def HandleData(self, retList):
@@ -1179,9 +1206,9 @@ class MainWin(QMainWindow):
                     return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
-            elif retList[0] == "StartAll":
+            elif retList[0] == "StartMode":
                 # 更新状态
-                self.StartAllPromptBox.closeGif()
+                self.StartModePromptBox.closeGif()
             elif retList[0] == "deleteBlankFinished":
                 self.deleteBlankResult = retList[1]
                 self.deleteBlankIsFinished = retList[2]
@@ -1264,9 +1291,9 @@ class MainWin(QMainWindow):
             elif retList[0] == "ClassPeakDivision Error":
                 self.PeakDivPromptBox.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
-            elif retList[0] == "StartAll Error":
+            elif retList[0] == "StartMode Error":
                 # 关闭弹出的程序运行指示对话框
-                self.StartAllPromptBox.closeGif()
+                self.StartModePromptBox.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
             elif retList[0] == "ImportSampleFile":
                 # 读入数据，并显示到主界面
@@ -1458,6 +1485,18 @@ class MainWin(QMainWindow):
 
             if ConstValues.PsIsDebug:
                 print(self.PlotList[2:])
+        elif Type == "StartModeSetup":
+            # 运行模式
+            self.startMode = newParameters[0]
+            # 确定开始运行
+            self.startModeConfirm = newParameters[1]
+            self.startModeList = [
+                self.startMode,
+                self.startModeConfirm
+            ]
+
+            if ConstValues.PsIsDebug:
+                print(self.startModeList)
 
     # 程序运行前准备工作
     def BeforeRunning(self, Type):
@@ -1618,74 +1657,25 @@ class MainWin(QMainWindow):
                 self.mainPlotNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainPlotNeedCover
             pass
-        elif Type == "StartAll":
-            if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
-                PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
-                return False
-            self.AllData = [
-                [
-                    # 去空白
-                    self.sampleFilePath,  # 格式：字符串
-                    self.blankFilePath,  # 格式：字符串
-                    self.deleteBlankIntensity,  # 格式：整数
-                    self.deleteBlankPPM,  # 格式：浮点数
-                    self.deleteBlankPercentage  # 格式：整数
-                ],
-                [
-                    # 数据库生成
-                    self.GDBClass,  # 格式：列表，列表中均为字符串
-                    self.GDBCarbonRangeLow,  # 格式：整数
-                    self.GDBCarbonRangeHigh,  # 格式：整数
-                    self.GDBDBERageLow,  # 格式：整数
-                    self.GDBDBERageHigh,  # 格式：整数
-                    self.GDBM_ZRageLow,  # 格式：整数
-                    self.GDBM_ZRageHigh,  # 格式：整数
-                    self.GDB_MHPostive,  # 格式：bool
-                    self.GDB_MPostive,  # 格式：bool
-                    self.GDB_MHNegative,  # 格式：bool
-                    self.GDB_MNegative  # 格式：bool
-                ],
-                [
-                    # 搜同位素
-                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                    self.deleteBlankIntensity,
-                    self.DelIsoIntensityX,  # 格式：整数
-                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                    self.DelIsoMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                ],
-                [
-                    # 峰识别
-                    self.TICDataDictionary,
-                    self.DelIsoResult,
-                    self.PeakDisContinuityNum,
-                    self.PeakDisMassDeviation,
-                    self.PeakDisDiscontinuityPointNum,
-                    self.PeakDisClassIsNeed,  # 第二部分
-                    self.PeakDisClass,
-                ],
-                [
-                    # 去假阳性
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                 ],
-                [
-                    # 峰检测
-                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
-                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
-                    self.PeakDivNoiseThreshold,
-                    self.PeakDivRelIntensity,
-                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                 ]
-            ]
-            if ConstValues.PsNameDeleteBlank in self.mainDataNameSetAll:
+        elif Type == "StartMode":
+            if self.startMode == 1:
+                if self.sampleFilePath == "" or self.blankFilePath == "":
+                    PromptBox().warningMessage("请选择需要处理的样本文件、空白文件!")  # 弹出错误提示
+                    return False
+            elif (self.startMode == 2) or (self.startMode == 3):
+                if self.sampleFilePath == "" or self.blankFilePath == "" or self.TICFilePath == "":
+                    PromptBox().warningMessage("请选择需要处理的样本文件、空白文件和总离子流图文件!")  # 弹出错误提示
+                    return False
+            elif self.startMode == 4:
+                if self.sampleFilePath == "":
+                    PromptBox().warningMessage("请选择需要处理的样本文件!")  # 弹出错误提示
+                    return False
+            elif (self.startMode == 5) or (self.startMode == 6):
+                if self.sampleFilePath == "" or self.TICFilePath == "":
+                    PromptBox().warningMessage("请选择需要处理的样本文件和总离子流图文件!")  # 弹出错误提示
+                    return False
+
+            if ConstValues.PsNameGDB in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
         elif Type == "ImportSampleFile":
@@ -1772,10 +1762,151 @@ class MainWin(QMainWindow):
             self.PlotMt = MultiThread("ClassPlot", self.PlotList, self.outputFilesPath)
             self.PlotMt.signal.connect(self.HandleData)
             self.PlotMt.start()
-        elif Type == "StartAll":
-            self.StartAllMt = MultiThread("StartAll", self.AllData, self.outputFilesPath)
-            self.StartAllMt.signal.connect(self.HandleData)
-            self.StartAllMt.start()
+        elif Type == "StartMode":
+            startModeData = []
+            if self.startMode == 1:
+                # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
+                self.RemoveFPId = 1  # 设置为去假阳性
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.deleteBlankList,
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.RemoveFPList
+                                 ]
+            elif self.startMode == 2:
+                # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+                self.RemoveFPId = 2  # 设置为 峰提取
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.deleteBlankList,
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.PeakDisList,
+                    self.RemoveFPList
+                ]
+            elif self.startMode == 3:
+                # 3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+                self.RemoveFPId = 2  # 设置为 峰提取
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.deleteBlankList,
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.PeakDisList,
+                    self.RemoveFPList,
+                    self.PeakDivList
+                ]
+            elif self.startMode == 4:
+                # 4：数据库生成 --> 搜同位素 --> 去假阳性
+                self.RemoveFPId = 1  # 设置为去假阳性
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
+                self.DelIsoList = [
+                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                    self.deleteBlankIntensity,
+                    self.DelIsoIntensityX,  # 格式：整数
+                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                    self.DelIsoMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.RemoveFPList
+                ]
+            elif self.startMode == 5:
+                # 5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+                self.RemoveFPId = 2  # 设置为 峰提取
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
+                self.DelIsoList = [
+                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                    self.deleteBlankIntensity,
+                    self.DelIsoIntensityX,  # 格式：整数
+                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                    self.DelIsoMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.PeakDisList,
+                    self.RemoveFPList
+                ]
+            elif self.startMode == 6:
+                # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+                self.RemoveFPId = 2  # 设置为 峰提取
+                self.RemoveFPList = [  # 更新数据
+                    self.DelIsoResult,
+                    self.PeakDisResult,
+                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                    self.RemoveFPContinue_CNum,
+                    self.RemoveFPContinue_DBENum
+                ]
+                self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
+                self.DelIsoList = [
+                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                    self.deleteBlankIntensity,
+                    self.DelIsoIntensityX,  # 格式：整数
+                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                    self.DelIsoMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+                ]
+                # 需要传入另一个线程的数据
+                startModeData = [
+                    self.GDBList,
+                    self.DelIsoList,
+                    self.PeakDisList,
+                    self.RemoveFPList,
+                    self.PeakDivList
+                ]
+            # 启动线程，开始处理
+            startMode = "StartMode" + str(self.startMode)
+            self.StartModeMt = MultiThread(startMode, startModeData, self.outputFilesPath)
+            self.StartModeMt.signal.connect(self.HandleData)
+            self.StartModeMt.start()
         elif Type == "ImportSampleFile":
             self.ImportSampleFileMt = MultiThread("ImportSampleFile", [self.sampleFilePath], self.outputFilesPath)
             self.ImportSampleFileMt.signal.connect(self.HandleData)
@@ -1828,12 +1959,12 @@ class MainWin(QMainWindow):
             # 弹出提示框
             self.PeakDivPromptBox = PromptBox()
             self.PeakDivPromptBox.showGif("正在处理峰检测，请稍后...", ConstValues.PsIconLoading)
-        elif Type == "StartAll":
+        elif Type == "StartMode":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理中，请稍后...")
             # 弹出提示框
-            self.StartAllPromptBox = PromptBox()
-            self.StartAllPromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
+            self.StartModePromptBox = PromptBox()
+            self.StartModePromptBox.showGif("正在处理中，请稍后...", ConstValues.PsIconLoading)
         elif Type == "ImportSampleFile":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在导入样本文件，请稍后...")
@@ -1862,5 +1993,18 @@ class MainWin(QMainWindow):
                 self.Plot()
         except Exception as e:
             if ConstValues.PsIsDebug:
-                print("HandleData Error : ", e)
+                print("SetupAndPlot Error : ", e)
                 traceback.print_exc()
+
+    # 模式选择
+    def SetupAndStartMode(self):
+        try:
+            # 参数设置
+            if self.StartModeSetup():
+                # 绘图
+                self.StartMode()
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("SetupAndStartMode Error : ", e)
+                traceback.print_exc()
+

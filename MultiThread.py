@@ -114,69 +114,6 @@ class MultiThread(QThread):
                     print("MultiThread ClassPlot Error : ", e)
                     traceback.print_exc()
                 # self.signal.emit(["Plot Error"])
-        elif self.__function == "StartAll":
-            try:
-                retList = ["StartAll"]
-                # 提取参数
-                DeleteBlankParameterList = self.__parameters[0]  # 去空白
-                GDBParameterList = self.__parameters[1]  # 数据库生成
-                DelIsoParameterList = self.__parameters[2]  # 扣同位素
-                PeakDisParameterList = self.__parameters[3]  # 峰识别
-                RemoveFPParameterList = self.__parameters[4]  # 去假阳性
-                PeakDivParameterList = self.__parameters[5]  # 峰检测
-                # 去空白
-                cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
-                deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
-                self.signal.emit(["deleteBlankFinished", deleteBlankResult, deleteBlankIsFinished])
-                if ConstValues.PsIsDebug:
-                    print("扣空白完成！")
-                # 数据库生成
-                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
-                GDBResult, GDBIsFinished = cgdb.GenerateData()
-                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
-                if ConstValues.PsIsDebug:
-                    print("数据库生成完成！")
-                # 扣同位素
-                DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
-                DelIsoParameterList[1] = GDBResult
-                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
-                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
-                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
-                if ConstValues.PsIsDebug:
-                    print("扣同位素完成！")
-                # 峰识别
-                PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
-                cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
-                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
-                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
-                if ConstValues.PsIsDebug:
-                    print("峰识别完成！")
-                # 去假阳性
-                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
-                RemoveFPParameterList[1] = PeakDisResult
-                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
-                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
-                retList.append(RemoveFPResult)
-                retList.append(RemoveFPIsFinished)
-                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
-                if ConstValues.PsIsDebug:
-                    print("去假阳性完成！")
-                # 峰检测
-                PeakDisClassIsNeed = PeakDisParameterList[5]
-                if PeakDisClassIsNeed:  # 需要判断是否需要运行
-                    PeakDivParameterList[1] = RemoveFPResult[1]  # 更新数据，此处注意
-                    PeakDivParameterList[2] = PeakDisResult[2]
-                    cpd = ClassPeakDivision(PeakDivParameterList, self.outputFilesPath)
-                    PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
-                    self.signal.emit(["PeakDivFinished", PeakDivResult, PeakDivIsFinished])
-                    if ConstValues.PsIsDebug:
-                        print("峰检测完成！")
-                # 返回结果
-                self.signal.emit(retList)
-            except Exception as e:
-                if ConstValues.PsIsDebug:
-                    print("MultiThread StartAll Error : ", e)
-                self.signal.emit(["StartAll Error"])
         elif self.__function == "ImportSampleFile":  # 读入数据显示，后台处理
             try:
                 retList = ["ImportSampleFile"]
@@ -219,6 +156,283 @@ class MultiThread(QThread):
             except Exception as e:
                 if ConstValues.PsIsDebug:
                     print("MultiThread ImportTICFile : ", e)
+        elif self.__function == "StartMode1":
+            try:
+                # 提取参数
+                DeleteBlankParameterList = self.__parameters[0]  # 去空白
+                GDBParameterList = self.__parameters[1]  # 数据库生成
+                DelIsoParameterList = self.__parameters[2]  # 扣同位素
+                RemoveFPParameterList = self.__parameters[3]  # 去假阳性
+                # 去空白
+                cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
+                deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
+                self.signal.emit(["deleteBlankFinished", deleteBlankResult, deleteBlankIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣空白完成！")
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
+                DelIsoParameterList[1] = GDBResult
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                # RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode1 Error : ", e)
+                self.signal.emit(["StartMode Error"])
+        elif self.__function == "StartMode2":
+            try:
+                # 提取参数
+                DeleteBlankParameterList = self.__parameters[0]  # 去空白
+                GDBParameterList = self.__parameters[1]  # 数据库生成
+                DelIsoParameterList = self.__parameters[2]  # 扣同位素
+                PeakDisParameterList = self.__parameters[3]  # 峰识别
+                RemoveFPParameterList = self.__parameters[4]  # 去假阳性
+                # 去空白
+                cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
+                deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
+                self.signal.emit(["deleteBlankFinished", deleteBlankResult, deleteBlankIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣空白完成！")
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
+                DelIsoParameterList[1] = GDBResult
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 峰识别
+                PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
+                cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
+                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
+                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("峰识别完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode2 Error : ", e)
+                self.signal.emit(["StartMode Error"])
+        elif self.__function == "StartMode3":
+            try:
+                # 提取参数
+                DeleteBlankParameterList = self.__parameters[0]  # 去空白
+                GDBParameterList = self.__parameters[1]  # 数据库生成
+                DelIsoParameterList = self.__parameters[2]  # 扣同位素
+                PeakDisParameterList = self.__parameters[3]  # 峰识别
+                RemoveFPParameterList = self.__parameters[4]  # 去假阳性
+                PeakDivParameterList = self.__parameters[5]  # 峰检测
+                # 去空白
+                cdb = ClassDeleteBlank(DeleteBlankParameterList, self.outputFilesPath)
+                deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
+                self.signal.emit(["deleteBlankFinished", deleteBlankResult, deleteBlankIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣空白完成！")
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
+                DelIsoParameterList[1] = GDBResult
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 峰识别
+                PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
+                cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
+                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
+                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("峰识别完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 峰检测
+                PeakDisClassIsNeed = PeakDisParameterList[5]
+                if PeakDisClassIsNeed:  # 需要判断是否需要运行
+                    PeakDivParameterList[1] = RemoveFPResult[1]  # 更新数据，此处注意
+                    PeakDivParameterList[2] = PeakDisResult[2]
+                    cpd = ClassPeakDivision(PeakDivParameterList, self.outputFilesPath)
+                    PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
+                    self.signal.emit(["PeakDivFinished", PeakDivResult, PeakDivIsFinished])
+                    if ConstValues.PsIsDebug:
+                        print("峰检测完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode3 Error : ", e)
+                self.signal.emit(["StartMode Error"])
+        elif self.__function == "StartMode4":
+            try:
+                # 提取参数
+                GDBParameterList = self.__parameters[0]  # 数据库生成
+                DelIsoParameterList = self.__parameters[1]  # 扣同位素
+                RemoveFPParameterList = self.__parameters[2]  # 去假阳性
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                # DelIsoParameterList[0] = deleteBlankResult  # 更新数据，此处注意
+                DelIsoParameterList[1] = GDBResult  # 更新数据，此处注意
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                # RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode4 Error : ", e)
+                self.signal.emit(["StartMode Error"])
+        elif self.__function == "StartMode5":
+            try:
+                # 提取参数
+                GDBParameterList = self.__parameters[0]  # 数据库生成
+                DelIsoParameterList = self.__parameters[1]  # 扣同位素
+                PeakDisParameterList = self.__parameters[2]  # 峰识别
+                RemoveFPParameterList = self.__parameters[3]  # 去假阳性
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                DelIsoParameterList[1] = GDBResult  # 更新数据，此处注意
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 峰识别
+                PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
+                cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
+                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
+                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("峰识别完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode5 Error : ", e)
+                self.signal.emit(["StartMode Error"])
+        elif self.__function == "StartMode6":
+            try:
+                # 提取参数
+                GDBParameterList = self.__parameters[0]  # 数据库生成
+                DelIsoParameterList = self.__parameters[1]  # 扣同位素
+                PeakDisParameterList = self.__parameters[2]  # 峰识别
+                RemoveFPParameterList = self.__parameters[3]  # 去假阳性
+                PeakDivParameterList = self.__parameters[4]  # 峰检测
+                # 数据库生成
+                cgdb = ClassGenerateDataBase(GDBParameterList, self.outputFilesPath)
+                GDBResult, GDBIsFinished = cgdb.GenerateData()
+                self.signal.emit(["GDBFinished", GDBResult, GDBIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("数据库生成完成！")
+                # 扣同位素
+                DelIsoParameterList[1] = GDBResult  # 更新数据，此处注意
+                cdi = ClassDeleteIsotope(DelIsoParameterList, self.outputFilesPath)
+                DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
+                self.signal.emit(["DelIsoFinished", DelIsoResult, DelIsoIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("扣同位素完成！")
+                # 峰识别
+                PeakDisParameterList[1] = DelIsoResult  # 更新数据，此处注意
+                cpd = ClassPeakDistinguish(PeakDisParameterList, self.outputFilesPath)
+                PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
+                self.signal.emit(["PeakDisFinished", PeakDisResult, PeakDisIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("峰识别完成！")
+                # 去假阳性
+                RemoveFPParameterList[0] = DelIsoResult  # 更新数据，此处注意
+                RemoveFPParameterList[1] = PeakDisResult
+                crfp = ClassRemoveFalsePositive(RemoveFPParameterList, self.outputFilesPath)
+                RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
+                self.signal.emit(["RemoveFPFinished", RemoveFPResult, RemoveFPIsFinished])
+                if ConstValues.PsIsDebug:
+                    print("去假阳性完成！")
+                # 峰检测
+                PeakDisClassIsNeed = PeakDisParameterList[5]
+                if PeakDisClassIsNeed:  # 需要判断是否需要运行
+                    PeakDivParameterList[1] = RemoveFPResult[1]  # 更新数据，此处注意
+                    PeakDivParameterList[2] = PeakDisResult[2]
+                    cpd = ClassPeakDivision(PeakDivParameterList, self.outputFilesPath)
+                    PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
+                    self.signal.emit(["PeakDivFinished", PeakDivResult, PeakDivIsFinished])
+                    if ConstValues.PsIsDebug:
+                        print("峰检测完成！")
+                # 返回结果
+                self.signal.emit(["StartMode"])
+            except Exception as e:
+                if ConstValues.PsIsDebug:
+                    print("MultiThread StartMode3 Error : ", e)
+                self.signal.emit(["StartMode Error"])
         endTime = time.time()
         if ConstValues.PsIsDebug:
             if endTime - startTime > 60:

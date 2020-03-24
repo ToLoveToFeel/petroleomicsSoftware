@@ -94,6 +94,18 @@ class SetupInterface():
         self.PlotDBENum = None  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = None  # 用户是否确认要画图
 
+        # 绘图模式选择设置
+        # 运行模式
+        # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
+        # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+        # 3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+        # 4：数据库生成 --> 搜同位素 --> 去假阳性
+        # 5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
+        # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
+        self.startMode = ConstValues.PsStartMode
+        # 确定开始运行
+        self.startModeConfirm = False
+
     # 设置有int校验器的QLineEdit
     def IntQLineEdit(self, low, high, text):
         # 设置校验器
@@ -1985,6 +1997,99 @@ class SetupInterface():
 
         # 一定合法
         return 1
+
+
+    #################################################################################################################
+    def StartModeSetup(self, parameters):
+        # 峰检测设置对话框，设置默认参数
+        self.StartModeDefaultParameters(parameters)
+
+        # 创建QDialog
+        self.StartModeDialog = QDialog()
+        self.StartModeDialog.setWindowTitle("模式选择")
+        self.StartModeDialog.setFixedSize(ConstValues.PsSetupFontSize * 67, ConstValues.PsSetupFontSize * 40)  # 固定窗口大小
+        if ConstValues.PsIconType == 1:
+            self.StartModeDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            self.StartModeDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        if ConstValues.PsSetupStyleEnabled:
+            self.StartModeDialog.setStyleSheet(ConstValues.PsSetupStyle)
+
+        # 创建控件
+        StartModeLabel = self.GetQLabel("Select Run Mode", "font:15pt '楷体'; color:blue;")
+        # 单选按钮
+        StartModeListWidget = QListWidget()  # 列表控件
+        StartModeListWidget.setStyleSheet("background-color: white;")
+        self.modeList = [
+                        "1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性",
+                        "2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性",
+                        "3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测",
+                        "4：数据库生成 --> 搜同位素 --> 去假阳性",
+                        "5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性",
+                        "6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测"
+                    ]
+        for i in range(len(self.modeList)):
+            mode = self.modeList[i]
+            globals()["mode" + str(i)] = QRadioButton(mode)
+            globals()["mode" + str(i)].setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            listWidgetItem = QListWidgetItem()
+            StartModeListWidget.addItem(listWidgetItem)
+            StartModeListWidget.setItemWidget(listWidgetItem, globals()["mode" + str(i)])
+            # 关联槽函数
+            globals()["mode" + str(i)].clicked.connect(lambda: self.StartModeRadioButtonState())
+        globals()["mode" + str(0)].setChecked(True)
+
+        # 创建按钮
+        StartModeButton1 = QPushButton("确定")
+        StartModeButton1.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        StartModeButton1.clicked.connect(lambda: self.HBCStartMode(parameters, True))
+        StartModeButton2 = QPushButton("退出")
+        StartModeButton2.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
+        StartModeButton2.clicked.connect(lambda: self.HBCStartMode(parameters, False))
+
+        # 创建栅格布局
+        layout = QGridLayout(self.StartModeDialog)
+        layout.setVerticalSpacing(20)
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        layout.addWidget(StartModeLabel, 0, 0, 1, 5)
+        # 第二行
+        layout.addWidget(StartModeListWidget, 1, 0, 1, 5)
+        # 最后一行
+        layout.addWidget(StartModeButton1, 8, 3, 1, 1)
+        layout.addWidget(StartModeButton2, 8, 4, 1, 1)
+
+        self.StartModeDialog.exec()
+        # 返回值类型：list
+        retList = [
+                    self.startMode,
+                    self.startModeConfirm
+                  ]
+        return retList
+
+    # 设置参数为用户上次输入的值
+    def StartModeDefaultParameters(self, parameters):
+        # 运行模式
+        self.startMode = parameters[0]
+        # 确定开始运行
+        self.startModeConfirm = parameters[1]
+
+    # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
+    def HBCStartMode(self, parameters, isOK):
+        if not isOK:  # 点击取消按钮
+            self.StartModeDefaultParameters(parameters)
+            self.startModeConfirm = False
+        else:  # 点击确认按钮
+            self.startModeConfirm = True
+        self.StartModeDialog.close()
+
+    def StartModeRadioButtonState(self):
+        for i in range(len(self.modeList)):
+            if globals()["mode" + str(i)].isChecked():  # 确定是哪个按钮被选中
+                self.startMode = i + 1
+                if ConstValues.PsIsDebug:
+                    print(self.startMode)
+                break
+
 
 
 

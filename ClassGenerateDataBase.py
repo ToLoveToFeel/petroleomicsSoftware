@@ -70,10 +70,19 @@ class ClassGenerateDataBase():
     def _GenerateData(self, typeList):
         data = []
         for Class in self.GDBClass:  # 对每个Class会生成多条NeutralDBE
+            # 计算N的数目，为后面排除不符合要求数据使用
+            NNumber = 0
+            for i in range(len(Class)):
+                if Class[i] == "N":
+                    NNumber = int(Class[i + 1])
+                    break
             for NeutralDBE in range(self.GDBDBERageLow, self.GDBDBERageHigh + 1):  # 对每个NeutralDBE会根据C数不同生成不同的分子式
                 for CNumber in range(self.GDBCarbonRangeLow, self.GDBCarbonRangeHigh + 1):  # 每个C数生成一个分子式（可能对应两项数据）
-                    for i in typeList:
-                        data.append(self.GenerateItem(Class, NeutralDBE, CNumber, i))
+                    if CNumber >= NeutralDBE / 0.9 - NNumber:  # 排除一些不法分子式
+                        for i in typeList:
+                            item = self.GenerateItem(Class, NeutralDBE, CNumber, i)
+                            if item is not None:
+                                data.append(item)
         return data
 
     # 负责生成excel某一行（项）
@@ -103,6 +112,10 @@ class ClassGenerateDataBase():
                 SNumber = int(Class[i + 1])
         # H的数目，class为Nz（这里z表示氮的个数）DBE为x，碳数为y,则formula为Cy H 2y+z-2x+2 Nz
         HNumber = 2 * CNumber + NNumber - 2 * NeutralDBE + 2
+
+        # H数少于0，可以直接排除
+        if HNumber <= 0:
+            return None
 
         # 生成分子式
         formula = "C" + str(CNumber)

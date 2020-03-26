@@ -31,7 +31,7 @@ class ClassPeakDivision:
     def PeakDivision(self):
         try:
             resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
-            headerPart2 = ["SampleMass", "Area", "PeakRT", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion", "orderOfMagnitude"]
+            headerPart2 = ["SampleMass", "Area", "PeakRTIndex", "PeakRT", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion", "orderOfMagnitude"]
             resultPart2.append(headerPart2)
             # 峰检测预处理
             ret1DetailPreprocessing = self.PeakDivPreprocessing()
@@ -343,7 +343,7 @@ class ClassPeakDivision:
         # 返回值
         ret = []
         for i in range(len(areas)):
-            ret.append([SampleMass, float(areas[i]), peakInfo[i][0]] + information[2:] + [orderOfMagnitude])
+            ret.append([SampleMass, float(areas[i]), peakInfo[i][0], peakInfo[i][1]] + information[2:8] + [orderOfMagnitude])
         if len(ret) != 0:
             ret.append([])
         if self.PeakDivNeedGenImage:  # 根据参数决定是否生成图片

@@ -1,0 +1,13 @@
+1.打开conda
+2.进入.py所在文件夹
+3.pyinstaller -w *.py
+    出错后在生成的.spec问价前面加上两句话：
+        import sys
+        sys.setrecursionlimit(1000000)
+4.pyinstaller *.spec
+
+遇到的错误参考网址：
+    http://www.jyguagua.com/?p=3932
+    https://blog.csdn.net/weixin_44128511/article/details/95372044
+    https://www.jianshu.com/p/c99577b9c901
+

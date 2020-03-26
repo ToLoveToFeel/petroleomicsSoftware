@@ -47,6 +47,7 @@ class ClassRemoveFalsePositive:
         newData = []
         if self.RemoveFPId == 2:
             newData = self.RemoveFPFromPeakDisPlot(result)  # 从读取PeakDisPart1DetailPlot.xlsx去假阳性后生成newData
+            WriteDataToExcel(newData, newDirectory + "/PeakDisPart1DetailPlotAfterRFP.xlsx")
             # self.PlotAfterRemoveFP(newData)
 
         return [result, newData], True
@@ -264,8 +265,6 @@ class ClassRemoveFalsePositive:
         for item in self.PeakDisResultDetail:
             if item[0] in massSet:
                 newData.append(item)
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive")
-        WriteDataToExcel(newData, newDirectory + "/PeakDisPart1DetailPlotAfterRFP.xlsx")
         return newData
 
     # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形

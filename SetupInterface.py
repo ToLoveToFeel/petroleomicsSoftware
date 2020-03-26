@@ -1041,6 +1041,8 @@ class SetupInterface:
             DBEIndex = 8
         for item in self.RemoveFPResult:
             if len(item) != 0:
+                if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                    continue
                 itemClass = item[ClassIndex]  # 获取类别
                 itemDBE = item[DBEIndex]  # DBE数目
                 # 更新集合

@@ -10,7 +10,7 @@ class ConstValues:
     # 用于打开调试
     PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度

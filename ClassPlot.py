@@ -63,6 +63,8 @@ class ClassPlot:
             PlotClassDictionary = dict(zip(self.PlotClassList, [i for i in range(len(self.PlotClassList))]))
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]
                     if itemClass in self.PlotClassList:
                         itemIndex = PlotClassDictionary[itemClass]  # 查询对应类别的下标
@@ -93,6 +95,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     if itemClass in self.PlotClassItem:
@@ -135,6 +139,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
@@ -178,6 +184,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
@@ -229,6 +237,8 @@ class ClassPlot:
             yList = []  # KMD
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     # 获取sampleMass
                     sampleMass = item[sampleMassIndex]
                     # 记录数据
@@ -264,6 +274,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]  # C的数目

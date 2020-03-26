@@ -700,7 +700,7 @@ class MainWin(QMainWindow):
         file.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction("离子图", self)  # 添加二级菜单
+        TICFile = QAction("样本TIC", self)  # 添加二级菜单
         file.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
 
@@ -786,10 +786,15 @@ class MainWin(QMainWindow):
         tb1.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction("离子图", self)
+        TICFile = QAction("样本TIC", self)
         TICFile.setToolTip("选择需要导入的总离子图文件")
         tb1.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
+
+        intermediateFiles = QAction("导入", self)
+        intermediateFiles.setToolTip("从生成的结果文件中导入数据")
+        tb1.addAction(intermediateFiles)
+        intermediateFiles.triggered.connect(self.importIntermediateFiles)
 
         OutFilesPath = QAction("输出", self)
         OutFilesPath.setToolTip("选择生成文件位置")
@@ -850,17 +855,17 @@ class MainWin(QMainWindow):
 
         # 设置字体，图标等
         elementList = [
-            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            importSampleFile, importBlankFile, TICFile, intermediateFiles, OutFilesPath, exitProgram,
             deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
             self.TBpeakDivision, plot, allStart, allReset
         ]
         IconFromImage = [
-            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
             ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
             ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconAllStart,ConstValues.PsIconAllReset
         ]
         IconFromQta = [
-            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
             ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
             ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconAllReset
         ]
@@ -930,6 +935,176 @@ class MainWin(QMainWindow):
         # 程序开始运行后收尾工作
         self.AfterRunning("ImportTICFile")
 
+    # 导入中间生成的文件，直接选择中间文件所在的总文件夹，如果默认是 intermediateFiles
+    def importIntermediateFiles(self):
+        # 导入文件，并得到文件名称
+        self.intermediateFilesPath = QFileDialog.getExistingDirectory(self, '选择生成的文件所在的总文件夹', './')
+        if ConstValues.PsIsDebug:
+            print(self.intermediateFilesPath)
+        # 如果为空，直接返回
+        if self.intermediateFilesPath == "":
+            return
+        # 用户选择导入哪个假阳性文件
+        RFPPath = ""
+        RFPName = None
+        RFPPath1 = self.intermediateFilesPath + "/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult
+        RFPPath2 = self.intermediateFilesPath + "/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
+        if os.path.exists(RFPPath1) and (not os.path.exists(RFPPath2)):
+            RFPPath = RFPPath1
+            RFPName = ConstValues.PsNameRemoveFPFrom_DelIsoResult
+            self.RemoveFPId = 1
+        elif os.path.exists(RFPPath2) and (not os.path.exists(RFPPath1)):
+            RFPPath = RFPPath2
+            RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
+            self.RemoveFPId = 2
+        elif os.path.exists(RFPPath1) and os.path.exists(RFPPath2):
+            chooseRFPPath1 = PromptBox().informationMessage("去假阳性可以有两种方式生成:\n1.选择搜同位素后去假阳性文件点击确定\n2.选择峰提取后去假阳性文件点击取消")
+            if chooseRFPPath1:
+                RFPPath = RFPPath1
+                RFPName = ConstValues.PsNameRemoveFPFrom_DelIsoResult
+                self.RemoveFPId = 1
+            else:
+                RFPPath = RFPPath2
+                RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
+                self.RemoveFPId = 2
+
+        try:
+            # 否则，遍历文件夹中的所有文件夹，对于每个文件夹，读取其中的文件，并显示到界面上
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "开始导入数据.")
+            # deleteBlankPath = self.intermediateFilesPath + "/_1_deleteBlank/" + ConstValues.PsNameDeleteBlank
+            # if os.path.exists(deleteBlankPath):
+            #     # 是否存在删空白后的文件，如果存在，读取并显示
+            #     parent = self.mainTreeChild2
+            #     name = ConstValues.PsNameDeleteBlank
+            #     self.deleteBlankResult = ReadExcelToList(deleteBlankPath, hasNan=False)
+            #     icon = ConstValues.PsqtaIconOpenFileExcel
+            #     functionStr = "去空白数据导入完毕！正在导入其他内容，请稍后..."
+            #     self.AddTreeItemShowData(parent, name, self.deleteBlankResult, None, icon, functionStr)
+            #     # 更新数据
+            #     self.deleteBlankIsFinished = True
+            #
+            # GDBPath = self.intermediateFilesPath + "/_2_generateDataBase/" + ConstValues.PsNameGDB
+            # if os.path.exists(GDBPath):
+            #     # 是否存在数据库生成后的文件，如果存在，读取并显示
+            #     parent = self.mainTreeChild3
+            #     name = ConstValues.PsNameGDB
+            #     self.GDBResult = ReadExcelToList(GDBPath, hasNan=True)
+            #     icon = ConstValues.PsqtaIconOpenFileExcel
+            #     functionStr = "数据库导入完毕！正在导入其他内容，请稍后..."
+            #     self.AddTreeItemShowData(parent, name, self.GDBResult, None, icon, functionStr)
+            #     # 更新数据
+            #     self.GDBIsFinished = True
+            #
+            # DelIsoPath = self.intermediateFilesPath + "/_3_deleteIsotope/" + ConstValues.PsNameDeleteIsotope
+            # if os.path.exists(DelIsoPath):
+            #     # 是否存在搜同位素后的文件，如果存在，读取并显示
+            #     parent = self.mainTreeChild4
+            #     name = ConstValues.PsNameDeleteIsotope
+            #     self.DelIsoResult = ReadExcelToList(DelIsoPath, hasNan=True)
+            #     icon = ConstValues.PsqtaIconOpenFileExcel
+            #     functionStr = "搜同位素数据导入完毕！正在导入其他内容，请稍后..."
+            #     self.AddTreeItemShowData(parent, name, self.DelIsoResult, None, icon, functionStr)
+            #     # 更新数据
+            #     self.DelIsoIsFinished = True
+            #     self.DelIsoList = [
+            #         self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+            #         self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+            #         self.deleteBlankIntensity,
+            #         self.DelIsoIntensityX,  # 格式：整数
+            #         self.DelIso_13C2RelativeIntensity,  # 格式：整数
+            #         self.DelIsoMassDeviation,  # 格式：浮点数
+            #         self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+            #         self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+            #     ]
+            #
+            # PeakDisPath = self.intermediateFilesPath + "/_4_peakDistinguish/" + ConstValues.PsNamePeakDistinguish
+            # if os.path.exists(PeakDisPath):
+            #     # 是否存在峰提取后的文件，如果存在，读取并显示
+            #     parent = self.mainTreeChild5
+            #     name = ConstValues.PsNamePeakDistinguish
+            #     data = ReadExcelToList(PeakDisPath, hasNan=True)
+            #     icon = ConstValues.PsqtaIconOpenFileExcel
+            #     functionStr = "峰提取数据导入完毕！正在导入其他内容，请稍后..."
+            #     self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
+            #
+            #     # 导入另外两个文件的数据
+            #     PeakDisPart1DetailPlotPath = self.intermediateFilesPath + "/_4_peakDistinguish/PeakDisPart1DetailPlot.xlsx"
+            #     PeakDisPart1DetailPlotData = []
+            #     if os.path.exists(PeakDisPart1DetailPlotPath):
+            #         # 是否存在数据库生成后的文件，如果存在，读取并显示
+            #         PeakDisPart1DetailPlotData = ReadExcelToList(PeakDisPart1DetailPlotPath, hasNan=False)
+            #     sortedRTValuePath = self.intermediateFilesPath + "/_4_peakDistinguish/sortedRTValue.xlsx"
+            #     sortedRTValueData = []
+            #     if os.path.exists(sortedRTValuePath):
+            #         # 是否存在数据库生成后的文件，如果存在，读取并显示
+            #         sortedRTValueData = ReadExcelToList(sortedRTValuePath, hasNan=False)[0]
+            #     # 更新数据
+            #     if len(PeakDisPart1DetailPlotData) == 0 or len(sortedRTValueData) == 0:
+            #         if ConstValues.PsIsDebug:
+            #             print("峰提取直接从文件中导入数据不全！后续程序可能会出现错误！")
+            #     self.PeakDisResult = [data, PeakDisPart1DetailPlotData, sortedRTValueData]
+            #     self.PeakDisIsFinished = True
+            #     self.PeakDisList = [
+            #         self.TICDataDictionary,
+            #         self.DelIsoResult,
+            #         self.PeakDisContinuityNum,
+            #         self.PeakDisMassDeviation,
+            #         self.PeakDisDiscontinuityPointNum,
+            #         self.PeakDisClassIsNeed,  # 第二部分
+            #         self.PeakDisClass,
+            #     ]
+
+            if os.path.exists(RFPPath):
+                # 是否存在去假阳性后的文件，如果存在，读取并显示
+                parent = self.mainTreeChild6
+                name = RFPName
+                data = ReadExcelToList(RFPPath, hasNan=True)
+                icon = ConstValues.PsqtaIconOpenFileExcel
+                functionStr = "峰提取数据导入完毕！"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+
+                # # 导入另外两个文件的数据
+                # PeakDisPart1DetailPlotAfterRFPPath = self.intermediateFilesPath + "/_5_removeFalsePositive/PeakDisPart1DetailPlotAfterRFP.xlsx"
+                # PeakDisPart1DetailPlotAfterRFPData = []
+                # if os.path.exists(PeakDisPart1DetailPlotAfterRFPPath):
+                #     # 是否存在数据库生成后的文件，如果存在，读取并显示
+                #     PeakDisPart1DetailPlotAfterRFPData = ReadExcelToList(PeakDisPart1DetailPlotAfterRFPPath, hasNan=False)
+                # # 更新数据
+                # if len(PeakDisPart1DetailPlotAfterRFPData) == 0:
+                #     if ConstValues.PsIsDebug:
+                #         print("去假阳性直接从文件中导入数据不全！后续程序可能会出现错误！")
+                # self.RemoveFPResult = [data, PeakDisPart1DetailPlotAfterRFPData]
+                self.RemoveFPResult = [data, []]
+                self.RemoveFPIsFinished = True
+
+            # PeakDivPath = self.intermediateFilesPath + "/_6_peakDivision/" + ConstValues.PsNamePeakDivision
+            # if os.path.exists(PeakDivPath):
+            #     # 是否存在删空白后的文件，如果存在，读取并显示
+            #     parent = self.mainTreeChild7
+            #     name = ConstValues.PsNamePeakDivision
+            #     self.PeakDivResult = ReadExcelToList(PeakDivPath, hasNan=False)
+            #     icon = ConstValues.PsqtaIconOpenFileExcel
+            #     functionStr = "峰检测数据导入完毕！正在导入其他内容，请稍后..."
+            #     self.AddTreeItemShowData(parent, name, self.PeakDivResult, None, icon, functionStr)
+            #     # 更新数据
+            #     self.PeakDivIsFinished = True
+            #     self.PeakDivList = [
+            #         self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            #         self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+            #         self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+            #         self.PeakDivNoiseThreshold,
+            #         self.PeakDivRelIntensity,
+            #         self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+            #         self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+            #     ]
+
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据导入完毕.")
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("importIntermediateFiles : ", e)
+                traceback.print_exc()
+
     # 选择输入的文件存放的文件夹
     def GetOutputFilesPath(self):
         # 导入文件，并得到文件名称
@@ -996,7 +1171,9 @@ class MainWin(QMainWindow):
     def PlotSetup(self):
         if ConstValues.PsIsSingleRun:  # 读取文件需要花费一些时间，所以界面会延迟一下
             self.RemoveFPIsFinished = True
-            filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
+            filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult
+            if self.RemoveFPId == 2:
+                filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
             self.RemoveFPResult[0] = ReadExcelToList(filepath=filePath, hasNan=True)
         # 画图前前需要先读入数据
         if not self.RemoveFPIsFinished:

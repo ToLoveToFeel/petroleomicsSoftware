@@ -17,7 +17,7 @@ def ReadExcelToList(filepath="", hasNan=True):
         data = dataFrame.values[1:]
         for item in data:
             # 全部是nan
-            if math.isnan(item[0]):
+            if isinstance(item[0], float) and math.isnan(item[0]):
                 result.append([])
                 continue
             # 后面一部分是nan

@@ -1173,6 +1173,8 @@ class SetupInterface:
         self.PlotMainUIRadioButton4 = QRadioButton("DBE vs carbon number by class")
         self.PlotMainUIRadioButton5 = QRadioButton("Kendrick mass defect （KMD）")
         self.PlotMainUIRadioButton6 = QRadioButton("Retention time vs carbon number")
+        if self.RemoveFPId == 1:
+            self.PlotMainUIRadioButton6.setEnabled(False)
         self.PlotMainUIRadioButton1.setChecked(True)
         self.PlotMainUIRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         self.PlotMainUIRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))

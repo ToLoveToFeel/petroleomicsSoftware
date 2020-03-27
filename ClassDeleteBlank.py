@@ -5,7 +5,7 @@ from Utils import *
 from ConstValues import ConstValues
 
 
-class ClassDeleteBlank():
+class ClassDeleteBlank:
     def __init__(self, parameterList, outputFilesPath):
         """
         :param parameterList: 程序运行所需要的参数列表

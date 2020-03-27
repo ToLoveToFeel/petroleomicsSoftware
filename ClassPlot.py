@@ -262,7 +262,7 @@ class ClassPlot:
             # 返回图片路径
             return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
         elif self.PlotType == 6:  # Retention time vs carbon number
-            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
                 plt.close()
                 return None, []
 
@@ -294,7 +294,7 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList]
 
 
 

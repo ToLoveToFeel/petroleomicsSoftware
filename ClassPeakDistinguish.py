@@ -152,7 +152,16 @@ class ClassPeakDistinguish:
                 startRTValue = keysList[startRT]  # 开始的扫描点的值
                 endRT = startRT + len(continuityItems) - 1  # 结束的扫描点在TIC中属于第几个扫描点
                 endRTValue = keysList[endRT]  # 结束的扫描点的值
-                MassMedian = np.median(continuityMasses2)  # TIC中所有符合条件的连续的记录的
+
+                # 计算中位数：应该是先计算最大值，然后各个intensity／最大值，选取大于60的 m/z，取中位数
+                thresholdValue = np.max(continuityMasses2) * 0.6
+                greaterThanThresholdList = []
+                for value in continuityMasses2:
+                    if value > thresholdValue:
+                        greaterThanThresholdList.append(value)
+                MassMedian = -1  # 代表不存在这样的中位数，理论上一定存在
+                if len(greaterThanThresholdList) > 0:
+                    MassMedian = np.median(np.array(greaterThanThresholdList))  # TIC中所有符合条件的连续的记录的
 
                 ret.append([sampleMass, Area, startRT, startRTValue, endRT, endRTValue, MassMedian] + sampleItem[2:])
             elif needDetectPeak:  # 需要将连续的但扫描点数目不符合要求的数据值清零

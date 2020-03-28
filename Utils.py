@@ -54,7 +54,7 @@ def WriteDataToExcel(data, filename):
 
 
 # 负责创建文件夹，要求此文件必须和其他的py文件目录同级
-def CreateDirectory(outputFilesPath="", directoryPath = "", subDirectory=""):
+def CreateDirectory(outputFilesPath="", directoryPath="", subDirectory=""):
     if outputFilesPath == "" and directoryPath == "":
         return
 

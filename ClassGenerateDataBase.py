@@ -1,10 +1,9 @@
 # coding=utf-8
 # 此文件负责定义：生成数据库
 from Utils import *
-from PromptBox import PromptBox
 
 
-class ClassGenerateDataBase():
+class ClassGenerateDataBase:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 11, "ClassGenerateDataBase参数不对"
         self.GDBClass = parameterList[0]  # 数据库生成(参数)：Class类型

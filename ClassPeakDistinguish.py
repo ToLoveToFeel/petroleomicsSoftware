@@ -1,13 +1,9 @@
 # coding=utf-8
 # 此文件负责定义：峰识别（第一阶段）
 # 第二部分是 峰检测：检测出各个峰，并计算面积
-import matplotlib.pyplot as plt
-import time
-import os
 import numpy as np
 from Utils import *
 from ConstValues import ConstValues
-from PromptBox import PromptBox
 
 
 class ClassPeakDistinguish:
@@ -73,9 +69,6 @@ class ClassPeakDistinguish:
         # 数据写入excel文件中
         WriteDataToExcel(self.resultPart1, newDirectory + "/" + ConstValues.PsNamePeakDistinguish)
         WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDisPart1DetailPlot.xlsx")
-
-        # # 第二部分需要处理的数据，将图像输出到文件中
-        # self.PeakDisPlotPeak()
 
         # # 为了录屏演示用，直接从文件读取
         # self.resultPart1 = ReadExcelToList("./intermediateFiles/_4_peakDistinguish/" + ConstValues.PsNamePeakDistinguish)
@@ -188,43 +181,6 @@ class ClassPeakDistinguish:
             if abs((TICMass - sampleMass) * 1000000.0 / sampleMass) < self.PeakDisMassDeviation:
                 return item
         return None
-
-    # # 负责读取总离子流图文件(txt)
-    # def ReadTIC(self):
-    #     """
-    #     文件格式必须为：每行三个数据，一个表头，数据之间用制表符(\t)分割，无其他无关字符
-    #     :return:返回结果为字典：{key:value,...,key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-    #     """
-    #     startTime = time.time()
-    #     # 读取数据，数据分割
-    #     f = open(self.TICFilePath, "r")
-    #     content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
-    #     # 去除表头
-    #     content = content[3:]
-    #     if len(content) / 3 != int(len(content) / 3):
-    #         # raise Exception("Error in ClassPeakDistinguish ReadTIC.")
-    #         PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
-    #         return None
-    #     # str全部转为float
-    #     content = [float(item) for item in content]
-    #     # 返回结果为字典：{key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-    #     res = {}
-    #
-    #     key = content[0]
-    #     value = []
-    #     for i in range(int(len(content) / 3)):
-    #         if content[i * 3] != key:
-    #             res[key] = value  # 字典中添加元素（二维列表）
-    #             key = content[i * 3]
-    #             value = []
-    #         value.append([content[i * 3 + 1], content[i * 3 + 2]])
-    #
-    #     if ConstValues.PsIsDebug:
-    #         print("扫描点的个数： ", len(res))
-    #     endTime = time.time()
-    #     if ConstValues.PsIsDebug:
-    #         print("读入和处理文件费时： ",endTime - startTime, " s")
-    #     return res
 
     # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
     def PeakDisSort(self):

@@ -9,7 +9,6 @@ from MultiThread import MultiThread
 import qtawesome
 import math
 import traceback
-import sys
 
 
 class MainWin(QMainWindow):
@@ -371,7 +370,7 @@ class MainWin(QMainWindow):
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
-            PromptBox().informationMessageAutoClose(message, 2)
+            PromptBox().informationMessageAutoClose(message, ConstValues.PsPromptBoxTime)
 
     # 生成    图形    后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
     def AddTreeItemPlot(self, plotImagePath, rawData, functionStr=""):
@@ -766,7 +765,7 @@ class MainWin(QMainWindow):
             elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
             # 设置图标
             if ConstValues.PsIconType == 1:  # 从图片读取
-                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+                elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
                 elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
 
@@ -874,7 +873,7 @@ class MainWin(QMainWindow):
             elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
             # 设置图标
             if ConstValues.PsIconType == 1:  # 从图片读取
-                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+                elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
                 elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
 

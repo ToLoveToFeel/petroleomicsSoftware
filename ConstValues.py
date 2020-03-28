@@ -41,8 +41,7 @@ class ConstValues:
     PsTreeFontType = "Arial"
     PsTreeFontSize = 11
     # 运行提示框弹出时间 1 -> 1s
-    PsBeforeRunningPromptBoxTime = 1
-    PsAfterRunningPromptBoxTime = 1
+    PsPromptBoxTime = 2
     # 图标系统  1:从图片读取  2:来自 qtawesome
     PsIconType = 2
     PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
@@ -132,7 +131,7 @@ class ConstValues:
     # 主页面最多显示的表格行数
     PsMainMaxRowNum = 10000
     # 读入文件默认目录
-    PsReadFileDefaultDirectoy = "./inputdata/350"
+    PsReadFileDefaultDirectoy = "./"
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"

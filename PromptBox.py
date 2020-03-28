@@ -1,6 +1,5 @@
 # coding=utf-8
 # 此文件负责定义：弹出对话框
-import time
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -8,7 +7,7 @@ from ConstValues import ConstValues
 import qtawesome
 
 
-class PromptBox():
+class PromptBox:
     def __init__(self):
         pass
 

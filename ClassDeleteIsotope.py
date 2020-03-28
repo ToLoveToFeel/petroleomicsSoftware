@@ -26,14 +26,12 @@ class ClassDeleteIsotope():
         result = []
         header = ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
         result.append(header)
-        try:
-            for sampleItem in self.deleteBlankResult:
-                # sampleItem均为列表，列表：[Mass, Intensity]，都是浮点数
-                ret = self.DelIsoHandleItem(sampleItem)
-                for item in ret:
-                    result.append(item)
-        except Exception as e:
-            print("Error : ", e)
+
+        for sampleItem in self.deleteBlankResult:
+            # sampleItem均为列表，列表：[Mass, Intensity]，都是浮点数
+            ret = self.DelIsoHandleItem(sampleItem)
+            for item in ret:
+                result.append(item)
 
         # 去同位素按照Formula（主键），C（次主键）从小到大顺序排序
         result = self.DelIsoSort(result)

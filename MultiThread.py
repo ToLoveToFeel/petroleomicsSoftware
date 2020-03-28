@@ -29,133 +29,104 @@ class MultiThread(QThread):
 
         if self.__function == "ClassDeleteBlank":
             try:
-                retList = ["ClassDeleteBlank"]
                 cdb = ClassDeleteBlank(self.__parameters, self.outputFilesPath)
                 deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
-                retList.append(deleteBlankResult)
-                retList.append(deleteBlankIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassDeleteBlank", deleteBlankResult, deleteBlankIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassDeleteBlank Error : ", e)
-                self.signal.emit(["ClassDeleteBlank Error"])
+                    print("Error_CDB_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CDB_MultiThread"])
         elif self.__function == "ClassGenerateDataBase":
             try:
-                retList = ["ClassGenerateDataBase"]
                 cgdb = ClassGenerateDataBase(self.__parameters, self.outputFilesPath)
                 GDBResult, GDBIsFinished = cgdb.GenerateData()
-                retList.append(GDBResult)
-                retList.append(GDBIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassGenerateDataBase", GDBResult, GDBIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassGenerateDataBase Error : ", e)
-                self.signal.emit(["ClassGenerateDataBase Error"])
+                    print("Error_CGDB_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CGDB_MultiThread"])
         elif self.__function == "ClassDeleteIsotope":
             try:
-                retList = ["ClassDeleteIsotope"]
                 cdi = ClassDeleteIsotope(self.__parameters, self.outputFilesPath)
                 DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
-                retList.append(DelIsoResult)
-                retList.append(DelIsoIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassDeleteIsotope", DelIsoResult, DelIsoIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassDeleteIsotope Error : ", e)
-                self.signal.emit(["ClassDeleteIsotope Error"])
+                    print("Error_CDI_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CDI_MultiThread"])
         elif self.__function == "ClassPeakDistinguish":
             try:
-                retList = ["ClassPeakDistinguish"]
                 cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
-                # cpd.PeakDisPlotPeak()
                 PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
-                time.sleep(5)  # 认为睡眠20s
-                retList.append(PeakDisResult)
-                retList.append(PeakDisIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPeakDistinguish", PeakDisResult, PeakDisIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPeakDistinguish Error : ", e)
-                self.signal.emit(["ClassPeakDistinguish Error"])
+                    print("Error_CPD1_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CPD1_MultiThread"])
         elif self.__function == "ClassRemoveFalsePositive":
             try:
-                retList = ["ClassRemoveFalsePositive"]
                 crfp = ClassRemoveFalsePositive(self.__parameters, self.outputFilesPath)
                 RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
-                retList.append(RemoveFPResult)
-                retList.append(RemoveFPIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassRemoveFalsePositive", RemoveFPResult, RemoveFPIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassRemoveFalsePositive Error : ", e)
-                self.signal.emit(["ClassRemoveFalsePositive Error"])
+                    print("Error_CRFP_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CRFP_MultiThread"])
         elif self.__function == "ClassPeakDivision":
             try:
-                retList = ["ClassPeakDivision"]
                 cpd = ClassPeakDivision(self.__parameters, self.outputFilesPath)
                 PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
-                retList.append(PeakDivResult)
-                retList.append(PeakDivIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPeakDivision", PeakDivResult, PeakDivIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPeakDivision Error : ", e)
-                self.signal.emit(["ClassPeakDivision Error"])
+                    print("Error_CPD2_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CPD2_MultiThread"])
         elif self.__function == "ClassPlot":
             try:
-                retList = ["ClassPlot"]
                 cp = ClassPlot(self.__parameters, self.outputFilesPath)
                 PlotImagePath, PlotRawData = cp.Plot()
-                retList.append(PlotImagePath)
-                retList.append(PlotRawData)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPlot", PlotImagePath, PlotRawData])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPlot Error : ", e)
+                    print("Error_CPlot_MultiThread : ", e)
                     traceback.print_exc()
-                # self.signal.emit(["Plot Error"])
+                self.signal.emit(["Error_CPlot_MultiThread"])
         elif self.__function == "ImportSampleFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportSampleFile"]
-                # 提取参数
-                sampleFilePath = self.__parameters[0]
-                # 弹出提示框
-                sampleData = np.array(pd.read_excel(sampleFilePath, header=None)).tolist()
-                # 返回结果
-                retList.append(sampleData)
-                self.signal.emit(retList)
+                sampleFilePath = self.__parameters[0]  # 提取参数
+                sampleData = np.array(pd.read_excel(sampleFilePath, header=None)).tolist()  # 弹出提示框
+                self.signal.emit(["ImportSampleFile", sampleData])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportSampleFile : ", e)
-                # self.signal.emit(["ImportSampleFile"])
+                    print("Error_ImSample_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImSample_MultiThread"])
         elif self.__function == "ImportBlankFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportBlankFile"]
-                # 提取参数
-                blankFilePath = self.__parameters[0]
-                # 弹出提示框
-                blankData = np.array(pd.read_excel(blankFilePath, header=None)).tolist()
-                # 返回结果
-                retList.append(blankData)
-                self.signal.emit(retList)
+                blankFilePath = self.__parameters[0]  # 提取参数
+                blankData = np.array(pd.read_excel(blankFilePath, header=None)).tolist()  # 弹出提示框
+                self.signal.emit(["ImportBlankFile", blankData])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportBlankFile : ", e)
-                # self.signal.emit(["ImportBlankFile"])
+                    print("Error_ImBlank_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImBlank_MultiThread"])
         elif self.__function == "ImportTICFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportTICFile"]
-                # 提取参数
-                TICFilePath = self.__parameters[0]
-                # 弹出提示框
-                TICData, TICDataDictionary = self.ReadTIC(TICFilePath)
-                # 返回结果
-                retList.append(TICData)
-                retList.append(TICDataDictionary)
-                self.signal.emit(retList)
+                TICFilePath = self.__parameters[0]  # 提取参数
+                TICData, TICDataDictionary = self.ReadTIC(TICFilePath)  # 弹出提示框
+                self.signal.emit(["ImportTICFile", TICData, TICDataDictionary])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportTICFile : ", e)
+                    print("Error_ImTIC_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImTIC_MultiThread"])
         elif self.__function == "StartMode1":
             try:
                 # 提取参数
@@ -199,9 +170,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode1 Error : ", e)
+                    print("Error_StartMode1_MultiThread : ", e)
                     traceback.print_exc()
-                self.signal.emit(["StartMode Error"])
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode2":
             try:
                 # 提取参数
@@ -254,8 +225,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode2 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode2_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode3":
             try:
                 # 提取参数
@@ -320,8 +292,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode3 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode3_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode4":
             try:
                 # 提取参数
@@ -357,8 +330,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode4 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode4_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode5":
             try:
                 # 提取参数
@@ -402,8 +376,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode5 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode5_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode6":
             try:
                 # 提取参数
@@ -459,8 +434,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode3 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode6_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         endTime = time.time()
         if ConstValues.PsIsDebug:
             if endTime - startTime > 60:

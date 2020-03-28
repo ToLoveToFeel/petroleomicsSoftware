@@ -43,24 +43,22 @@ class ClassPeakDistinguish:
         # self.resultPart1Detail中所有的数据都是是用户输入的需要进行峰检测（第二部分）的类别
         self.resultPart1Detail = []
         flag = 1
-        try:
-            for sampleItem in self.DelIsoResult:
-                # sampleItem均为列表，有多种类型：
-                # 类型一：["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-                # 类型二：["SampleMass", "SampleIntensity"]
-                # 类型三：[DBItem_13C1, DBItem_13C1Intensity, "iostope"]或者[DBItem_13C2, DBItem_13C2Intensity, "iostope"]
-                # 类型四：[]
-                if len(sampleItem) == 8:
-                    ret, retDetail = self.PeakDisHandleItem(sampleItem)
-                    for item in ret:
-                        self.resultPart1.append(item)
-                    if len(retDetail) != 0:
-                        if flag == 1 and ConstValues.PsIsDebug:
-                            print("------------The length of retDetail : ", len(retDetail))
-                            flag = 0
-                        self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
-        except Exception as e:
-            print("Error : ", e)
+
+        for sampleItem in self.DelIsoResult:
+            # sampleItem均为列表，有多种类型：
+            # 类型一：["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+            # 类型二：["SampleMass", "SampleIntensity"]
+            # 类型三：[DBItem_13C1, DBItem_13C1Intensity, "iostope"]或者[DBItem_13C2, DBItem_13C2Intensity, "iostope"]
+            # 类型四：[]
+            if len(sampleItem) == 8:
+                ret, retDetail = self.PeakDisHandleItem(sampleItem)
+                for item in ret:
+                    self.resultPart1.append(item)
+                if len(retDetail) != 0:
+                    if flag == 1 and ConstValues.PsIsDebug:
+                        print("------------The length of retDetail : ", len(retDetail))
+                        flag = 0
+                    self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
 
         # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
         self.resultPart1 = self.PeakDisSort()

@@ -365,8 +365,8 @@ class MainWin(QMainWindow):
         self.mainNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
         # 更新状态栏消息
         self.statusSetup(ConstValues.PsMainWindowStatusMessage, functionStr)
-        if (promptBox is not None) and ConstValues.PsIsShowGif:
-            promptBox.closeGif()
+        # if (promptBox is not None) and ConstValues.PsIsShowGif:
+        #     promptBox.closeGif()
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
@@ -1000,12 +1000,15 @@ class MainWin(QMainWindow):
 
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
+        self.plotStack.removeWidget(globals()["Plot_" + "initShow"])
         self.Layout.removeWidget(self.mainTreeWidget)
         self.Layout.removeWidget(self.plotStack)
         # initShow 初始化数据
         self.initShowDataInit()
         # self.Layout 添加控件
         self.MainLayoutAddWidget()
+        # 更新状态栏
+        self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
 
     # 退出程序
     @staticmethod
@@ -1017,36 +1020,73 @@ class MainWin(QMainWindow):
 
     # 扣空白参数设置  #######################################
     def DeleteBlankSetup(self):
-        # 重新设置参数
-        newParameters = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
-        # 更新数据
-        self.UpdateData("DeleteBlankSetup", newParameters)
+        try:
+            # 重新设置参数
+            newParameters = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
+            # 更新数据
+            self.UpdateData("DeleteBlankSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_DeleteBlankSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("删空白设置出现错误!")
 
     # 数据库生成参数设置
     def GenerateDataBaseSetup(self):
-        newParameters = SetupInterface().GenerateDataBaseSetup(self.GDBList)
-        self.UpdateData("GenerateDataBaseSetup", newParameters)
+        try:
+            newParameters = SetupInterface().GenerateDataBaseSetup(self.GDBList)
+            self.UpdateData("GenerateDataBaseSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_GenerateDataBaseSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("数据库生成设置出现错误!")
 
-    # 去同位素参数设置
+    # 搜同位素参数设置
     def DeleteIsotopeSetup(self):
-        newParameters = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
-        self.UpdateData("DeleteIsotopeSetup", newParameters)
+        try:
+            newParameters = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
+            self.UpdateData("DeleteIsotopeSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_DeleteIsotopeSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("搜同位素设置出现错误!")
 
-    # 峰识别参数设置
+    # 峰提取参数设置
     def PeakDistinguishSetup(self):
-        newParameters = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
-        self.UpdateData("PeakDistinguishSetup", newParameters)
+        try:
+            newParameters = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
+            self.UpdateData("PeakDistinguishSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PeakDistinguishSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("峰提取设置出现错误!")
 
     # 去假阳性参数设置
     def RemoveFalsePositiveSetup(self):
-        newParameters = SetupInterface().RemoveFalsePositiveSetup(self.RemoveFPList[2:])
-        self.UpdateData("RemoveFalsePositiveSetup", newParameters)
+        try:
+            newParameters = SetupInterface().RemoveFalsePositiveSetup(self.RemoveFPList[2:])
+            self.UpdateData("RemoveFalsePositiveSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_RemoveFalsePositiveSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("去假阳性设置出现错误!")
 
     # 峰检测参数设置
     def PeakDivisionSetup(self):
-        newParameters = SetupInterface().PeakDivisionSetup(self.PeakDivList[3:])
-        self.UpdateData("PeakDivisionSetup", newParameters)
+        try:
+            newParameters = SetupInterface().PeakDivisionSetup(self.PeakDivList[3:])
+            self.UpdateData("PeakDivisionSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PeakDivisionSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("峰检测设置出现错误!")
 
+    # 绘图设置
     def PlotSetup(self):
         if ConstValues.PsIsSingleRun:  # 读取文件需要花费一些时间，所以界面会延迟一下
             self.RemoveFPIsFinished = True
@@ -1076,12 +1116,20 @@ class MainWin(QMainWindow):
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
             self.PlotConfirm
         ]
-        newParameters = SetupInterface().PlotSetup(self.PlotList)
-        self.UpdateData("PlotSetup", newParameters)
+
+        try:
+            newParameters = SetupInterface().PlotSetup(self.PlotList)
+            self.UpdateData("PlotSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PlotSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("绘图设置出现错误!")
 
         # 判断是否要绘图
         return self.PlotConfirm
 
+    # 模式选择设置
     def StartModeSetup(self):
 
         self.startModeConfirm = False  # 每次运行前需要重置
@@ -1090,8 +1138,14 @@ class MainWin(QMainWindow):
             self.startModeConfirm
         ]
 
-        newParameters = SetupInterface().StartModeSetup(self.startModeList)
-        self.UpdateData("StartModeSetup", newParameters)
+        try:
+            newParameters = SetupInterface().StartModeSetup(self.startModeList)
+            self.UpdateData("StartModeSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_StartModeSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("模式选择设置出现错误!")
 
         return self.startModeConfirm
 
@@ -1234,6 +1288,43 @@ class MainWin(QMainWindow):
                     return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
+            elif retList[0] == "ImportSampleFile":
+                # 读入数据，并显示到主界面
+                self.sampleData = retList[1]
+                if ConstValues.PsIsDebug:
+                    print(self.sampleData)
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.sampleFilePath.split("/")[-1]
+                data = self.sampleData
+                icon = ConstValues.PsqtaIconOpenFileExcel
+                functionStr = "样本导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            elif retList[0] == "ImportBlankFile":
+                # 读入数据，并显示到主界面
+                self.blankData = retList[1]
+                if ConstValues.PsIsDebug:
+                    print(self.blankData)
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.blankFilePath.split("/")[-1]
+                data = self.blankData
+                icon = ConstValues.PsqtaIconOpenFileExcel
+                functionStr = "空白导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            elif retList[0] == "ImportTICFile":
+                # 读入数据，并显示到主界面
+                self.TICData = retList[1]
+                self.TICDataDictionary = retList[2]
+                # if ConstValues.PsIsDebug:
+                #     print(self.TICData)
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.TICFilePath.split("/")[-1]
+                data = self.TICData
+                icon = ConstValues.PsqtaIconOpenFileTxt
+                functionStr = "总离子流图导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "StartMode":
                 # 更新状态
                 if ConstValues.PsIsShowGif:
@@ -1302,74 +1393,53 @@ class MainWin(QMainWindow):
                 data = self.PeakDivResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
-            elif retList[0] == "ClassDeleteBlank Error":
+            elif retList[0] == "Error_CDB_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
-            elif retList[0] == "ClassGenerateDataBase Error":
+            elif retList[0] == "Error_CGDB_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.GDBPromptBox.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
-            elif retList[0] == "ClassDeleteIsotope Error":
+            elif retList[0] == "Error_CDI_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
-            elif retList[0] == "ClassPeakDistinguish Error":
+            elif retList[0] == "Error_CPD1_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
-            elif retList[0] == "ClassRemoveFalsePositive Error":
+            elif retList[0] == "Error_CRFP_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
-            elif retList[0] == "ClassPeakDivision Error":
+            elif retList[0] == "Error_CPD2_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
-            elif retList[0] == "StartMode Error":
+            elif retList[0] == "Error_CPlot_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("绘图出现错误!")
+            elif retList[0] == "Error_ImSample_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入样本文件出现错误!")
+            elif retList[0] == "Error_ImBlank_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入空白文件出现错误!")
+            elif retList[0] == "Error_ImTIC_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入样本总离子图文件出现错误!")
+            elif retList[0] == "Error_StartMode_MultiThread":
                 # 关闭弹出的程序运行指示对话框
                 self.promptGif.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
-            elif retList[0] == "ImportSampleFile":
-                # 读入数据，并显示到主界面
-                self.sampleData = retList[1]
-                if ConstValues.PsIsDebug:
-                    print(self.sampleData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.sampleFilePath.split("/")[-1]
-                data = self.sampleData
-                icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "样本导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
-            elif retList[0] == "ImportBlankFile":
-                # 读入数据，并显示到主界面
-                self.blankData = retList[1]
-                if ConstValues.PsIsDebug:
-                    print(self.blankData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.blankFilePath.split("/")[-1]
-                data = self.blankData
-                icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "空白导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
-            elif retList[0] == "ImportTICFile":
-                # 读入数据，并显示到主界面
-                self.TICData = retList[1]
-                self.TICDataDictionary = retList[2]
-                # if ConstValues.PsIsDebug:
-                #     print(self.TICData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.TICFilePath.split("/")[-1]
-                data = self.TICData
-                icon = ConstValues.PsqtaIconOpenFileTxt
-                functionStr = "总离子流图导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
         except Exception as e:
             if ConstValues.PsIsDebug:
-                print("HandleData Error : ", e)
+                print("Error_HandleData : ", e)
                 traceback.print_exc()
 
     # 设置：数据更新
@@ -2033,25 +2103,15 @@ class MainWin(QMainWindow):
 
     # 画图
     def SetupAndPlot(self):
-        try:
-            # 参数设置
-            if self.PlotSetup():
+        # 参数设置
+        if self.PlotSetup():
                 # 绘图
                 self.Plot()
-        except Exception as e:
-            if ConstValues.PsIsDebug:
-                print("SetupAndPlot Error : ", e)
-                traceback.print_exc()
 
     # 模式选择
     def SetupAndStartMode(self):
-        try:
-            # 参数设置
-            if self.StartModeSetup():
-                # 绘图
-                self.StartMode()
-        except Exception as e:
-            if ConstValues.PsIsDebug:
-                print("SetupAndStartMode Error : ", e)
-                traceback.print_exc()
+        # 参数设置
+        if self.StartModeSetup():
+            # 绘图
+            self.StartMode()
 

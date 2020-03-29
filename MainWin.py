@@ -100,41 +100,32 @@ class MainWin(QMainWindow):
         # 树控件设置根节点
         self.mainTreeRoot = QTreeWidgetItem(self.mainTreeWidget)
         self.mainTreeRoot.setText(0, "石油组学数据")
-        self.mainTreeRoot.setIcon(0,
-                                  qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        self.mainTreeRoot.setIcon(0, qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 树控件创建子节点
         self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild1.setText(0, ConstValues.PsTreeInputFiles)
-        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild2 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild2.setText(0, ConstValues.PsTreeDeleteBlank)
-        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild3 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild3.setText(0, ConstValues.PsTreeGDB)
-        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild4 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild4.setText(0, ConstValues.PsTreeDelIso)
-        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild5 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild5.setText(0, ConstValues.PsTreePeakDis)
-        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild6 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild6.setText(0, ConstValues.PsTreeRemoveFP)
-        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild7 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild7.setText(0, ConstValues.PsTreePeakDiv)
-        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8 = QTreeWidgetItem(self.mainTreeRoot)
         self.mainTreeChild8.setText(0, ConstValues.PsTreePlot)
-        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
 
         # 展开所有树控件
         self.mainTreeWidget.expandAll()
@@ -160,8 +151,8 @@ class MainWin(QMainWindow):
             "botchi.png",
             "castle.png",
             "flower.png",
-            "road.png",
             "sea.png",
+            "road.png",
         ]
         imagePathList = [
             "./images/show/sky.png",
@@ -171,8 +162,8 @@ class MainWin(QMainWindow):
             "./images/show/botchi.png",
             "./images/show/castle.png",
             "./images/show/flower.png",
-            "./images/show/road.png",
             "./images/show/sea.png",
+            "./images/show/road.png",
         ]
         globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
         self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
@@ -220,7 +211,7 @@ class MainWin(QMainWindow):
             print(indexRow)
             print('key=%s' % treeWidgetName)
 
-    # 创建选项卡控件
+    # 创建图像选项卡控件（初始化显示）
     def CreateQTabWidgetImages(self, titleList, imagePathList):
         if len(titleList) != len(imagePathList):
             if ConstValues.PsIsDebug:
@@ -755,21 +746,31 @@ class MainWin(QMainWindow):
         plot.addAction(addPlot)
         addPlot.triggered.connect(self.SetupAndPlot)
 
+        # 创建第四个主菜单
+        help = bar.addMenu("帮助")
+        functionIntroduce = QAction("功能介绍", self)  # 添加二级菜单
+        help.addAction(functionIntroduce)
+        functionIntroduce.triggered.connect(lambda: self.Help(1))
+
+        about = QAction("关于", self)  # 添加二级菜单
+        help.addAction(about)
+        about.triggered.connect(lambda: self.Help(2))
+
         # 设置字体，图标等
         elementList = [
             importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
             deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
-            peakDivision, addPlot
+            peakDivision, addPlot, functionIntroduce, about
         ]
         IconFromImage = [
             ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
             ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
-            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconHelpFuncIntro, ConstValues.PsIconHelpAbout
         ]
         IconFromQta = [
             ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
             ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
-            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconHelpFuncIntro, ConstValues.PsqtaIconHelpAbout
         ]
         bar.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
         for i in range(len(elementList)):
@@ -2126,4 +2127,8 @@ class MainWin(QMainWindow):
         if self.StartModeSetup():
             # 绘图
             self.StartMode()
+
+    # 帮助界面
+    def Help(self, function):
+        print("help:", function)
 

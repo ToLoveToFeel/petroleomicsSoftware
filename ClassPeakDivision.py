@@ -155,24 +155,19 @@ class ClassPeakDivision:
         orderValueList = [10 ** int(math.log10(maxValue+1)) for maxValue in maxValueList]  # +1是为了防止maxValue=0
         # 存储每个数据的数量级（字符串），例如：1e4
         orderStrList = ["1e" + str(int(math.log10(maxValue+1))) for maxValue in maxValueList]
-        # 获取数据个数
-        length = len(rawData[0])
-        # 将数据进行平滑处理，分为两段平滑：[0...shortEdge]，[longEdge...length-1]
-        shortWinLength = 101          # 平滑数据窗口大小
-        longWinLength = 201
-        shortEdge = int(length / 6)  # 500
-        bufferLength = int(length / 20)  # 150
-        longEdge = shortEdge - 2*bufferLength
+
+        # 拟合数据
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:
-            data = item[9:]
-            y1 = savgol_filter(data[:shortEdge], window_length=shortWinLength, polyorder=2)
-            y2 = savgol_filter(data[longEdge:], window_length=longWinLength, polyorder=2)
-            # 合并平滑后的数据：[0...shortEdge-bufferLength]，[bufferLength...length-1]
-            y = np.hstack([y1[: shortEdge-bufferLength], y2[bufferLength:]])
-            smoothData.append(y)
+            # # 拟合滤波算法
+            # smoothData.append(self.FilterPoly(item[9:]))
+
+            # 普通滤波算法
+            smoothData.append(self.Filter(item[9:], "mean"))
+
         # 主逻辑
         ret = []
+        length = len(rawData[0])  # 获取数据个数（扫描点个数）
         for i in range(len(ContinueList)):
             ContinueItem = ContinueList[i]  # 是个二维列表，最前面一项是个列表，表示该物质信息
             ret.append([dataProcessing[i], smoothData[i]])
@@ -195,6 +190,49 @@ class ClassPeakDivision:
             ret[i].append(parameters)
 
         return ret
+
+    # 滤波算法
+    def Filter(self, data, filterType="median", filterSize=10):
+        rawDataLength = len(data)
+        if rawDataLength <= filterSize:
+            return data
+
+        newData = []
+        halfFilterSize = int(filterSize / 2)  # 开始滤波的位置
+        endEdge = rawDataLength - halfFilterSize  # 滤波结束位置
+        # 前面halfFilterSize个数据
+        for i in range(halfFilterSize):
+            newData.append(data[i])
+        # 滤波
+        if filterType == "median":  # 中位值滤波法
+            for i in range(halfFilterSize, endEdge):
+                newData.append(np.median(np.array(data[i - halfFilterSize:i + halfFilterSize])))
+        elif filterType == "mean":  # 滑动平均数滤波
+            for i in range(halfFilterSize, endEdge):
+                newData.append(np.mean(np.array(data[i - halfFilterSize:i + halfFilterSize])))
+        # 后面halfFilterSize个数据
+        for i in range(endEdge, rawDataLength):
+            newData.append(data[i])
+
+        return np.array(newData)
+
+    # 拟合滤波算法
+    def FilterPoly(self, data):
+        # 获取数据个数（扫描点个数）
+        length = len(data)
+        # 将数据进行平滑处理，分为两段平滑：[0...shortEdge]，[longEdge...length-1]
+        shortWinLength = 101  # 平滑数据窗口大小
+        longWinLength = 201
+        shortEdge = int(length / 6)  # 500
+        bufferLength = int(length / 20)  # 150
+        longEdge = shortEdge - 2 * bufferLength
+
+        y1 = savgol_filter(data[:shortEdge], window_length=shortWinLength, polyorder=2)
+        y2 = savgol_filter(data[longEdge:], window_length=longWinLength, polyorder=2)
+        # 合并平滑后的数据：[0...shortEdge-bufferLength]，[bufferLength...length-1]
+        y = np.hstack([y1[: shortEdge - bufferLength], y2[bufferLength:]])
+
+        return y
 
     # 重点逻辑，峰分割
     def PeakDivSplit(self, rawdata, smoothdata, ordervalue):

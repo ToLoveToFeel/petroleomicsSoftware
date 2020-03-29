@@ -8,6 +8,7 @@ from SetupInterface import SetupInterface
 from MultiThread import MultiThread
 import qtawesome
 import math
+import random
 import traceback
 
 
@@ -155,19 +156,23 @@ class MainWin(QMainWindow):
             "sky.png",
             "people.png",
             "dandelion.png",
-            "feather.png",
-            "w1.jpg",
-            "w2.jpg",
-            "w3.jpg",
+            "lake.png",
+            "botchi.png",
+            "castle.png",
+            "flower.png",
+            "road.png",
+            "sea.png",
         ]
         imagePathList = [
             "./images/show/sky.png",
             "./images/show/people.png",
             "./images/show/dandelion.png",
-            "./images/show/feather.png",
-            "./images/windows/w1.jpg",
-            "./images/windows/w2.jpg",
-            "./images/windows/w3.jpg",
+            "./images/show/lake.png",
+            "./images/show/botchi.png",
+            "./images/show/castle.png",
+            "./images/show/flower.png",
+            "./images/show/road.png",
+            "./images/show/sea.png",
         ]
         globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
         self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
@@ -228,8 +233,11 @@ class MainWin(QMainWindow):
         tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
         tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
-
-        for i in range(len(titleList)):
+        # 为了随机显示图片，打乱顺序
+        shuffleList = [i for i in range(len(titleList))]
+        random.shuffle(shuffleList)
+        imageNum = 0
+        for i in shuffleList:
             imagePath = imagePathList[i]
             title = titleList[i]
 
@@ -243,6 +251,10 @@ class MainWin(QMainWindow):
             tb.setWidget(label)
 
             tabWidget.addTab(tb, title)
+
+            imageNum += 1
+            if imageNum == ConstValues.PsShowImageNum:
+                break
 
         return tabWidget
 

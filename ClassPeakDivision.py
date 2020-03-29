@@ -160,8 +160,8 @@ class ClassPeakDivision:
         # 将数据进行平滑处理，分为两段平滑：[0...shortEdge]，[longEdge...length-1]
         shortWinLength = 101          # 平滑数据窗口大小
         longWinLength = 201
-        shortEdge = int(length / 6)  # 3
-        bufferLength = int(length / 20)  # 15
+        shortEdge = int(length / 6)  # 500
+        bufferLength = int(length / 20)  # 150
         longEdge = shortEdge - 2*bufferLength
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:

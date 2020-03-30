@@ -21,8 +21,8 @@ class ConstValues:
     PsMainWindowHeight = PsMainWindowLength * 8
     # 主窗口底部状态栏显示的信息
     PsMainWindowStatusMessage = "欢迎使用！"
-    # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
-    PsMainWindowStyle = "Macintosh"
+    # 主窗口风格  可选：["Windows", "Fusion", "Macintosh", "Qdarkstyle"]
+    PsMainWindowStyle = "Qdarkstyle"
     # 主窗口背景样式（背景颜色RGB）
     PsMainBackgroundStyle = "#MainWindow{background-color: #F5F5F5;}"  # 白烟色
     # PsMainBackgroundStyle = "#MainWindow{border-image:url(./images/test.jpg);}}"  # 背景图片
@@ -37,6 +37,9 @@ class ConstValues:
     # 工具栏显示的字体及大小
     PsToolbarFontType = "Arial"
     PsToolbarFontSize = 10
+    # 状态栏显示的字体及大小
+    PsStatusFontType = "Arial"
+    PsStatusFontSize = 11
     # 主界面树控件显示的字体及大小
     PsTreeFontType = "Arial"
     PsTreeFontSize = 11
@@ -56,7 +59,8 @@ class ConstValues:
     PsIconRemoveFP = './images/work/j5.png'  # 去假阳性图标
     PsIconpeakDiv = './images/work/j6.png'  # 峰检测图标
     PsIconPlot = './images/work/j7.png'  # 绘图图标
-    PsIconHelpFuncIntro = "./images/basic/help.png"  # 帮助图标：功能介绍
+    PsIconHelpEdit = "./images/basic/Sorceress.ico"  # 帮助图标：编辑
+    PsIconHelpOther = "./images/basic/Logo.ico"  # 帮助图标：其他帮助
     PsIconHelpAbout = "./images/basic/help.png"  # 帮助图标：about
     PsIconAllStart = './images/work/j21.png'  # 全部开始图标
     PsIconAllReset = './images/work/j12.png'  # 重置软件图标
@@ -77,7 +81,9 @@ class ConstValues:
     PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
     PsqtaIconpeakDiv = 'fa.search'  # 峰检测图标
     PsqtaIconPlot = 'fa.bar-chart-o'  # 绘图图标
-    PsqtaIconHelpFuncIntro = "fa.question-circle-o"  # 帮助图标：功能介绍
+    PsqtaIconHelpWindows = "fa.windows"  # 帮助图标：界面介绍
+    PsqtaIconHelpEdit = "fa.edit"  # 帮助图标：编辑
+    PsqtaIconHelpOther = "fa.star-o"  # 帮助图标：其他帮助
     PsqtaIconHelpAbout = "fa.heart-o"  # 帮助图标：功能介绍
     PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
     PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
@@ -113,7 +119,7 @@ class ConstValues:
     PsStartMode = 1
 
     # 处理过程中是否显示弹框
-    PsIsShowGif = False
+    PsIsShowGif = True
 
     # 初始化是否是只显示指定数目图片，大于图片总数目则全部显示
     PsShowImageNum = 2
@@ -143,7 +149,7 @@ class ConstValues:
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
-    PsSetupStyleEnabled = False  # 默认颜色是否使能
+    PsSetupStyleEnabled = True  # 默认颜色是否使能
     PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
     # PsSetupStyle = "background-color: #F5F5F5;"
 

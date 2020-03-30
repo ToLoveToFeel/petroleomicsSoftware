@@ -4,12 +4,14 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PromptBox import PromptBox
 from Utils import *
+from ClassHelp import ClassHelp
 from SetupInterface import SetupInterface
 from MultiThread import MultiThread
 import qtawesome
 import math
 import random
 import traceback
+import qdarkstyle
 
 
 class MainWin(QMainWindow):
@@ -39,7 +41,11 @@ class MainWin(QMainWindow):
         # 设置主窗口的尺寸
         self.setFixedSize(ConstValues.PsMainWindowWidth, ConstValues.PsMainWindowHeight)
         # 设置主窗口风格
-        QApplication.setStyle(ConstValues.PsMainWindowStyle)
+        app = QApplication.instance()
+        if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+            app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        else:
+            app.setStyle(ConstValues.PsMainWindowStyle)
         # 设置窗口样式
         self.setWindowFlags(Qt.WindowMinimizeButtonHint  # 最小化
                             | Qt.WindowCloseButtonHint  # 关闭
@@ -51,7 +57,8 @@ class MainWin(QMainWindow):
             self.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 设置背景颜色
         self.setObjectName("MainWindow")
-        self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
         # 设置透明度
         self.setWindowOpacity(0.98)
         # 设置窗口显示内容
@@ -103,29 +110,29 @@ class MainWin(QMainWindow):
         self.mainTreeRoot.setIcon(0, qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 树控件创建子节点
         self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild1.setText(0, ConstValues.PsTreeInputFiles)
-        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild2 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild2.setText(0, ConstValues.PsTreeDeleteBlank)
-        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild3 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild3.setText(0, ConstValues.PsTreeGDB)
-        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild4 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild4.setText(0, ConstValues.PsTreeDelIso)
-        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild5 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild5.setText(0, ConstValues.PsTreePeakDis)
-        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild6 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild6.setText(0, ConstValues.PsTreeRemoveFP)
-        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild7 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild7.setText(0, ConstValues.PsTreePeakDiv)
-        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild8.setText(0, ConstValues.PsTreePlot)
-        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=ConstValues.PsqtaIconFolderColor))
+
+        # 设置显示的文字，设置图标
+        treeChildList = [
+            self.mainTreeChild1, self.mainTreeChild2, self.mainTreeChild3, self.mainTreeChild4,
+            self.mainTreeChild5, self.mainTreeChild6, self.mainTreeChild7, self.mainTreeChild8,
+        ]
+        treeNameList = [
+            ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank, ConstValues.PsTreeGDB, ConstValues.PsTreeDelIso,
+            ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv, ConstValues.PsTreePlot
+        ]
+        color = ConstValues.PsqtaIconFolderColor
+        if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+            color = "white"
+        for i in range(len(treeChildList)):
+            treeChildList[i].setText(0, treeNameList[i])
+            treeChildList[i].setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=color))
 
         # 展开所有树控件
         self.mainTreeWidget.expandAll()
@@ -138,7 +145,8 @@ class MainWin(QMainWindow):
         self.tabWidgetShowData.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        self.tabWidgetShowData.setStyleSheet(style)
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            self.tabWidgetShowData.setStyleSheet(style)
         self.tabWidgetShowData.setTabsClosable(True)  # 可以关闭
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
         self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
@@ -170,7 +178,7 @@ class MainWin(QMainWindow):
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
         self.mainTreeChild8_1.setText(0, "initShow")
         self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
-                                                        color=ConstValues.PsqtaIconFolderColor))
+                                                        color=color))
         self.mainTreeChild8_1.setSelected(True)
         self.plotStack.setCurrentWidget(globals()["Plot_" + "initShow"])
 
@@ -221,7 +229,8 @@ class MainWin(QMainWindow):
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        tabWidget.setStyleSheet(style)
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
         tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
         # 为了随机显示图片，打乱顺序
@@ -234,7 +243,8 @@ class MainWin(QMainWindow):
 
             tb = QScrollArea()
             tb.setAlignment(Qt.AlignCenter)
-            tb.setStyleSheet("background-color: #FFFFFF;")
+            if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+                tb.setStyleSheet("background-color: #FFFFFF;")
             label = QLabel()  # 创建Label
             pixmap = QPixmap(imagePath)
             pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth*95/120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
@@ -255,14 +265,16 @@ class MainWin(QMainWindow):
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        tabWidget.setStyleSheet(style)
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
         tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth*8/10)
 
         # tb1相关内容
         tb1 = QScrollArea()
         tb1.setAlignment(Qt.AlignCenter)
-        tb1.setStyleSheet("background-color: #FFFFFF;")
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            tb1.setStyleSheet("background-color: #FFFFFF;")
         label = QLabel()  # 创建Label
         pixmap = QPixmap(imagePath)
         pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth * 90 / 120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
@@ -343,7 +355,10 @@ class MainWin(QMainWindow):
         if not self.mainNeedCover:
             mainTreeChild_ = QTreeWidgetItem(parent)
             mainTreeChild_.setText(0, name)
-            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=ConstValues.PsqtaIconFolderColor))
+            color = ConstValues.PsqtaColor
+            if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+                color = "white"
+            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=color))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
@@ -361,15 +376,15 @@ class MainWin(QMainWindow):
         # 创建 QTableWidget
         globals()["tableWidget_" + name] = self.CreateQTableWidget(data)
         # self.tabWidgetShowData 添加该项内容
-        if globals()["tableWidget_" + name] is not None:  # # 添加 QTableWidget
+        if globals()["tableWidget_" + name] is not None:  # 添加 QTableWidget
             self.tabWidgetShowData.addTab(globals()["tableWidget_" + name], name)
             self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + name])  # 切换到当前tab
         self.plotStack.setCurrentIndex(0)  # 显示导入的数据
         self.mainNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
         # 更新状态栏消息
         self.statusSetup(ConstValues.PsMainWindowStatusMessage, functionStr)
-        # if (promptBox is not None) and ConstValues.PsIsShowGif:
-        #     promptBox.closeGif()
+        if (promptBox is not None) and ConstValues.PsIsShowGif:
+            promptBox.closeGif()
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
@@ -706,6 +721,10 @@ class MainWin(QMainWindow):
         file.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
 
+        intermediateFiles = QAction("导入", self)  # 添加二级菜单
+        file.addAction(intermediateFiles)
+        intermediateFiles.triggered.connect(self.importIntermediateFiles)
+
         OutFilesPath = QAction("输出", self)  # 添加二级菜单
         file.addAction(OutFilesPath)
         OutFilesPath.triggered.connect(self.GetOutputFilesPath)
@@ -748,39 +767,88 @@ class MainWin(QMainWindow):
 
         # 创建第四个主菜单
         help = bar.addMenu("帮助")
-        functionIntroduce = QAction("功能介绍", self)  # 添加二级菜单
-        help.addAction(functionIntroduce)
-        functionIntroduce.triggered.connect(lambda: self.Help(1))
+        uiHelp = QAction("界面介绍", self)  # 添加二级菜单
+        help.addAction(uiHelp)
+        uiHelp.triggered.connect(lambda: self.Help("UIHelp"))
+
+        fileHelp = QAction("文件帮助", self)  # 添加二级菜单
+        help.addAction(fileHelp)
+        fileHelp.triggered.connect(lambda: self.Help("FileHelp"))
+
+        editHelp = QMenu("编辑帮助", self)  # 添加二级菜单
+        help.addMenu(editHelp)
+        editHelpDeleteBlank = QAction("去空白", self)    # 添加三级菜单
+        editHelp.addAction(editHelpDeleteBlank)
+        editHelpDeleteBlank.triggered.connect(lambda: self.Help("EditHelpDeleteBlank"))
+        editHelpGDB = QAction("数据库生成", self)
+        editHelp.addAction(editHelpGDB)
+        editHelpGDB.triggered.connect(lambda: self.Help("EditHelpGDB"))
+        editHelpDeleteIso = QAction("搜同位素", self)
+        editHelp.addAction(editHelpDeleteIso)
+        editHelpDeleteIso.triggered.connect(lambda: self.Help("EditHelpDeleteIso"))
+        editHelpPeakDis = QAction("峰提取", self)
+        editHelp.addAction(editHelpPeakDis)
+        editHelpPeakDis.triggered.connect(lambda: self.Help("EditHelpPeakDis"))
+        editHelpRFP = QAction("去假阳性", self)
+        editHelp.addAction(editHelpRFP)
+        editHelpRFP.triggered.connect(lambda: self.Help("EditHelpRFP"))
+        editHelpPeakDiv = QAction("峰检测", self)
+        editHelp.addAction(editHelpPeakDiv)
+        editHelpPeakDiv.triggered.connect(lambda: self.Help("EditHelpPeakDiv"))
+
+        plotHelp = QAction("绘图帮助", self)  # 添加二级菜单
+        help.addAction(plotHelp)
+        plotHelp.triggered.connect(lambda: self.Help("PlotHelp"))
+
+        modeHelp = QAction("模式帮助", self)  # 添加二级菜单
+        help.addAction(modeHelp)
+        modeHelp.triggered.connect(lambda: self.Help("ModeHelp"))
+
+        otherHelp = QAction("其他帮助", self)  # 添加二级菜单
+        help.addAction(otherHelp)
+        otherHelp.triggered.connect(lambda: self.Help("OtherHelp"))
 
         about = QAction("关于", self)  # 添加二级菜单
         help.addAction(about)
-        about.triggered.connect(lambda: self.Help(2))
+        about.triggered.connect(lambda: self.Help("About"))
 
         # 设置字体，图标等
         elementList = [
-            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            importSampleFile, importBlankFile, TICFile, intermediateFiles, OutFilesPath, exitProgram,
             deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
-            peakDivision, addPlot, functionIntroduce, about
+            peakDivision, addPlot, uiHelp,
+            fileHelp, editHelp, editHelpDeleteBlank, editHelpGDB,
+            editHelpDeleteIso, editHelpPeakDis, editHelpRFP, editHelpPeakDiv,
+            plotHelp, modeHelp, otherHelp, about
         ]
         IconFromImage = [
-            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
             ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
-            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconHelpFuncIntro, ConstValues.PsIconHelpAbout
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconOpenFile,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconHelpEdit, ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB,
+            ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP, ConstValues.PsIconpeakDiv,
+            ConstValues.PsIconPlot, ConstValues.PsIconAllStart, ConstValues.PsIconHelpOther, ConstValues.PsIconHelpAbout
         ]
         IconFromQta = [
-            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
             ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
-            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconHelpFuncIntro, ConstValues.PsqtaIconHelpAbout
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconHelpWindows,
+            ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconHelpEdit, ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB,
+            ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP, ConstValues.PsqtaIconpeakDiv,
+            ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconHelpOther, ConstValues.PsqtaIconHelpAbout
         ]
+        color = ConstValues.PsqtaColor
+        if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+            color = "white"
         bar.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
         for i in range(len(elementList)):
             # 设置字体大小
-            elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+            elementList[i].setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
             # 设置图标
             if ConstValues.PsIconType == 1:  # 从图片读取
                 elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=color))
 
     # 设置工具栏
     def toolbar(self):
@@ -804,7 +872,7 @@ class MainWin(QMainWindow):
         TICFile.triggered.connect(self.ImportTICFile)
 
         intermediateFiles = QAction("导入", self)
-        intermediateFiles.setToolTip("从生成的结果文件中导入数据")
+        intermediateFiles.setToolTip("从生成的结果文件夹中导入数据")
         tb1.addAction(intermediateFiles)
         intermediateFiles.triggered.connect(self.importIntermediateFiles)
 
@@ -881,6 +949,9 @@ class MainWin(QMainWindow):
             ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
             ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconAllReset
         ]
+        color = ConstValues.PsqtaColor
+        if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+            color = "white"
         for i in range(len(elementList)):
             # 设置字体大小
             elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
@@ -888,22 +959,27 @@ class MainWin(QMainWindow):
             if ConstValues.PsIconType == 1:  # 从图片读取
                 elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=color))
 
     # 设置主窗口底部状态栏
     def status(self):
         self.statusBar = self.statusBar()
         # 设置状态栏背景颜色
-        self.statusBar.setStyleSheet(ConstValues.PsStatusStyle)
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            self.statusBar.setStyleSheet(ConstValues.PsStatusStyle)
         # 设置字体显示样式
-        style = "color:rgb(0,0,0,250); font-size:15px; font-family: Microsoft YaHei;"
+        style = "color:rgb(0,0,0,250); font-family: Microsoft YaHei;"
         # 第一条显示的信息
         nowDate = str(QDate.currentDate().toString("yyyy.MM.dd"))
         self.statusContext1 = QLabel(ConstValues.PsMainWindowStatusMessage + "|   日期：" + nowDate)
-        self.statusContext1.setStyleSheet(style)
+        self.statusContext1.setFont(QFont(ConstValues.PsStatusFontType, ConstValues.PsStatusFontSize))
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            self.statusContext1.setStyleSheet(style)
         # 第二条显示的信息
         self.statusContext2 = QLabel("当前处于空闲状态.")
-        self.statusContext2.setStyleSheet(style)
+        self.statusContext2.setFont(QFont(ConstValues.PsStatusFontType, ConstValues.PsStatusFontSize))
+        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+            self.statusContext2.setStyleSheet(style)
         # 状态栏添加显示的信息
         self.statusBar.addPermanentWidget(self.statusContext1, stretch=2)
         self.statusBar.addPermanentWidget(self.statusContext2, stretch=1)
@@ -2130,5 +2206,10 @@ class MainWin(QMainWindow):
 
     # 帮助界面
     def Help(self, function):
-        print("help:", function)
+        if ConstValues.PsIsDebug:
+            print("help:", function)
+        # 创建对话框
+        ClassHelp(function).Help()
+
+
 

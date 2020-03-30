@@ -62,7 +62,6 @@ class ClassHelp:
             dialog.setWindowOpacity(0.94)  # 设置透明度
 
             label = self.GetQLabel("菜单栏 “文件” 下各项功能解释：", "color:red; font-size:15pt")
-
             textEdit = QTextEdit()
             textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
             textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
@@ -81,7 +80,6 @@ class ClassHelp:
                             "文件夹中。"
             ExitExplain = "退出：退出整个程序。"
             taskbarExplain = "工具栏和菜单栏对应功能一致。"
-
             showStr = sampleExplain + "\n\n" + blankExplain + "\n\n" + TICExplain + "\n\n" + importExplain + "\n\n" + outputExplain + "\n\n" + ExitExplain + "\n\n\n" + taskbarExplain
             textEdit.setPlainText(showStr)
 
@@ -89,41 +87,31 @@ class ClassHelp:
             # 栅格布局添加控件
             layout.addWidget(label, 0, 0, 1, 1)
             layout.addWidget(textEdit, 1, 0, 1, 1)
-
             dialog.exec()  # 运行
         elif self.__function == "EditHelpDeleteBlank":
-            dialog = self.CreateDialog("文件帮助", 60, 40)
-            dialog.setWindowOpacity(0.94)  # 设置透明度
-
-            label = self.GetQLabel("菜单栏 “编辑->去空白” 下功能解释：", "color:red; font-size:15pt")
-
-            textEdit = QTextEdit()
-            textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
-            textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-            # 显示内容编辑
-            explain = "去空白：这是一个参数设置界面，如果灭有导入“空白”，虽然能设置数据，但不能运行这一步。" \
+            explain = "这是一个参数设置界面，如果没有导入“空白”，虽然能设置数据，但不能运行这一步。" \
                       "这一步的目的：去除样品中无关物质以及仪器产生的影响，使得分析结果更加准确。"
-            taskbarExplain = "工具栏对应的“去空白”是运行按钮，菜单栏对应的“去空白”是参数设置。"
-
-            showStr = explain + "\n\n\n" + taskbarExplain
-            textEdit.setPlainText(showStr)
-
-            layout = QGridLayout(dialog)  # 创建栅格布局
-            # 栅格布局添加控件
-            layout.addWidget(label, 0, 0, 1, 1)
-            layout.addWidget(textEdit, 1, 0, 1, 1)
-
-            dialog.exec()  # 运行
+            self.EditShow("去空白", explain)
         elif self.__function == "EditHelpGDB":
-            pass
+            explain = "这是一个参数设置界面，这一步不需要任何输入文件即可运行，根据用户输出参数自动生成信息，" \
+                      "信息格式为：（Class, Neutral, Formula, Calc m/z, C, ion），即（类别，不饱和度，分子式，质荷比，" \
+                      "碳的数目，仪器离子模式），生成的数据最终存储在excel中。这一步的目的：为后续分子式匹配做准备。"
+            self.EditShow("数据库生成", explain)
         elif self.__function == "EditHelpDeleteIso":
-            pass
+            explain = "这是一个参数设置界面，我们根据（去空白后的）样本文件里的内容根据Mass去匹配数据库，如果" \
+                      "未匹配到，当前Mass结束，继续（去空白后的）样本文件下一条记录的匹配；如果匹配到，则计算匹配到的分" \
+                      "子式分子量为12的C元素替换为分子量为13的C元素，分别替换一个和两个，根据替换后分子量在（去空白后的）" \
+                      "样本文件中搜索是否有对应的记录，并记录下来。这个步骤最终生成一个excel文件。"
+            self.EditShow("搜同位素", explain)
         elif self.__function == "EditHelpPeakDis":
-            pass
+            explain = "这是一个参数设置界面，"
+            self.EditShow("峰匹配", explain)
         elif self.__function == "EditHelpRFP":
-            pass
+            explain = "这是一个参数设置界面，"
+            self.EditShow("去假阳性", explain)
         elif self.__function == "EditHelpPeakDiv":
-            pass
+            explain = "这是一个参数设置界面，"
+            self.EditShow("峰识别", explain)
         elif self.__function == "PlotHelp":
             pass
         elif self.__function == "ModeHelp":
@@ -137,5 +125,22 @@ class ClassHelp:
             layout.addWidget(label)
             dialog.exec()
 
+    def EditShow(self, name, explain):
+        dialog = self.CreateDialog("编辑->" + name, 60, 40)
+        dialog.setWindowOpacity(0.94)  # 设置透明度
 
+        label = self.GetQLabel("菜单栏 “编辑->" + name + "” 下功能解释：", "color:red; font-size:15pt")
+        textEdit = QTextEdit()
+        textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+        textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        # 显示内容编辑
+        explain = name + ":" + explain
+        taskbarExplain = "工具栏对应的“" + name + "”是运行按钮，菜单栏对应的“" + name + "”是参数设置。"
+        showStr = explain + "\n\n\n" + taskbarExplain
+        textEdit.setPlainText(showStr)
 
+        layout = QGridLayout(dialog)  # 创建栅格布局
+        # 栅格布局添加控件
+        layout.addWidget(label, 0, 0, 1, 1)
+        layout.addWidget(textEdit, 1, 0, 1, 1)
+        dialog.exec()  # 运行

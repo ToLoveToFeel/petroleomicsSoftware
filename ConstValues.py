@@ -33,7 +33,7 @@ class ConstValues:
     PsMainFontSize = 12
     # 下拉菜单显示的字体及大小
     PsMenuFontType = "Arial"
-    PsMenuFontSize = 10
+    PsMenuFontSize = 10.5
     # 工具栏显示的字体及大小
     PsToolbarFontType = "Arial"
     PsToolbarFontSize = 10

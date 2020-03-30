@@ -84,7 +84,7 @@ class MainWin(QMainWindow):
         # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
         self.tabWidgetId = 0
         # 主界面读取文件名称列表，读入相同名称的文件时，需要确认是否覆盖
-        self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减
+        self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减，因为用户可能点击叉号
         self.mainDataNameSetAll = set()  # 所有可能需要显示的表格名称集合，里面全是字符串，只增不减
         self.mainNeedCover = False
         # 主界面生成图形后的图形名称列表，读入相同名称的图片名称时，需要确认是否覆盖
@@ -149,7 +149,7 @@ class MainWin(QMainWindow):
             self.tabWidgetShowData.setStyleSheet(style)
         self.tabWidgetShowData.setTabsClosable(True)  # 可以关闭
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
-        self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
+        self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，0
 
         titleList = [
             "sky.png",
@@ -174,7 +174,7 @@ class MainWin(QMainWindow):
             "./images/show/road.png",
         ]
         globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
-        self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
+        self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，1
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
         self.mainTreeChild8_1.setText(0, "initShow")
         self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
@@ -237,6 +237,9 @@ class MainWin(QMainWindow):
         shuffleList = [i for i in range(len(titleList))]
         random.shuffle(shuffleList)
         imageNum = 0
+        width = ConstValues.PsMainWindowWidth * 95 / 120
+        if ConstValues.PsMainWindowStyle == "Qdarkstyle":
+            width = ConstValues.PsMainWindowWidth * 90 / 120
         for i in shuffleList:
             imagePath = imagePathList[i]
             title = titleList[i]
@@ -247,7 +250,7 @@ class MainWin(QMainWindow):
                 tb.setStyleSheet("background-color: #FFFFFF;")
             label = QLabel()  # 创建Label
             pixmap = QPixmap(imagePath)
-            pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth*95/120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
+            pixmap = pixmap.scaled(width, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
             label.setPixmap(pixmap)
             tb.setWidget(label)
 
@@ -353,18 +356,18 @@ class MainWin(QMainWindow):
         self.mainDataNameSetAll.add(name)
         # 树控件创建对应项
         if not self.mainNeedCover:
-            mainTreeChild_ = QTreeWidgetItem(parent)
-            mainTreeChild_.setText(0, name)
+            globals()["mainTreeChild_" + name] = QTreeWidgetItem(parent)  # 全局的，因为删除的时候需要使用
+            globals()["mainTreeChild_" + name].setText(0, name)
             color = ConstValues.PsqtaColor
             if ConstValues.PsMainWindowStyle == "Qdarkstyle":
                 color = "white"
-            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=color))
+            globals()["mainTreeChild_" + name].setIcon(0, qtawesome.icon(icon, color=color))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
                 treeWidgetItem = item.value()
                 if ConstValues.PsIsDebug:
-                    print(treeWidgetItem)
+                    # print(treeWidgetItem)
                     print(treeWidgetItem.text(0))
                 if treeWidgetItem.isSelected():
                     treeWidgetItem.setSelected(False)
@@ -372,7 +375,10 @@ class MainWin(QMainWindow):
                 # 到下一个节点
                 item += 1
             # 光标选择到当前导入的文件
-            mainTreeChild_.setSelected(True)
+            globals()["mainTreeChild_" + name].setSelected(True)
+            # # 右键处理
+            # globals()["mainTreeChild_" + name].setContextMenuPolicy(Qt.CustomContextMenu)
+            # globals()["mainTreeChild_" + name].customContextMenuRequested.connect(self.rightTreeShow)  # 开放右键策略
         # 创建 QTableWidget
         globals()["tableWidget_" + name] = self.CreateQTableWidget(data)
         # self.tabWidgetShowData 添加该项内容
@@ -468,7 +474,7 @@ class MainWin(QMainWindow):
         menu.triggered.connect(self.MenuSlot)
         menu.exec_(QCursor.pos())
 
-    # 右击后处理函数
+    # 右击后处理函数（Plot / Raw Plot Data）
     def MenuSlot(self, act):
         if ConstValues.PsIsDebug:
             print(act.text())
@@ -482,10 +488,25 @@ class MainWin(QMainWindow):
             elif self.currentFunction == 2:
                 WriteDataToExcel(self.currentPixmapData, outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
 
+    # 右击选项菜单（树控件），就是为了删除导入的数据
+    def rightTreeShow(self):
+        sender = self.sender()
+        print(sender.text(0))
+
+        menu = QMenu()
+        menu.addAction(QAction("删除", menu))
+        menu.triggered.connect(self.TreeSlot)
+        menu.exec_(QCursor.pos())
+
+    # 右击后处理函数（树控件）
+    def TreeSlot(self, act):
+        pass
+
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
         # 专门用来弹出gif
         self.promptGif = PromptBox()
+        self.whetherShowGif = False
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
         self.sampleData = []
@@ -1488,7 +1509,7 @@ class MainWin(QMainWindow):
                 PromptBox().errorMessage("去空白出现错误!")
             elif retList[0] == "Error_CGDB_MultiThread":
                 if ConstValues.PsIsShowGif:
-                    self.GDBPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
             elif retList[0] == "Error_CDI_MultiThread":
                 if ConstValues.PsIsShowGif:
@@ -1529,6 +1550,9 @@ class MainWin(QMainWindow):
         except Exception as e:
             if ConstValues.PsIsDebug:
                 print("Error_HandleData : ", e)
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("出现错误！错误标识：Error_HandleData")
                 traceback.print_exc()
 
     # 设置：数据更新
@@ -2129,6 +2153,7 @@ class MainWin(QMainWindow):
 
     # 程序开始运行后收尾工作
     def AfterRunning(self, Type):
+        self.whetherShowGif = True
         if Type == "DeleteBlank":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理扣空白，请稍后...")
@@ -2189,6 +2214,8 @@ class MainWin(QMainWindow):
             # 弹出提示框
             if ConstValues.PsIsShowGif:
                 self.promptGif.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
+        else:
+            self.whetherShowGif = False
 
     # 画图
     def SetupAndPlot(self):

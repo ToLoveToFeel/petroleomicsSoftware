@@ -1,5 +1,6 @@
 # coding=utf-8
 # 此文件负责定义：扣空白
+import sys
 import numpy as np
 from Utils import *
 from ConstValues import ConstValues
@@ -40,8 +41,13 @@ class ClassDeleteBlank:
         self.sampleData = self.sampleData[self.sampleData.Intensity > self.deleteBlankIntensity]
         self.blankData = self.blankData[self.blankData.Intensity > self.deleteBlankIntensity]
         if ConstValues.PsIsDebug:
-            print(self.sampleData.shape[0])  # 180-onescan-external.xlsx处理后：5888
-            print(self.blankData.shape[0])  # blank-3.xlsx处理后：3778
+            # 180-onescan-external.xlsx处理后：5888
+            # blank-3.xlsx处理后：3778
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.sampleData.shape[0]:", self.sampleData.shape[0], "self.blankData.shape[0]:", self.blankData.shape[0]
+            )
 
     # 删去样本和空白中相同的mass且intensity相近的mass，必须调过DeleteSmallIntensity函数调用此函数才有意义
     def DeleteSimilarToBlank(self):
@@ -61,8 +67,11 @@ class ClassDeleteBlank:
         in2 = self.blankData["Intensity"].values      # 空白中的intensity
         result = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
         if ConstValues.PsIsDebug:
-            print(type(result))
-            print(result[:6, :])
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "type(result):", type(result), "result[:6, :]:", result[:6, :]
+            )
 
         # 核心处理逻辑
         deleteList = []  # 记录需要删除的索引
@@ -94,10 +103,11 @@ class ClassDeleteBlank:
         result = header + result
 
         if ConstValues.PsIsDebug:
-            print(len(deleteList))
-            print(len(result))
-            print(type(result))
-            print(result[:6])
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "len(deleteList):", len(deleteList), "len(result):", len(result), "result[:6]:", result[:6]
+            )
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_1_deleteBlank")

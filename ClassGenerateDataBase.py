@@ -2,7 +2,6 @@
 # 此文件负责定义：生成数据库
 from Utils import *
 
-
 class ClassGenerateDataBase:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 11, "ClassGenerateDataBase参数不对"

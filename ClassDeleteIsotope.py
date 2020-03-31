@@ -114,16 +114,20 @@ class ClassDeleteIsotope():
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     ret.append(True)
                     ret.append(item)
                     break
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     if len(ret) == 0:
                         ret.append(True)
                     ret.append(item)
@@ -140,8 +144,10 @@ class ClassDeleteIsotope():
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     ret.append(True)
                     ret.append(item)
                     break

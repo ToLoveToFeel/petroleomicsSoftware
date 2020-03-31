@@ -6,7 +6,7 @@ from PyQt5.QtGui import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 import qtawesome
-import traceback
+import sys
 
 
 class SetupInterface:
@@ -1259,7 +1259,11 @@ class SetupInterface:
         if radioButton.isChecked():
             self.PlotType = Id
             if ConstValues.PsIsDebug:
-                print("PlotMainUIRadioButtonState self.PlotType : ", self.PlotType)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.PlotType:", self.PlotType
+                )
 
     # -------------------------------------- 一级子界面
     def PlotMainToSubUI(self):
@@ -1425,7 +1429,11 @@ class SetupInterface:
             if globals()["radioBox_2" + item].isChecked():
                 self.PlotClassItem[0] = globals()["radioBox_2" + item].text()
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0]
+                    )
                 break
 
     # -------------------------------------- 第三个：Carbon number distribution by class and DBE，创建控件
@@ -1527,7 +1535,11 @@ class SetupInterface:
                 # 默认勾选第一个
                 globals()["radioBox_3_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
                 if ConstValues.PsIsDebug:
-                    print("PlotSubUI_3RadioButtonClass self.PlotDBENum : ", self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "key（self.PlotClassItem[0]）:", key, "self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # 一级子界面第三个界面 选择需要绘制的DBE
@@ -1537,8 +1549,11 @@ class SetupInterface:
                 self.PlotClassItem[0] = Class
                 self.PlotDBENum = num
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
-                    print(self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0], "; self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # -------------------------------------- 第四个：DBE vs carbon number by class，创建控件
@@ -1604,7 +1619,11 @@ class SetupInterface:
             if globals()["radioBox_4" + item].isChecked():
                 self.PlotClassItem[0] = globals()["radioBox_4" + item].text()
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0]
+                    )
                 break
 
     # -------------------------------------- 第五个：Kendrick mass defect （KMD），创建控件
@@ -1757,19 +1776,26 @@ class SetupInterface:
                 # 默认勾选第一个
                 globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
                 if ConstValues.PsIsDebug:
-                    print("PlotSubUI_6RadioButtonClass self.PlotDBENum : ", self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "key（self.PlotClassItem[0]）:", key, "self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # 一级子界面第三个界面 选择需要绘制的DBE
     def PlotSubUI_6RadioButtonDBE(self, Class):
-            for num in self.PlotDictionary[Class]:
-                if globals()["radioBox_6_2" + str(Class) + str(num)].isChecked():
-                    self.PlotClassItem[0] = Class
-                    self.PlotDBENum = num
-                    if ConstValues.PsIsDebug:
-                        print(self.PlotClassItem[0])
-                        print(self.PlotDBENum)
-                    break
+        for num in self.PlotDictionary[Class]:
+            if globals()["radioBox_6_2" + str(Class) + str(num)].isChecked():
+                self.PlotClassItem[0] = Class
+                self.PlotDBENum = num
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0], "; self.PlotDBENum:", self.PlotDBENum
+                    )
+                break
 
     # -------------------------------------- 一级子界面对应的二级子界面，命名功能等
     def PlotSubUINameCreateWidget(self):
@@ -1914,7 +1940,11 @@ class SetupInterface:
     def PlotSubUINameSetColor(self, DType):
         color = QColorDialog.getColor()
         if ConstValues.PsIsDebug:
-            print(color.getRgb())
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "color.getRgb():", color.getRgb()
+            )
         p = QPalette()
         p.setColor(QPalette.WindowText, color)
         if DType == 1:  # 标题颜色
@@ -2060,7 +2090,11 @@ class SetupInterface:
             if globals()["mode" + str(i)].isChecked():  # 确定是哪个按钮被选中
                 self.startMode = i + 1
                 if ConstValues.PsIsDebug:
-                    print(self.startMode)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.startMode:", self.startMode
+                    )
                 break
 
 

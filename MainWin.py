@@ -2437,7 +2437,7 @@ class MainWin(QMainWindow):
             print(
                 "***Debug In \"", self.__class__.__name__, "\" class，In \"",
                 sys._getframe().f_code.co_name, "\" method***：",
-                "help:", function
+                "function:", function
             )
         # 创建对话框
         ClassHelp(function, self.MainWindowsStyle).Help()

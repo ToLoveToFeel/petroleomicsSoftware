@@ -6,14 +6,16 @@ from PyQt5.QtGui import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
 import qtawesome
+import traceback
 
 
 class SetupInterface:
-    def __init__(self):
+    def __init__(self, theme=""):
         # 全局变量初始化
-        self.dataInit()
+        self.dataInit(theme)
 
-    def dataInit(self):
+    def dataInit(self, theme):
+        self.MainWindowsStyle = theme
         # 扣空白所需要返回的数据，数据初值无所谓
         # 0~10000（整数）
         self.deleteBlankIntensity = None
@@ -151,7 +153,7 @@ class SetupInterface:
         label = QLabel()
         label.setText(text)
         label.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             label.setStyleSheet(style)
         if alignment == "AlignCenter":
             label.setAlignment(Qt.AlignCenter)
@@ -1271,7 +1273,7 @@ class SetupInterface:
         self.PlotSubUI_1ButtonPrev = QPushButton("back")
         self.PlotSubUI_1ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_1ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_1ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_1ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_1LabelPrev = self.GetQLabel("")  # 标签
@@ -1285,7 +1287,7 @@ class SetupInterface:
         self.PlotSubUI_1CheckBoxNone.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         # 复选按钮，根据类别数目（self.PlotClass：一个列表，里面是种类str）生成复选框
         self.PlotSubUI_1ListWidget = QListWidget()  # 列表控件
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_1ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["checkBox_1" + item] is None:
@@ -1366,13 +1368,13 @@ class SetupInterface:
         self.PlotSubUI_2ButtonPrev = QPushButton("back")
         self.PlotSubUI_2ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_2ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_2ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_2ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_2LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_2ListWidget = QListWidget()  # 列表控件
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_2ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_2" + item] is None:
@@ -1432,13 +1434,13 @@ class SetupInterface:
         self.PlotSubUI_3ButtonPrev = QPushButton("back")
         self.PlotSubUI_3ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_3ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_3ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_3ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_3LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_3ListWidget1 = QListWidget()  # 列表控件1
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_3ListWidget1.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_3_1" + item] is None:
@@ -1452,7 +1454,7 @@ class SetupInterface:
 
         # 单选按钮
         self.PlotSubUI_3ListWidget2 = QListWidget()  # 列表控件1
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_3ListWidget2.setStyleSheet("background-color: white;")
         key = self.PlotClass[0]
         for num in self.PlotDictionary[key]:
@@ -1545,13 +1547,13 @@ class SetupInterface:
         self.PlotSubUI_4ButtonPrev = QPushButton("back")
         self.PlotSubUI_4ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_4ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_4ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_4ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_4LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_4ListWidget = QListWidget()  # 列表控件
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_4ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_4" + item] is None:
@@ -1611,13 +1613,13 @@ class SetupInterface:
         self.PlotSubUI_5ButtonPrev = QPushButton("back")
         self.PlotSubUI_5ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_5ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_5ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_5ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_5LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_5ListWidget = QListWidget()  # 列表控件
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_5ListWidget.setStyleSheet("background-color: white;")
         listWidgetItem = QListWidgetItem()
         self.PlotSubUI_5ListWidget.addItem(listWidgetItem)
@@ -1660,13 +1662,13 @@ class SetupInterface:
         self.PlotSubUI_6ButtonPrev = QPushButton("back")
         self.PlotSubUI_6ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_6ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_6ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_6ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_6LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_6ListWidget1 = QListWidget()  # 列表控件1
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_6ListWidget1.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_6_1" + item] is None:
@@ -1680,7 +1682,7 @@ class SetupInterface:
 
         # 单选按钮
         self.PlotSubUI_6ListWidget2 = QListWidget()  # 列表控件1
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUI_6ListWidget2.setStyleSheet("background-color: white;")
         key = self.PlotClass[0]
         for num in self.PlotDictionary[key]:
@@ -1775,7 +1777,7 @@ class SetupInterface:
         self.PlotSubUINamePrev = QPushButton("back")
         self.PlotSubUINamePrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUINamePrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUINamePrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUINamePrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUINameLabelPrev = self.GetQLabel("")
@@ -1785,7 +1787,7 @@ class SetupInterface:
         # 第一行输入内容
         self.PlotSubUINameLabel1 = self.GetQLabel("标题")
         self.PlotSubUINameEdit1 = self.RegExpQLineEdit(text=self.PlotTitleName)
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit1.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel1_ = self.GetQLabel(text="标题", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
@@ -1795,7 +1797,7 @@ class SetupInterface:
         # 第二行输入内容
         self.PlotSubUINameLabel2 = self.GetQLabel("x轴名称")
         self.PlotSubUINameEdit2 = self.RegExpQLineEdit(text=self.PlotXAxisName)
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit2.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel2_ = self.GetQLabel(text="x轴", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
@@ -1805,7 +1807,7 @@ class SetupInterface:
         # 第三行输入内容
         self.PlotSubUINameLabel3 = self.GetQLabel("y轴名称")
         self.PlotSubUINameEdit3 = self.RegExpQLineEdit(text=self.PlotYAxisName)
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit3.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel3_ = self.GetQLabel(text="y轴", style=style, alignment="AlignCenter")
         self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
@@ -1982,14 +1984,14 @@ class SetupInterface:
             self.StartModeDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.StartModeDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled and (ConstValues.PsMainWindowStyle != "Qdarkstyle"):
+        if ConstValues.PsSetupStyleEnabled and (self.MainWindowsStyle != "Qdarkstyle"):
             self.StartModeDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # 创建控件
         StartModeLabel = self.GetQLabel("Select Run Mode", "font:15pt '楷体'; color:blue;")
         # 单选按钮
         StartModeListWidget = QListWidget()  # 列表控件
-        if ConstValues.PsMainWindowStyle != "Qdarkstyle":
+        if self.MainWindowsStyle != "Qdarkstyle":
             StartModeListWidget.setStyleSheet("background-color: white;")
         self.modeList = [
                         "1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性",

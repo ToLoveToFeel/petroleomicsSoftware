@@ -8,8 +8,9 @@ import qtawesome
 
 class ClassHelp:
 
-    def __init__(self, function):
+    def __init__(self, function, theme=""):
         self.__function = function
+        self.MainWindowsStyle = theme
 
     # 设置QLabel
     def GetQLabel(self, text, style="", alignment=""):
@@ -44,9 +45,9 @@ class ClassHelp:
             dialog.setWindowOpacity(0.94)  # 设置透明度
 
             label = QLabel()
-            imagePath = "./images/help/uiExplain1.png"
-            if ConstValues.PsMainWindowStyle == "Qdarkstyle":
-                imagePath = "./images/help/uiExplainDark1.png"
+            imagePath = "./__system/images/help/uiExplain1.png"
+            if self.MainWindowsStyle == "Qdarkstyle":
+                imagePath = "./__system/images/help/uiExplainDark1.png"
             pixmap = QPixmap(imagePath)
             pixmap = pixmap.scaled(ConstValues.PsSetupFontSize * 55, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation) # 限制一个即可
             label.setPixmap(pixmap)  # 设置图片

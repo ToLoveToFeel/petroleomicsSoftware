@@ -47,24 +47,24 @@ class ConstValues:
     PsPromptBoxTime = 2
     # 图标系统  1:从图片读取  2:来自 qtawesome
     PsIconType = 2
-    PsIconLoading = './images/basic/ajax-loading.gif'  # 正在运行gif
+    PsIconLoading = './__system/images/basic/ajax-loading.gif'  # 正在运行gif
     # 从图片读取
-    PsWindowIcon = './images/basic/Dragon.ico'  # 窗口弹出的图标所在的位置
-    PsIconOpenFile = './images/basic/open.png'  # 打开文件图标
-    PsIconExit = './images/basic/close.ico'  # 退出软件图标
-    PsIconDeleteBlank = './images/work/j1.png'  # 删空白图标
-    PsIconGDB = './images/work/j2.png'  # 数据库生成图标
-    PsIcondelIso = './images/work/j3.png'  # 去同位素图标
-    PsIconpeakDis = './images/work/j4.png'  # 峰识别图标
-    PsIconRemoveFP = './images/work/j5.png'  # 去假阳性图标
-    PsIconpeakDiv = './images/work/j6.png'  # 峰检测图标
-    PsIconPlot = './images/work/j7.png'  # 绘图图标
-    PsIconHelpEdit = "./images/basic/Sorceress.ico"  # 帮助图标：编辑
-    PsIconHelpOther = "./images/basic/Logo.ico"  # 帮助图标：其他帮助
-    PsIconHelpAbout = "./images/basic/help.png"  # 帮助图标：about
-    PsIconAllStart = './images/work/j21.png'  # 全部开始图标
-    PsIconAllReset = './images/work/j12.png'  # 重置软件图标
-    PsIconBack = "./images/basic/back.png"
+    PsWindowIcon = './__system/images/basic/Dragon.ico'  # 窗口弹出的图标所在的位置
+    PsIconOpenFile = './__system/images/basic/open.png'  # 打开文件图标
+    PsIconExit = './__system/images/basic/close.ico'  # 退出软件图标
+    PsIconDeleteBlank = './__system/images/work/j1.png'  # 删空白图标
+    PsIconGDB = './__system/images/work/j2.png'  # 数据库生成图标
+    PsIcondelIso = './__system/images/work/j3.png'  # 去同位素图标
+    PsIconpeakDis = './__system/images/work/j4.png'  # 峰识别图标
+    PsIconRemoveFP = './__system/images/work/j5.png'  # 去假阳性图标
+    PsIconpeakDiv = './__system/images/work/j6.png'  # 峰检测图标
+    PsIconPlot = './__system/images/work/j7.png'  # 绘图图标
+    PsIconHelpEdit = "./__system/images/basic/Sorceress.ico"  # 帮助图标：编辑
+    PsIconHelpOther = "./__system/images/basic/Logo.ico"  # 帮助图标：其他帮助
+    PsIconHelpAbout = "./__system/images/basic/help.png"  # 帮助图标：about
+    PsIconAllStart = './__system/images/work/j21.png'  # 全部开始图标
+    PsIconAllReset = './__system/images/work/j12.png'  # 重置软件图标
+    PsIconBack = "./__system/images/basic/back.png"
     # 来自 qtawesome 网址：https://fontawesome.dashgame.com/
     PsqtaColor = "black"
     PsqtaWindowIconColor = "red"
@@ -81,6 +81,10 @@ class ConstValues:
     PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
     PsqtaIconpeakDiv = 'fa.search'  # 峰检测图标
     PsqtaIconPlot = 'fa.bar-chart-o'  # 绘图图标
+    PsqtathemeMacintosh = "fa.plane"  # 主题图标
+    PsqtathemeQdarkstyle = "fa.rocket"
+    PsqtathemeWindows = "fa.ship"
+    PsqtathemeFusion = "fa.train"
     PsqtaIconHelpWindows = "fa.windows"  # 帮助图标：界面介绍
     PsqtaIconHelpEdit = "fa.edit"  # 帮助图标：编辑
     PsqtaIconHelpOther = "fa.star-o"  # 帮助图标：其他帮助

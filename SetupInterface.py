@@ -184,7 +184,7 @@ class SetupInterface:
         self.DeleteBlankSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 25, 16)
+        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 30, 16)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -514,7 +514,7 @@ class SetupInterface:
         self.DeleteIsotopeSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 35, 25)
+        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 40, 25)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
@@ -800,7 +800,7 @@ class SetupInterface:
         self.RemoveFalsePositiveDefaultParameters(parameters)
 
         # 创建QDialog
-        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 35, 20)
+        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 45, 20)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -1790,7 +1790,7 @@ class SetupInterface:
         if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit1.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel1_ = self.GetQLabel(text="标题", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton1 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotTitleColor))
         self.PlotSubUINameLabel1_.setPalette(pa)
@@ -1800,7 +1800,7 @@ class SetupInterface:
         if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit2.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel2_ = self.GetQLabel(text="x轴", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton2 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotXAxisColor))
         self.PlotSubUINameLabel2_.setPalette(pa)
@@ -1810,7 +1810,7 @@ class SetupInterface:
         if self.MainWindowsStyle != "Qdarkstyle":
             self.PlotSubUINameEdit3.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel3_ = self.GetQLabel(text="y轴", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton3 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotYAxisColor))
         self.PlotSubUINameLabel3_.setPalette(pa)

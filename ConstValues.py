@@ -96,6 +96,7 @@ class ConstValues:
     PsqtaIconTreeImage = "fa.file-image-o"  # 树控件文件夹
 
     # 左侧树结构二级目录名称
+    PsTreeProject = "石油组学数据"
     PsTreeInputFiles = "输入文件"
     PsTreeDeleteBlank = "去空白结果"
     PsTreeGDB = "数据库生成结果"
@@ -104,6 +105,7 @@ class ConstValues:
     PsTreeRemoveFP = "去假阳性结果"
     PsTreePeakDiv = "峰检测结果"
     PsTreePlot = "绘图结果"
+    PsTreePlotInit = "initShow"
     # 生成的文件名称
     PsNameDeleteBlank = "__DeleteBlank.xlsx"
     PsNameGDB = "__GDB.xlsx"

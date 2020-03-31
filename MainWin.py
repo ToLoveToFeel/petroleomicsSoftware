@@ -12,6 +12,7 @@ import math
 import random
 import traceback
 import qdarkstyle
+import sys
 
 
 class MainWin(QMainWindow):
@@ -51,8 +52,8 @@ class MainWin(QMainWindow):
                 self.MainWindowsStyle = style
         except Exception as e:
             if ConstValues.PsIsDebug:
-                print("Error_ReadConfig1 : ", e)
-                PromptBox().errorMessage("出现错误！错误标识：Error_ReadConfig1")
+                print("Error_ReadConfig : ", e)
+                # PromptBox().errorMessage("出现错误！错误标识：Error_ReadConfig")
                 traceback.print_exc()
         
         if self.MainWindowsStyle == "Qdarkstyle":
@@ -94,8 +95,10 @@ class MainWin(QMainWindow):
 
     # initShow 初始化数据
     def initShowDataInit(self):
-        # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
-        self.tabWidgetId = 0
+        # 样本文件名称，长度恒为一，空白文件和TIC同理
+        self.sampleNameList = [None]
+        self.blankNameList = [None]
+        self.TICNameList = [None]
         # 主界面读取文件名称列表，读入相同名称的文件时，需要确认是否覆盖
         self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减，因为用户可能点击叉号
         self.mainDataNameSetAll = set()  # 所有可能需要显示的表格名称集合，里面全是字符串，只增不减
@@ -112,6 +115,8 @@ class MainWin(QMainWindow):
         self.mainTreeWidget.setHeaderLabel("Project")
         self.mainTreeWidget.header().setMinimumSectionSize(500)  # 杜文文件名太长，设置这一句有水平滚动条
         self.mainTreeWidget.setFont(QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 设置字体和大小
+        self.mainTreeWidget.setContextMenuPolicy(Qt.CustomContextMenu)  # 开放右键策略
+        self.mainTreeWidget.customContextMenuRequested.connect(self.rightTreeShow)
         self.plotStack = QStackedWidget()  # 堆栈窗口控件，右边
         # 主窗口放置左右两大控件
         self.Layout.addWidget(self.mainTreeWidget, 0, 0, 1, 2)
@@ -119,7 +124,7 @@ class MainWin(QMainWindow):
 
         # 树控件设置根节点
         self.mainTreeRoot = QTreeWidgetItem(self.mainTreeWidget)
-        self.mainTreeRoot.setText(0, "石油组学数据")
+        self.mainTreeRoot.setText(0, ConstValues.PsTreeProject)
         self.mainTreeRoot.setIcon(0, qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 树控件创建子节点
         self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
@@ -186,14 +191,14 @@ class MainWin(QMainWindow):
             "./__system/images/show/sea.png",
             "./__system/images/show/road.png",
         ]
-        globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
-        self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，1
+        globals()["Plot_" + ConstValues.PsTreePlotInit] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
+        self.plotStack.addWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])  # 添加 QTabWidget，1
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
-        self.mainTreeChild8_1.setText(0, "initShow")
+        self.mainTreeChild8_1.setText(0, ConstValues.PsTreePlotInit)
         self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
                                                         color=color))
         self.mainTreeChild8_1.setSelected(True)
-        self.plotStack.setCurrentWidget(globals()["Plot_" + "initShow"])
+        self.plotStack.setCurrentWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])
 
         # 树控件设置字体大小
         item = QTreeWidgetItemIterator(self.mainTreeWidget)
@@ -208,7 +213,11 @@ class MainWin(QMainWindow):
         item = self.mainTreeWidget.currentItem()  # 获取当前树控件，item.text(0)是树控件的名称
         if item == self.mainTreeRoot:
             if ConstValues.PsIsDebug:
-                print("i am root")
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "i am root"
+                )
             return
         treeWidgetName = item.parent().text(0)
         indexRow = index.row()
@@ -223,20 +232,28 @@ class MainWin(QMainWindow):
 
             if myName not in self.mainDataNameSet:  # 如果当前tab没显示在主界面上，添加到主界面
                 self.tabWidgetShowData.addTab(globals()["tableWidget_" + myName], myName)
+                self.mainDataNameSet.add(myName)
             self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + myName])  # 切换到当前tab
             self.plotStack.setCurrentIndex(0)
         elif treeWidgetName == ConstValues.PsTreePlot:  # 画图结果
             self.plotStack.setCurrentWidget(globals()["Plot_" + myName])
 
         if ConstValues.PsIsDebug:
-            print(indexRow)
-            print('key=%s' % treeWidgetName)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "key:", treeWidgetName, "; indexRow", indexRow
+            )
 
     # 创建图像选项卡控件（初始化显示）
     def CreateQTabWidgetImages(self, titleList, imagePathList):
         if len(titleList) != len(imagePathList):
             if ConstValues.PsIsDebug:
-                print("CreateQTabWidgetImages 列表长度不一致!")
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "CreateQTabWidgetImages 列表长度不一致!"
+                )
                 return
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
@@ -311,8 +328,11 @@ class MainWin(QMainWindow):
         sender = self.sender()
         name = self.tabWidgetShowData.tabText(index)  # 当前tab的名称
         if ConstValues.PsIsDebug:
-            print("TabWidgetCloseTab()中sender：", sender)
-            print("TabWidgetCloseTab()中name：", name)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "sender:", sender, "; name", name
+            )
         if name in self.mainDataNameSet:
             self.mainDataNameSet.remove(name)
         sender.removeTab(index)
@@ -369,29 +389,26 @@ class MainWin(QMainWindow):
         self.mainDataNameSetAll.add(name)
         # 树控件创建对应项
         if not self.mainNeedCover:
-            globals()["mainTreeChild_" + name] = QTreeWidgetItem(parent)  # 全局的，因为删除的时候需要使用
-            globals()["mainTreeChild_" + name].setText(0, name)
+            mainTreeChild_ = QTreeWidgetItem(parent)
+            mainTreeChild_.setText(0, name)
             color = ConstValues.PsqtaColor
             if self.MainWindowsStyle == "Qdarkstyle":
                 color = "white"
-            globals()["mainTreeChild_" + name].setIcon(0, qtawesome.icon(icon, color=color))
+            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=color))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
                 treeWidgetItem = item.value()
-                if ConstValues.PsIsDebug:
-                    # print(treeWidgetItem)
-                    print(treeWidgetItem.text(0))
+                # if ConstValues.PsIsDebug:
+                #     # print(treeWidgetItem)
+                #     print(treeWidgetItem.text(0))
                 if treeWidgetItem.isSelected():
                     treeWidgetItem.setSelected(False)
                 treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
                 # 到下一个节点
                 item += 1
             # 光标选择到当前导入的文件
-            globals()["mainTreeChild_" + name].setSelected(True)
-            # # 右键处理
-            # globals()["mainTreeChild_" + name].setContextMenuPolicy(Qt.CustomContextMenu)
-            # globals()["mainTreeChild_" + name].customContextMenuRequested.connect(self.rightTreeShow)  # 开放右键策略
+            mainTreeChild_.setSelected(True)
         # 创建 QTableWidget
         globals()["tableWidget_" + name] = self.CreateQTableWidget(data)
         # self.tabWidgetShowData 添加该项内容
@@ -427,9 +444,9 @@ class MainWin(QMainWindow):
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
                 treeWidgetItem = item.value()
-                if ConstValues.PsIsDebug:
-                    print(treeWidgetItem)
-                    print(treeWidgetItem.text(0))
+                # if ConstValues.PsIsDebug:
+                #     print(treeWidgetItem)
+                #     print(treeWidgetItem.text(0))
                 if treeWidgetItem.isSelected():
                     treeWidgetItem.setSelected(False)
                 treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
@@ -489,12 +506,14 @@ class MainWin(QMainWindow):
 
     # 右击后处理函数（Plot / Raw Plot Data）
     def MenuSlot(self, act):
-        if ConstValues.PsIsDebug:
-            print(act.text())
         if act.text() == "导出到":
             outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
             if ConstValues.PsIsDebug:
-                print(outputImagePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "outputImagePath:", outputImagePath
+                )
             if self.currentFunction == 1:
                 if outputImagePath != "":
                     self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
@@ -503,17 +522,62 @@ class MainWin(QMainWindow):
 
     # 右击选项菜单（树控件），就是为了删除导入的数据
     def rightTreeShow(self):
-        sender = self.sender()
-        print(sender.text(0))
+        # 遍历所有节点，如果选择，记录下来，根据后续逻辑决定是否需要删除
+        item = QTreeWidgetItemIterator(self.mainTreeWidget)
+        treeItemSelected = None
+        while item.value():
+            treeWidgetItem = item.value()
+            if treeWidgetItem.isSelected():
+                treeItemSelected = treeWidgetItem
+                break
+            # 到下一个节点
+            item += 1
+        returnList = [
+            ConstValues.PsTreeProject, ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank, ConstValues.PsTreeGDB, ConstValues.PsTreeDelIso,
+            ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv, ConstValues.PsTreePlot, ConstValues.PsTreePlotInit,
+        ]
+        if treeItemSelected is None:  # 为空返回
+            return
+        treeItemName = treeItemSelected.text(0)
+        if treeItemName in returnList:  # 不是需要删除的内容返回
+            return
 
+        if ConstValues.PsIsDebug:  # 调试输出名称
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "treeItemName:", treeItemName
+            )
         menu = QMenu()
         menu.addAction(QAction("删除", menu))
-        menu.triggered.connect(self.TreeSlot)
+        menu.triggered.connect(lambda: self.TreeSlot(treeItemName))
         menu.exec_(QCursor.pos())
 
-    # 右击后处理函数（树控件）
-    def TreeSlot(self, act):
-        pass
+    # 右击后处理函数（树控件），就是删除功能
+    def TreeSlot(self, name):
+        if name in self.mainDataNameSetAll:  # 说明是数据
+            for item in self.mainTreeWidget.selectedItems():
+                item.parent().removeChild(item)
+                self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + name]))
+                if name in self.mainDataNameSet:
+                    self.mainDataNameSet.remove(name)
+                self.mainDataNameSetAll.remove(name)
+            # 判断是否为样本文件，或者空白文件，或者TIC
+            if name in self.sampleNameList:
+                self.sampleFilePath = ""  # 重置
+                self.sampleData = []
+                self.sampleNameList = [None]
+            elif name in self.blankNameList:
+                self.blankFilePath = ""
+                self.blankData = []
+                self.blankNameList = [None]
+            elif name in self.TICNameList:
+                self.TICFilePath = ""  # 总离子流图路径，第一部分
+                self.TICData = None
+                self.TICDataDictionary = None
+                self.TICNameList = [None]
+        else:  # 一定是图形
+            pass
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
@@ -942,6 +1006,7 @@ class MainWin(QMainWindow):
         exitProgram.setToolTip("退出程序")
         tb1.addAction(exitProgram)
         exitProgram.triggered.connect(self.QuitApplication)
+        exitProgram.setShortcut("Esc")
 
         # 添加第二个工具栏
         tb2 = self.addToolBar("单项处理开始按钮")
@@ -1085,7 +1150,11 @@ class MainWin(QMainWindow):
         # 导入文件，并得到文件名称
         self.intermediateFilesPath = QFileDialog.getExistingDirectory(self, '选择生成的文件所在的总文件夹', './')
         if ConstValues.PsIsDebug:
-            print(self.intermediateFilesPath)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.intermediateFilesPath:", self.intermediateFilesPath
+            )
         # 如果为空，直接返回
         if self.intermediateFilesPath == "":
             return
@@ -1135,18 +1204,22 @@ class MainWin(QMainWindow):
         # 导入文件，并得到文件名称
         self.outputFilesPath = QFileDialog.getExistingDirectory(self, '选择文件生成到的文件夹', './')
         if ConstValues.PsIsDebug:
-            print(self.outputFilesPath)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.outputFilesPath:", self.outputFilesPath
+            )
 
     # -------------------------------------- 重置软件，参数重置
     def ResetProgram(self):
         if PromptBox().informationMessage("是否重置?"):
             self.dataInit()
             self.ResetAssembly()
-            PromptBox().informationMessage("已重置.")
+            PromptBox().informationMessageAutoClose("已重置.", ConstValues.PsPromptBoxTime/2)
 
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
-        self.plotStack.removeWidget(globals()["Plot_" + "initShow"])
+        self.plotStack.removeWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])
         self.Layout.removeWidget(self.mainTreeWidget)
         self.Layout.removeWidget(self.plotStack)
         # initShow 初始化数据
@@ -1159,8 +1232,10 @@ class MainWin(QMainWindow):
     # 退出程序
     @staticmethod
     def QuitApplication(self):
-        app = QApplication.instance()
+        if not PromptBox().questionMessage("是否要退出程序？"):
+            return
 
+        app = QApplication.instance()
         # 退出应用程序
         app.quit()
 
@@ -1427,8 +1502,16 @@ class MainWin(QMainWindow):
                 # 画图原始数据
                 self.PlotRawData = retList[2]  # 必须为二维列表，并且第二个维度必须相同
                 if ConstValues.PsIsDebug:
-                    print(self.PlotImagePath)
-                    print(self.PlotRawData)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotImagePath：", self.PlotImagePath
+                    )
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotRawData：", self.PlotRawData
+                    )
                 # 检查数据合法性
                 if self.PlotImagePath is None:
                     return
@@ -1438,10 +1521,15 @@ class MainWin(QMainWindow):
                 # 读入数据，并显示到主界面
                 self.sampleData = retList[1]
                 if ConstValues.PsIsDebug:
-                    print(self.sampleData)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.sampleData：", self.sampleData
+                    )
                 # 处理过程
                 parent = self.mainTreeChild1
                 name = self.sampleFilePath.split("/")[-1]
+                self.sampleNameList[0] = name
                 data = self.sampleData
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "样本导入完成!"
@@ -1450,10 +1538,15 @@ class MainWin(QMainWindow):
                 # 读入数据，并显示到主界面
                 self.blankData = retList[1]
                 if ConstValues.PsIsDebug:
-                    print(self.blankData)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.blankData：", self.blankData
+                    )
                 # 处理过程
                 parent = self.mainTreeChild1
                 name = self.blankFilePath.split("/")[-1]
+                self.blankNameList[0] = name
                 data = self.blankData
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 functionStr = "空白导入完成!"
@@ -1467,6 +1560,7 @@ class MainWin(QMainWindow):
                 # 处理过程
                 parent = self.mainTreeChild1
                 name = self.TICFilePath.split("/")[-1]
+                self.TICNameList[0] = name
                 data = self.TICData
                 icon = ConstValues.PsqtaIconOpenFileTxt
                 functionStr = "总离子流图导入完成!"
@@ -1747,7 +1841,11 @@ class MainWin(QMainWindow):
             ]
 
             if ConstValues.PsIsDebug:
-                print(self.startModeList)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.startModeList：", self.startModeList
+                )
 
     # 程序运行前准备工作
     def BeforeRunning(self, Type):
@@ -1934,15 +2032,36 @@ class MainWin(QMainWindow):
             openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', ConstValues.PsReadFileDefaultDirectoy, 'Excel files(*.xlsx , *.xls)')
             self.sampleFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.sampleFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.sampleFilePath：", self.sampleFilePath
+                )
             if self.sampleFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
+            # 检查是否重名
             name = self.sampleFilePath.split("/")[-1]
-            # 用户确认是否为样本文件
-            isSampleFile = PromptBox().questionMessage("确定文件" + name + "是样本文件？")
-            if not isSampleFile:
+            if (name in self.blankNameList) or (name in self.TICNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.sampleNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过样本文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.sampleNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -1951,23 +2070,41 @@ class MainWin(QMainWindow):
                 self.deleteBlankPPM,  # 格式：浮点数
                 self.deleteBlankPercentage  # 格式：整数
             ]
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
         elif Type == "ImportBlankFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', ConstValues.PsReadFileDefaultDirectoy, 'Excel files(*.xlsx , *.xls)')
             self.blankFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.blankFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.blankFilePath：", self.blankFilePath
+                )
             if self.blankFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
             name = self.blankFilePath.split("/")[-1]
-            # 用户确认是否为空白文件
-            isBlankFile = PromptBox().questionMessage("确定文件" + name + "是空白文件？")
-            if not isBlankFile:
+            if (name in self.sampleNameList) or (name in self.TICNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.blankNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过空白文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.blankNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(
+                                self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -1976,26 +2113,41 @@ class MainWin(QMainWindow):
                 self.deleteBlankPPM,  # 格式：浮点数
                 self.deleteBlankPercentage  # 格式：整数
             ]
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
         elif Type == "ImportTICFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', ConstValues.PsReadFileDefaultDirectoy, 'Txt files(*.txt)')
             self.TICFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.TICFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.TICFilePath：", self.TICFilePath
+                )
             if self.TICFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
             name = self.TICFilePath.split("/")[-1]
-            # 用户确认是否为空白文件
-            isTICFile = PromptBox().questionMessage("确定文件" + name + "是总离子图文件文件？")
-            if not isTICFile:
+            if (name in self.sampleNameList) or (name in self.blankNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.TICNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过TIC文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.TICNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(
+                                self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
 
         return True
 
@@ -2269,7 +2421,7 @@ class MainWin(QMainWindow):
 
     # 主题选择
     def ThemeSelect(self, theme):
-        PromptBox().informationMessage(theme + "主题选择成功，下次重启生效。")
+        PromptBox().informationMessageAutoClose(theme + "主题选择成功，下次重启生效。", 2)
         try:
             with open("./__system/config.txt", "w") as f:
                 f.write(theme)
@@ -2282,7 +2434,11 @@ class MainWin(QMainWindow):
     # 帮助界面
     def Help(self, function):
         if ConstValues.PsIsDebug:
-            print("help:", function)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "help:", function
+            )
         # 创建对话框
         ClassHelp(function, self.MainWindowsStyle).Help()
 

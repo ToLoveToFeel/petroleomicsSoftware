@@ -13,6 +13,7 @@ from PromptBox import PromptBox
 import numpy as np
 import pandas as pd
 import traceback
+import sys
 
 
 class MultiThread(QThread):
@@ -479,10 +480,18 @@ class MultiThread(QThread):
             value.append([content[i * 3 + 1], content[i * 3 + 2]])
 
         if ConstValues.PsIsDebug:
-            print("扫描点的个数： ", len(resDictionary))
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "扫描点的个数 len(resDictionary):", len(resDictionary)
+            )
         endTime = time.time()
         if ConstValues.PsIsDebug:
-            print("读入和处理文件费时： ", endTime - startTime, " s")
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "读入和处理文件费时: ", endTime - startTime, " s"
+            )
         return resList, resDictionary
 
 

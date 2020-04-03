@@ -8,9 +8,11 @@ class ConstValues:
         pass
 
     # 用于打开调试
-    PsIsDebug = True
+    PsIsDebug = False
     # 用于是否可以单独运行
-    PsIsSingleRun = True
+    PsIsSingleRun = False
+    # 软件版本
+    PsSoftwareEdition = "v1.1"
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -126,9 +128,6 @@ class ConstValues:
 
     # 处理过程中是否显示弹框
     PsIsShowGif = True
-
-    # 初始化是否是只显示指定数目图片，大于图片总数目则全部显示
-    PsShowImageNum = 2
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -278,4 +277,20 @@ class ConstValues:
     PsPlotDBENum = -1
     PsPlotConfirm = False  # 用户是否确认要画图
 
-
+    # 初始化显示图片列表，必须在./__system/images/show文件夹中
+    PstitleList = [
+            "sky.png",
+            "people.png",
+            "dandelion.png",
+            "lake.png",
+            "botchi.png",
+            "castle.png",
+            "flower.png",
+            "sea.png",
+            "road.png",
+            "hand.png",
+            "book.png",
+            "notebook.png",
+        ]
+    # 初始化是否是只显示指定数目图片，大于图片总数目则全部显示
+    PsShowImageNum = 12

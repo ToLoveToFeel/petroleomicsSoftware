@@ -4,6 +4,7 @@
 import numpy as np
 from Utils import *
 from ConstValues import ConstValues
+import sys
 
 
 class ClassPeakDistinguish:
@@ -56,7 +57,11 @@ class ClassPeakDistinguish:
                     self.resultPart1.append(item)
                 if len(retDetail) != 0:
                     if flag == 1 and ConstValues.PsIsDebug:
-                        print("------------The length of retDetail : ", len(retDetail))
+                        print(
+                            "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                            sys._getframe().f_code.co_name, "\" method***：",
+                            "len(retDetail):", len(retDetail)
+                        )
                         flag = 0
                     self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
 

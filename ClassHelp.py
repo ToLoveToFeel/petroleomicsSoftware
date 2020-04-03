@@ -192,7 +192,7 @@ class ClassHelp:
             dialog.exec()  # 运行
         elif self.__function == "About":
             dialog = self.CreateDialog("关于", 20, 10)
-            label = self.GetQLabel("石油组学软件：v1.0", alignment="AlignCenter")  # 创建label
+            label = self.GetQLabel("石油组学软件：" + ConstValues.PsSoftwareEdition, alignment="AlignCenter")  # 创建label
             layout = QVBoxLayout(dialog)  # 创建垂直布局
             layout.addWidget(label)
             dialog.exec()

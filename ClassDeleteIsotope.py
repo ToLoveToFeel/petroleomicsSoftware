@@ -2,9 +2,10 @@
 # 此文件负责定义：去同位素
 from Utils import *
 from ConstValues import ConstValues
+import sys
 
 
-class ClassDeleteIsotope():
+class ClassDeleteIsotope:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 8, "ClassDeleteIsotope参数个数不对"
         self.deleteBlankResult = parameterList[0]  # 删空白的结果（格式：list二维数组，有表头）
@@ -157,7 +158,11 @@ class ClassDeleteIsotope():
 
         # 传入的参数个数错误
         if ConstValues.PsIsDebug:
-            print("ClassDeleteIsotope 中的函数 DelIsoHasCorrespondInSample(self, parameterList)参数错误！")
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "parameterList参数错误！"
+            )
 
         return False
 

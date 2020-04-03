@@ -1178,13 +1178,16 @@ class SetupInterface:
         self.PlotMainUIRadioButton6 = QRadioButton("Retention time vs carbon number")
         if self.RemoveFPId == 1:
             self.PlotMainUIRadioButton6.setEnabled(False)
-        self.PlotMainUIRadioButton1.setChecked(True)
-        self.PlotMainUIRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton3.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton4.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton5.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton6.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        PlotMainUIRadioButtonList = [
+            self.PlotMainUIRadioButton1, self.PlotMainUIRadioButton2, self.PlotMainUIRadioButton3,
+            self.PlotMainUIRadioButton4, self.PlotMainUIRadioButton5, self.PlotMainUIRadioButton6,
+        ]
+        flag = False
+        for i in range(6):
+            PlotMainUIRadioButtonList[i].setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            if (self.PlotType == i+1) and (not flag):
+                PlotMainUIRadioButtonList[i].setChecked(True)
+                flag = True
         # Next/Cancel
         self.PlotMainUIButton1 = QPushButton("Next")
         self.PlotMainUIButton1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
@@ -1950,6 +1953,7 @@ class SetupInterface:
         if DType == 1:  # 标题颜色
             self.PlotSubUINameLabel1_.setPalette(p)
             self.PlotTitleColor = color.getRgb()
+            pass
         elif DType == 2:  # x轴颜色
             self.PlotSubUINameLabel2_.setPalette(p)
             self.PlotXAxisColor = color.getRgb()

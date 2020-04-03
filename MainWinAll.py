@@ -3,9 +3,11 @@ import os
 import sys
 import time
 import math
+import random
 import pandas as pd
 import numpy as np
 import qtawesome
+import qdarkstyle
 import traceback
 import xlsxwriter
 import matplotlib.pyplot as plt
@@ -27,7 +29,7 @@ def ReadExcelToList(filepath="", hasNan=True):
         data = dataFrame.values[1:]
         for item in data:
             # 全部是nan
-            if math.isnan(item[0]):
+            if isinstance(item[0], float) and math.isnan(item[0]):
                 result.append([])
                 continue
             # 后面一部分是nan
@@ -60,7 +62,7 @@ def WriteDataToExcel(data, filename):
     # 将excel文件保存关闭，如果没有这一行运行代码会报错
     workbook.close()
 # 负责创建文件夹，要求此文件必须和其他的py文件目录同级
-def CreateDirectory(outputFilesPath="", directoryPath = "", subDirectory=""):
+def CreateDirectory(outputFilesPath="", directoryPath="", subDirectory=""):
     if outputFilesPath == "" and directoryPath == "":
         return
 
@@ -87,6 +89,8 @@ class ConstValues:
     PsIsDebug = False
     # 用于是否可以单独运行
     PsIsSingleRun = False
+    # 软件版本
+    PsSoftwareEdition = "v1.1"
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -97,8 +101,8 @@ class ConstValues:
     PsMainWindowHeight = PsMainWindowLength * 8
     # 主窗口底部状态栏显示的信息
     PsMainWindowStatusMessage = "欢迎使用！"
-    # 主窗口风格  可选：["Windows", "Fusion", "Macintosh"]
-    PsMainWindowStyle = "Macintosh"
+    # 主窗口风格  可选：["Windows", "Fusion", "Macintosh", "Qdarkstyle"]
+    PsMainWindowStyle = "Qdarkstyle"
     # 主窗口背景样式（背景颜色RGB）
     PsMainBackgroundStyle = "#MainWindow{background-color: #F5F5F5;}"  # 白烟色
     # PsMainBackgroundStyle = "#MainWindow{border-image:url(./images/test.jpg);}}"  # 背景图片
@@ -109,33 +113,38 @@ class ConstValues:
     PsMainFontSize = 12
     # 下拉菜单显示的字体及大小
     PsMenuFontType = "Arial"
-    PsMenuFontSize = 10
+    PsMenuFontSize = 10.5
     # 工具栏显示的字体及大小
     PsToolbarFontType = "Arial"
     PsToolbarFontSize = 10
+    # 状态栏显示的字体及大小
+    PsStatusFontType = "Arial"
+    PsStatusFontSize = 11
     # 主界面树控件显示的字体及大小
     PsTreeFontType = "Arial"
     PsTreeFontSize = 11
     # 运行提示框弹出时间 1 -> 1s
-    PsBeforeRunningPromptBoxTime = 1
-    PsAfterRunningPromptBoxTime = 1
+    PsPromptBoxTime = 2
     # 图标系统  1:从图片读取  2:来自 qtawesome
     PsIconType = 2
-    PsIconLoading = './images/ajax-loading.gif'  # 正在运行gif
+    PsIconLoading = './__system/images/basic/ajax-loading.gif'  # 正在运行gif
     # 从图片读取
-    PsWindowIcon = './images/Dragon.ico'  # 窗口弹出的图标所在的位置
-    PsIconOpenFile = './images/open.png'  # 打开文件图标
-    PsIconExit = './images/close.ico'  # 退出软件图标
-    PsIconDeleteBlank = './images/work/j1.png'  # 删空白图标
-    PsIconGDB = './images/work/j2.png'  # 数据库生成图标
-    PsIcondelIso = './images/work/j3.png'  # 去同位素图标
-    PsIconpeakDis = './images/work/j4.png'  # 峰识别图标
-    PsIconRemoveFP = './images/work/j5.png'  # 去假阳性图标
-    PsIconpeakDiv = './images/work/j6.png'  # 峰检测图标
-    PsIconPlot = './images/work/j7.png'  # 画图图标
-    PsIconAllStart = './images/work/j21.png'  # 全部开始图标
-    PsIconAllReset = './images/work/j12.png'  # 重置软件图标
-    PsIconBack = "./images/back.png"
+    PsWindowIcon = './__system/images/basic/Dragon.ico'  # 窗口弹出的图标所在的位置
+    PsIconOpenFile = './__system/images/basic/open.png'  # 打开文件图标
+    PsIconExit = './__system/images/basic/close.ico'  # 退出软件图标
+    PsIconDeleteBlank = './__system/images/work/j1.png'  # 删空白图标
+    PsIconGDB = './__system/images/work/j2.png'  # 数据库生成图标
+    PsIcondelIso = './__system/images/work/j3.png'  # 去同位素图标
+    PsIconpeakDis = './__system/images/work/j4.png'  # 峰识别图标
+    PsIconRemoveFP = './__system/images/work/j5.png'  # 去假阳性图标
+    PsIconpeakDiv = './__system/images/work/j6.png'  # 峰检测图标
+    PsIconPlot = './__system/images/work/j7.png'  # 绘图图标
+    PsIconHelpEdit = "./__system/images/basic/Sorceress.ico"  # 帮助图标：编辑
+    PsIconHelpOther = "./__system/images/basic/Logo.ico"  # 帮助图标：其他帮助
+    PsIconHelpAbout = "./__system/images/basic/help.png"  # 帮助图标：about
+    PsIconAllStart = './__system/images/work/j21.png'  # 全部开始图标
+    PsIconAllReset = './__system/images/work/j12.png'  # 重置软件图标
+    PsIconBack = "./__system/images/basic/back.png"
     # 来自 qtawesome 网址：https://fontawesome.dashgame.com/
     PsqtaColor = "black"
     PsqtaWindowIconColor = "red"
@@ -151,7 +160,15 @@ class ConstValues:
     PsqtaIconpeakDis = 'fa.wheelchair'  # 峰识别图标
     PsqtaIconRemoveFP = 'fa.trash-o'  # 去假阳性图标
     PsqtaIconpeakDiv = 'fa.search'  # 峰检测图标
-    PsqtaIconPlot = 'fa.bar-chart-o'  # 峰检测图标
+    PsqtaIconPlot = 'fa.bar-chart-o'  # 绘图图标
+    PsqtathemeMacintosh = "fa.plane"  # 主题图标
+    PsqtathemeQdarkstyle = "fa.rocket"
+    PsqtathemeWindows = "fa.ship"
+    PsqtathemeFusion = "fa.train"
+    PsqtaIconHelpWindows = "fa.windows"  # 帮助图标：界面介绍
+    PsqtaIconHelpEdit = "fa.edit"  # 帮助图标：编辑
+    PsqtaIconHelpOther = "fa.star-o"  # 帮助图标：其他帮助
+    PsqtaIconHelpAbout = "fa.heart-o"  # 帮助图标：功能介绍
     PsqtaIconAllStart = 'fa.play-circle-o'  # 全部开始图标
     PsqtaIconAllReset = 'fa.refresh'  # 重置软件图标
     PsqtaIconBack = "fa.arrow-left"  # 返回上一级图标
@@ -159,6 +176,7 @@ class ConstValues:
     PsqtaIconTreeImage = "fa.file-image-o"  # 树控件文件夹
 
     # 左侧树结构二级目录名称
+    PsTreeProject = "石油组学数据"
     PsTreeInputFiles = "输入文件"
     PsTreeDeleteBlank = "去空白结果"
     PsTreeGDB = "数据库生成结果"
@@ -167,6 +185,7 @@ class ConstValues:
     PsTreeRemoveFP = "去假阳性结果"
     PsTreePeakDiv = "峰检测结果"
     PsTreePlot = "绘图结果"
+    PsTreePlotInit = "initShow"
     # 生成的文件名称
     PsNameDeleteBlank = "__DeleteBlank.xlsx"
     PsNameGDB = "__GDB.xlsx"
@@ -186,7 +205,10 @@ class ConstValues:
     PsStartMode = 1
 
     # 处理过程中是否显示弹框
-    PsIsShowGif = False
+    PsIsShowGif = True
+
+    # 初始化是否是只显示指定数目图片，大于图片总数目则全部显示
+    PsShowImageNum = 2
 
     # 扣空白错误提示信息
     PsDeleteBlankErrorMessage = "请选择需要处理的样本文件、空白文件和总离子流图文件!"
@@ -213,7 +235,7 @@ class ConstValues:
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
     PsSetupFontSize = 12
-    PsSetupStyleEnabled = False  # 默认颜色是否使能
+    PsSetupStyleEnabled = True  # 默认颜色是否使能
     PsSetupStyle = "background-color: #F0F0F0;"  # 默认颜色
     # PsSetupStyle = "background-color: #F5F5F5;"
 
@@ -337,7 +359,7 @@ class ConstValues:
     PsPlotConfirm = False  # 用户是否确认要画图
 
 # 弹出对话框
-class PromptBox():
+class PromptBox:
     def __init__(self):
         pass
 
@@ -495,7 +517,24 @@ class MainWin(QMainWindow):
         # 设置主窗口的尺寸
         self.setFixedSize(ConstValues.PsMainWindowWidth, ConstValues.PsMainWindowHeight)
         # 设置主窗口风格
-        QApplication.setStyle(ConstValues.PsMainWindowStyle)
+        app = QApplication.instance()
+        self.MainWindowsStyle = ConstValues.PsMainWindowStyle
+        styleList = ["Windows", "Fusion", "Macintosh", "Qdarkstyle"]
+        try:
+            with open("./__system/config.txt", "r") as f:
+                style = f.read()
+            if style in styleList:
+                self.MainWindowsStyle = style
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_ReadConfig : ", e)
+                # PromptBox().errorMessage("出现错误！错误标识：Error_ReadConfig")
+                traceback.print_exc()
+
+        if self.MainWindowsStyle == "Qdarkstyle":
+            app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        else:
+            app.setStyle(self.MainWindowsStyle)
         # 设置窗口样式
         self.setWindowFlags(Qt.WindowMinimizeButtonHint  # 最小化
                             | Qt.WindowCloseButtonHint  # 关闭
@@ -507,7 +546,8 @@ class MainWin(QMainWindow):
             self.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 设置背景颜色
         self.setObjectName("MainWindow")
-        self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.setStyleSheet(ConstValues.PsMainBackgroundStyle)
         # 设置透明度
         self.setWindowOpacity(0.98)
         # 设置窗口显示内容
@@ -530,10 +570,12 @@ class MainWin(QMainWindow):
 
     # initShow 初始化数据
     def initShowDataInit(self):
-        # 主界面左侧栏目标号，从0开始，每添加一个内容，加1
-        self.tabWidgetId = 0
+        # 样本文件名称，长度恒为一，空白文件和TIC同理
+        self.sampleNameList = [None]
+        self.blankNameList = [None]
+        self.TICNameList = [None]
         # 主界面读取文件名称列表，读入相同名称的文件时，需要确认是否覆盖
-        self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减
+        self.mainDataNameSet = set()  # 当前显示表格名称集合，里面全是字符串，可增可减，因为用户可能点击叉号
         self.mainDataNameSetAll = set()  # 所有可能需要显示的表格名称集合，里面全是字符串，只增不减
         self.mainNeedCover = False
         # 主界面生成图形后的图形名称列表，读入相同名称的图片名称时，需要确认是否覆盖
@@ -548,6 +590,8 @@ class MainWin(QMainWindow):
         self.mainTreeWidget.setHeaderLabel("Project")
         self.mainTreeWidget.header().setMinimumSectionSize(500)  # 杜文文件名太长，设置这一句有水平滚动条
         self.mainTreeWidget.setFont(QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 设置字体和大小
+        self.mainTreeWidget.setContextMenuPolicy(Qt.CustomContextMenu)  # 开放右键策略
+        self.mainTreeWidget.customContextMenuRequested.connect(self.rightTreeShow)
         self.plotStack = QStackedWidget()  # 堆栈窗口控件，右边
         # 主窗口放置左右两大控件
         self.Layout.addWidget(self.mainTreeWidget, 0, 0, 1, 2)
@@ -555,42 +599,35 @@ class MainWin(QMainWindow):
 
         # 树控件设置根节点
         self.mainTreeRoot = QTreeWidgetItem(self.mainTreeWidget)
-        self.mainTreeRoot.setText(0, "石油组学数据")
+        self.mainTreeRoot.setText(0, ConstValues.PsTreeProject)
         self.mainTreeRoot.setIcon(0,
                                   qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
         # 树控件创建子节点
         self.mainTreeChild1 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild1.setText(0, ConstValues.PsTreeInputFiles)
-        self.mainTreeChild1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild2 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild2.setText(0, ConstValues.PsTreeDeleteBlank)
-        self.mainTreeChild2.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild3 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild3.setText(0, ConstValues.PsTreeGDB)
-        self.mainTreeChild3.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild4 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild4.setText(0, ConstValues.PsTreeDelIso)
-        self.mainTreeChild4.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild5 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild5.setText(0, ConstValues.PsTreePeakDis)
-        self.mainTreeChild5.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild6 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild6.setText(0, ConstValues.PsTreeRemoveFP)
-        self.mainTreeChild6.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild7 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild7.setText(0, ConstValues.PsTreePeakDiv)
-        self.mainTreeChild7.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
         self.mainTreeChild8 = QTreeWidgetItem(self.mainTreeRoot)
-        self.mainTreeChild8.setText(0, ConstValues.PsTreePlot)
-        self.mainTreeChild8.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder,
-                                                      color=ConstValues.PsqtaIconFolderColor))
+
+        # 设置显示的文字，设置图标
+        treeChildList = [
+            self.mainTreeChild1, self.mainTreeChild2, self.mainTreeChild3, self.mainTreeChild4,
+            self.mainTreeChild5, self.mainTreeChild6, self.mainTreeChild7, self.mainTreeChild8,
+        ]
+        treeNameList = [
+            ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank, ConstValues.PsTreeGDB,
+            ConstValues.PsTreeDelIso,
+            ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv, ConstValues.PsTreePlot
+        ]
+        color = ConstValues.PsqtaIconFolderColor
+        if self.MainWindowsStyle == "Qdarkstyle":
+            color = "white"
+        for i in range(len(treeChildList)):
+            treeChildList[i].setText(0, treeNameList[i])
+            treeChildList[i].setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeFolder, color=color))
 
         # 展开所有树控件
         self.mainTreeWidget.expandAll()
@@ -603,37 +640,43 @@ class MainWin(QMainWindow):
         self.tabWidgetShowData.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        self.tabWidgetShowData.setStyleSheet(style)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.tabWidgetShowData.setStyleSheet(style)
         self.tabWidgetShowData.setTabsClosable(True)  # 可以关闭
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
-        self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，1
+        self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，0
 
         titleList = [
             "sky.png",
             "people.png",
             "dandelion.png",
-            "feather.png",
-            "w1.jpg",
-            "w2.jpg",
-            "w3.jpg",
+            "lake.png",
+            "botchi.png",
+            "castle.png",
+            "flower.png",
+            "sea.png",
+            "road.png",
         ]
         imagePathList = [
-            "./images/show/sky.png",
-            "./images/show/people.png",
-            "./images/show/dandelion.png",
-            "./images/show/feather.png",
-            "./images/windows/w1.jpg",
-            "./images/windows/w2.jpg",
-            "./images/windows/w3.jpg",
+            "./__system/images/show/sky.png",
+            "./__system/images/show/people.png",
+            "./__system/images/show/dandelion.png",
+            "./__system/images/show/lake.png",
+            "./__system/images/show/botchi.png",
+            "./__system/images/show/castle.png",
+            "./__system/images/show/flower.png",
+            "./__system/images/show/sea.png",
+            "./__system/images/show/road.png",
         ]
-        globals()["Plot_" + "initShow"] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
-        self.plotStack.addWidget(globals()["Plot_" + "initShow"])  # 添加 QTabWidget，2
+        globals()["Plot_" + ConstValues.PsTreePlotInit] = self.CreateQTabWidgetImages(titleList,
+                                                                                      imagePathList)  # 创建 QTabWidget
+        self.plotStack.addWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])  # 添加 QTabWidget，1
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
-        self.mainTreeChild8_1.setText(0, "initShow")
+        self.mainTreeChild8_1.setText(0, ConstValues.PsTreePlotInit)
         self.mainTreeChild8_1.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
-                                                        color=ConstValues.PsqtaIconFolderColor))
+                                                        color=color))
         self.mainTreeChild8_1.setSelected(True)
-        self.plotStack.setCurrentWidget(globals()["Plot_" + "initShow"])
+        self.plotStack.setCurrentWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])
 
         # 树控件设置字体大小
         item = QTreeWidgetItemIterator(self.mainTreeWidget)
@@ -648,7 +691,11 @@ class MainWin(QMainWindow):
         item = self.mainTreeWidget.currentItem()  # 获取当前树控件，item.text(0)是树控件的名称
         if item == self.mainTreeRoot:
             if ConstValues.PsIsDebug:
-                print("i am root")
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "i am root"
+                )
             return
         treeWidgetName = item.parent().text(0)
         indexRow = index.row()
@@ -663,43 +710,63 @@ class MainWin(QMainWindow):
 
             if myName not in self.mainDataNameSet:  # 如果当前tab没显示在主界面上，添加到主界面
                 self.tabWidgetShowData.addTab(globals()["tableWidget_" + myName], myName)
+                self.mainDataNameSet.add(myName)
             self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + myName])  # 切换到当前tab
             self.plotStack.setCurrentIndex(0)
         elif treeWidgetName == ConstValues.PsTreePlot:  # 画图结果
             self.plotStack.setCurrentWidget(globals()["Plot_" + myName])
 
         if ConstValues.PsIsDebug:
-            print(indexRow)
-            print('key=%s' % treeWidgetName)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "key:", treeWidgetName, "; indexRow", indexRow
+            )
 
-    # 创建选项卡控件
+    # 创建图像选项卡控件（初始化显示）
     def CreateQTabWidgetImages(self, titleList, imagePathList):
         if len(titleList) != len(imagePathList):
             if ConstValues.PsIsDebug:
-                print("CreateQTabWidgetImages 列表长度不一致!")
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "CreateQTabWidgetImages 列表长度不一致!"
+                )
                 return
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        tabWidget.setStyleSheet(style)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
         tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
-
-        for i in range(len(titleList)):
+        # 为了随机显示图片，打乱顺序
+        shuffleList = [i for i in range(len(titleList))]
+        random.shuffle(shuffleList)
+        imageNum = 0
+        width = ConstValues.PsMainWindowWidth * 95 / 120
+        if self.MainWindowsStyle == "Qdarkstyle":
+            width = ConstValues.PsMainWindowWidth * 90 / 120
+        for i in shuffleList:
             imagePath = imagePathList[i]
             title = titleList[i]
 
             tb = QScrollArea()
             tb.setAlignment(Qt.AlignCenter)
-            tb.setStyleSheet("background-color: #FFFFFF;")
+            if self.MainWindowsStyle != "Qdarkstyle":
+                tb.setStyleSheet("background-color: #FFFFFF;")
             label = QLabel()  # 创建Label
             pixmap = QPixmap(imagePath)
-            pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth*95/120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
+            pixmap = pixmap.scaled(width, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
             label.setPixmap(pixmap)
             tb.setWidget(label)
 
             tabWidget.addTab(tb, title)
+
+            imageNum += 1
+            if imageNum == ConstValues.PsShowImageNum:
+                break
 
         return tabWidget
 
@@ -709,17 +776,20 @@ class MainWin(QMainWindow):
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
                 "QTabBar::tab:selected{background-color:rbg(255, 255, 255, 0);} "
-        tabWidget.setStyleSheet(style)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            tabWidget.setStyleSheet(style)
         # 固定 QTabWidget 大小
-        tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth*8/10)
+        tabWidget.setFixedWidth(ConstValues.PsMainWindowWidth * 8 / 10)
 
         # tb1相关内容
         tb1 = QScrollArea()
         tb1.setAlignment(Qt.AlignCenter)
-        tb1.setStyleSheet("background-color: #FFFFFF;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            tb1.setStyleSheet("background-color: #FFFFFF;")
         label = QLabel()  # 创建Label
         pixmap = QPixmap(imagePath)
-        pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth * 90 / 120, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # 限制一个即可
+        pixmap = pixmap.scaled(ConstValues.PsMainWindowWidth * 90 / 120, 4000, Qt.KeepAspectRatio,
+                               Qt.SmoothTransformation)  # 限制一个即可
         label.setPixmap(pixmap)
         tb1.setWidget(label)
 
@@ -737,8 +807,11 @@ class MainWin(QMainWindow):
         sender = self.sender()
         name = self.tabWidgetShowData.tabText(index)  # 当前tab的名称
         if ConstValues.PsIsDebug:
-            print("TabWidgetCloseTab()中sender：", sender)
-            print("TabWidgetCloseTab()中name：", name)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "sender:", sender, "; name", name
+            )
         if name in self.mainDataNameSet:
             self.mainDataNameSet.remove(name)
         sender.removeTab(index)
@@ -797,14 +870,17 @@ class MainWin(QMainWindow):
         if not self.mainNeedCover:
             mainTreeChild_ = QTreeWidgetItem(parent)
             mainTreeChild_.setText(0, name)
-            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=ConstValues.PsqtaIconFolderColor))
+            color = ConstValues.PsqtaColor
+            if self.MainWindowsStyle == "Qdarkstyle":
+                color = "white"
+            mainTreeChild_.setIcon(0, qtawesome.icon(icon, color=color))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
                 treeWidgetItem = item.value()
-                if ConstValues.PsIsDebug:
-                    print(treeWidgetItem)
-                    print(treeWidgetItem.text(0))
+                # if ConstValues.PsIsDebug:
+                #     # print(treeWidgetItem)
+                #     print(treeWidgetItem.text(0))
                 if treeWidgetItem.isSelected():
                     treeWidgetItem.setSelected(False)
                 treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
@@ -815,7 +891,7 @@ class MainWin(QMainWindow):
         # 创建 QTableWidget
         globals()["tableWidget_" + name] = self.CreateQTableWidget(data)
         # self.tabWidgetShowData 添加该项内容
-        if globals()["tableWidget_" + name] is not None:  # # 添加 QTableWidget
+        if globals()["tableWidget_" + name] is not None:  # 添加 QTableWidget
             self.tabWidgetShowData.addTab(globals()["tableWidget_" + name], name)
             self.tabWidgetShowData.setCurrentWidget(globals()["tableWidget_" + name])  # 切换到当前tab
         self.plotStack.setCurrentIndex(0)  # 显示导入的数据
@@ -827,7 +903,7 @@ class MainWin(QMainWindow):
         # 如果行数过多，不全部显示，提醒用户
         if len(data) > ConstValues.PsMainMaxRowNum:
             message = "文件" + name + "行数多于" + str(ConstValues.PsMainMaxRowNum) + "行, 未完全显示."
-            PromptBox().informationMessageAutoClose(message, 2)
+            PromptBox().informationMessageAutoClose(message, ConstValues.PsPromptBoxTime)
 
     # 生成    图形    后树控件添加一项，并切换到当前数据显示，在 HandleData 调用
     def AddTreeItemPlot(self, plotImagePath, rawData, functionStr=""):
@@ -842,14 +918,15 @@ class MainWin(QMainWindow):
         if not self.mainPlotNeedCover:
             mainTreeChild8_ = QTreeWidgetItem(self.mainTreeChild8)
             mainTreeChild8_.setText(0, treeItemName)
-            mainTreeChild8_.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage, color=ConstValues.PsqtaIconFolderColor))
+            mainTreeChild8_.setIcon(0, qtawesome.icon(ConstValues.PsqtaIconTreeImage,
+                                                      color=ConstValues.PsqtaIconFolderColor))
             # 遍历所有节点，如果选择，则取消选择，因为只可能有一个选择了，所以碰到第一个选择的之后就可以退出
             item = QTreeWidgetItemIterator(self.mainTreeWidget)
             while item.value():
                 treeWidgetItem = item.value()
-                if ConstValues.PsIsDebug:
-                    print(treeWidgetItem)
-                    print(treeWidgetItem.text(0))
+                # if ConstValues.PsIsDebug:
+                #     print(treeWidgetItem)
+                #     print(treeWidgetItem.text(0))
                 if treeWidgetItem.isSelected():
                     treeWidgetItem.setSelected(False)
                 treeWidgetItem.setFont(0, QFont(ConstValues.PsTreeFontType, ConstValues.PsTreeFontSize))  # 树控件设置字体大小
@@ -858,14 +935,16 @@ class MainWin(QMainWindow):
             # 光标选择到当前导入的文件
             mainTreeChild8_.setSelected(True)
         # 创建 QTabWidget
-        globals()["Plot_" + treeItemName], globals()["PlotTB_" + treeItemName], globals()["PlotLabel_" + treeItemName] = self.CreateQTabWidget(plotImagePath, rawData)
+        globals()["Plot_" + treeItemName], globals()["PlotTB_" + treeItemName], globals()[
+            "PlotLabel_" + treeItemName] = self.CreateQTabWidget(plotImagePath, rawData)
         # self.plotStack 添加并显示该项内容
         self.plotStack.addWidget(globals()["Plot_" + treeItemName])
         self.plotStack.setCurrentWidget(globals()["Plot_" + treeItemName])
         self.mainPlotNeedCover = False  # 下次导入文件默认不需要覆盖，经过检查确定是否需要覆盖
         # 右键处理
         globals()["PlotLabel_" + treeItemName].setContextMenuPolicy(Qt.CustomContextMenu)
-        globals()["PlotLabel_" + treeItemName].customContextMenuRequested.connect(lambda: self.rightMenuShow(1))  # 开放右键策略
+        globals()["PlotLabel_" + treeItemName].customContextMenuRequested.connect(
+            lambda: self.rightMenuShow(1))  # 开放右键策略
         globals()["PlotTB_" + treeItemName].setContextMenuPolicy(Qt.CustomContextMenu)
         globals()["PlotTB_" + treeItemName].customContextMenuRequested.connect(lambda: self.rightMenuShow(2))  # 开放右键策略
         # 更新状态栏消息
@@ -873,58 +952,150 @@ class MainWin(QMainWindow):
 
     # 右击选项菜单（Plot / Raw Plot Data）
     def rightMenuShow(self, Type):
-        sender = self.sender()
-        self.currentFunction = Type
+        try:
+            sender = self.sender()
+            self.currentFunction = Type
 
-        self.currentPixmapName = "plot.png"
-        # 获取当前图片名称
-        item = QTreeWidgetItemIterator(self.mainTreeWidget)
-        while item.value():
-            treeWidgetItem = item.value()
-            if treeWidgetItem.isSelected():
-                self.currentPixmapName = treeWidgetItem.text(0)
-                break
-            item += 1  # 到下一个节点
+            self.currentPixmapName = "plot.png"
+            # 获取当前图片名称
+            item = QTreeWidgetItemIterator(self.mainTreeWidget)
+            while item.value():
+                treeWidgetItem = item.value()
+                if treeWidgetItem.isSelected():
+                    self.currentPixmapName = treeWidgetItem.text(0)
+                    break
+                item += 1  # 到下一个节点
 
-        if Type == 1:
-            # 获取当前图片
-            self.currentPixmap = sender.pixmap()
-        elif Type == 2:
-            # 从QTableWigget获取数据
-            rowNum = sender.rowCount()  # 获取行数
-            columnNum = sender.columnCount()  # 获取列数
-            self.currentPixmapData = []
-            for i in range(rowNum):
-                tempList = []
-                for j in range(columnNum):
-                    if i != 0:
-                        tempList.append(float(sender.item(i, j).text()))
-                    else:
-                        tempList.append(sender.item(i, j).text())
-                self.currentPixmapData.append(tempList)
-        menu = QMenu()
-        menu.addAction(QAction("导出到", menu))
-        menu.triggered.connect(self.MenuSlot)
-        menu.exec_(QCursor.pos())
+            if Type == 1:
+                # 获取当前图片
+                self.currentPixmap = sender.pixmap()
+            elif Type == 2:
+                # 从QTableWigget获取数据
+                rowNum = sender.rowCount()  # 获取行数
+                columnNum = sender.columnCount()  # 获取列数
+                self.currentPixmapData = []
+                for i in range(rowNum):
+                    tempList = []
+                    for j in range(columnNum):
+                        text = sender.item(i, j).text()
+                        try:
+                            textFloat = float(sender.item(i, j).text())
+                            tempList.append(textFloat)
+                        except ValueError:
+                            tempList.append(text)
 
-    # 右击后处理函数
-    def MenuSlot(self, act):
-        if ConstValues.PsIsDebug:
-            print(act.text())
-        if act.text() == "导出到":
-            outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
+                    self.currentPixmapData.append(tempList)
+            menu = QMenu()
+            menu.addAction(QAction("导出到", menu))
+            menu.triggered.connect(self.MenuSlot)
+            menu.exec_(QCursor.pos())
+        except Exception as e:
             if ConstValues.PsIsDebug:
-                print(outputImagePath)
-            if self.currentFunction == 1:
-                if outputImagePath != "":
-                    self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
-            elif self.currentFunction == 2:
-                WriteDataToExcel(self.currentPixmapData, outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
+                print("Error_rightMenuShow : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键导出出现错误1!")
+
+    # 右击后处理函数（Plot / Raw Plot Data）
+    def MenuSlot(self, act):
+        try:
+            if act.text() == "导出到":
+                outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "outputImagePath:", outputImagePath
+                    )
+                if self.currentFunction == 1:
+                    if outputImagePath != "":
+                        self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
+                elif self.currentFunction == 2:
+                    WriteDataToExcel(self.currentPixmapData,
+                                     outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键导出出现错误2!")
+
+    # 右击选项菜单（树控件），就是为了删除导入的数据
+    def rightTreeShow(self):
+        try:
+            # 遍历所有节点，如果选择，记录下来，根据后续逻辑决定是否需要删除
+            item = QTreeWidgetItemIterator(self.mainTreeWidget)
+            treeItemSelected = None
+            while item.value():
+                treeWidgetItem = item.value()
+                if treeWidgetItem.isSelected():
+                    treeItemSelected = treeWidgetItem
+                    break
+                # 到下一个节点
+                item += 1
+            returnList = [
+                ConstValues.PsTreeProject, ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank,
+                ConstValues.PsTreeGDB, ConstValues.PsTreeDelIso,
+                ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv,
+                ConstValues.PsTreePlot, ConstValues.PsTreePlotInit,
+            ]
+            if treeItemSelected is None:  # 为空返回
+                return
+            treeItemName = treeItemSelected.text(0)
+            if treeItemName in returnList:  # 不是需要删除的内容返回
+                return
+
+            if ConstValues.PsIsDebug:  # 调试输出名称
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "treeItemName:", treeItemName
+                )
+            menu = QMenu()
+            menu.addAction(QAction("删除", menu))
+            menu.triggered.connect(lambda: self.TreeSlot(treeItemName))
+            menu.exec_(QCursor.pos())
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键删除出现错误1!")
+
+    # 右击后处理函数（树控件），就是删除功能
+    def TreeSlot(self, name):
+        try:
+            if name in self.mainDataNameSetAll:  # 说明是数据
+                for item in self.mainTreeWidget.selectedItems():
+                    item.parent().removeChild(item)
+                    self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + name]))
+                    if name in self.mainDataNameSet:
+                        self.mainDataNameSet.remove(name)
+                    self.mainDataNameSetAll.remove(name)
+                # 判断是否为样本文件，或者空白文件，或者TIC
+                if name in self.sampleNameList:
+                    self.sampleFilePath = ""  # 重置
+                    self.sampleData = []
+                    self.sampleNameList = [None]
+                elif name in self.blankNameList:
+                    self.blankFilePath = ""
+                    self.blankData = []
+                    self.blankNameList = [None]
+                elif name in self.TICNameList:
+                    self.TICFilePath = ""  # 总离子流图路径，第一部分
+                    self.TICData = None
+                    self.TICDataDictionary = None
+                    self.TICNameList = [None]
+            else:  # 一定是图形
+                pass
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键删除出现错误2!")
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
         # 专门用来弹出gif
         self.promptGif = PromptBox()
+        self.whetherShowGif = False
         # 文件路径
         self.sampleFilePath = ""  # 样本文件路径
         self.sampleData = []
@@ -936,50 +1107,50 @@ class MainWin(QMainWindow):
             self.blankFilePath = "./inputData/350/blank-54.xlsx"
 
         # 扣空白全过程需要的数据  0~10000（整数）
-        self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity      # 去空白(参数)：删除Intensity小于deleteBlankIntensity的行
+        self.deleteBlankIntensity = ConstValues.PsDeleteBlankIntensity  # 去空白(参数)：删除Intensity小于deleteBlankIntensity的行
         # 0.00~100.00（浮点数）
-        self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM                  # 去空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
+        self.deleteBlankPPM = ConstValues.PsDeleteBlankPPM  # 去空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
         # 0~100（整数）
-        self.deleteBlankPercentage = ConstValues.PsDeleteBlankPercentage    # 去空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
+        self.deleteBlankPercentage = ConstValues.PsDeleteBlankPercentage  # 去空白(参数)：删去样本和空白中相同的mass且intensity相近的mass中的指标
         self.deleteBlankList = [
-                                    self.sampleFilePath,  # 格式：字符串
-                                    self.blankFilePath,  # 格式：字符串
-                                    self.deleteBlankIntensity,  # 格式：整数
-                                    self.deleteBlankPPM,  # 格式：浮点数
-                                    self.deleteBlankPercentage  # 格式：整数
-                                ]
+            self.sampleFilePath,  # 格式：字符串
+            self.blankFilePath,  # 格式：字符串
+            self.deleteBlankIntensity,  # 格式：整数
+            self.deleteBlankPPM,  # 格式：浮点数
+            self.deleteBlankPercentage  # 格式：整数
+        ]
         self.deleteBlankResult = None  # 去空白：最终返回的结果（格式：list二维数组，有表头）
-        self.deleteBlankIsFinished = False   # 去空白：记录扣空白过程是否完成
+        self.deleteBlankIsFinished = False  # 去空白：记录扣空白过程是否完成
 
         # 数据库生成全过程需要的数据
-        self.GDBClass = ConstValues.PsGDBClass        # 数据库生成(参数)：Class类型
+        self.GDBClass = ConstValues.PsGDBClass  # 数据库生成(参数)：Class类型
         # 1~100（整数）
-        self.GDBCarbonRangeLow = ConstValues.PsGDBCarbonRangeLow    # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
+        self.GDBCarbonRangeLow = ConstValues.PsGDBCarbonRangeLow  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
         self.GDBCarbonRangeHigh = ConstValues.PsGDBCarbonRangeHigh  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
         # 1~30（整数）
-        self.GDBDBERageLow = ConstValues.PsGDBDBERageLow            # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
-        self.GDBDBERageHigh = ConstValues.PsGDBDBERageHigh          # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
+        self.GDBDBERageLow = ConstValues.PsGDBDBERageLow  # 数据库生成(参数)：DBE rage(不饱和度范围)最小值(包含)
+        self.GDBDBERageHigh = ConstValues.PsGDBDBERageHigh  # 数据库生成(参数)：DBE rage(不饱和度范围)最大值(包含)
         # 50~1500(整数)
-        self.GDBM_ZRageLow = ConstValues.PsGDBM_ZRageLow            # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
-        self.GDBM_ZRageHigh = ConstValues.PsGDBM_ZRageHigh          # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageLow = ConstValues.PsGDBM_ZRageLow  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
+        self.GDBM_ZRageHigh = ConstValues.PsGDBM_ZRageHigh  # 数据库生成(参数)：m/z rage(质荷比范围)最小值(包含)
         # 离子类型
-        self.GDB_MHPostive = ConstValues.PsGDB_MHPostive            # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
-        self.GDB_MPostive = ConstValues.PsGDB_MPostive              # 数据库生成(参数)：正离子，是否选择M+，True为选中
-        self.GDB_MHNegative = ConstValues.PsGDB_MHNegative          # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
-        self.GDB_MNegative = ConstValues.PsGDB_MNegative            # 数据库生成(参数)：负离子，是否选择M-，True为选中
+        self.GDB_MHPostive = ConstValues.PsGDB_MHPostive  # 数据库生成(参数)：正离子，是否选择[M+H]+，True为选中
+        self.GDB_MPostive = ConstValues.PsGDB_MPostive  # 数据库生成(参数)：正离子，是否选择M+，True为选中
+        self.GDB_MHNegative = ConstValues.PsGDB_MHNegative  # 数据库生成(参数)：负离子，是否选择[M-H]-，True为选中
+        self.GDB_MNegative = ConstValues.PsGDB_MNegative  # 数据库生成(参数)：负离子，是否选择M-，True为选中
         self.GDBList = [
-                            self.GDBClass,  # 格式：列表，列表中均为字符串
-                            self.GDBCarbonRangeLow,  # 格式：整数
-                            self.GDBCarbonRangeHigh,  # 格式：整数
-                            self.GDBDBERageLow,  # 格式：整数
-                            self.GDBDBERageHigh,  # 格式：整数
-                            self.GDBM_ZRageLow,  # 格式：整数
-                            self.GDBM_ZRageHigh,  # 格式：整数
-                            self.GDB_MHPostive,  # 格式：bool
-                            self.GDB_MPostive,  # 格式：bool
-                            self.GDB_MHNegative,  # 格式：bool
-                            self.GDB_MNegative  # 格式：bool
-                        ]
+            self.GDBClass,  # 格式：列表，列表中均为字符串
+            self.GDBCarbonRangeLow,  # 格式：整数
+            self.GDBCarbonRangeHigh,  # 格式：整数
+            self.GDBDBERageLow,  # 格式：整数
+            self.GDBDBERageHigh,  # 格式：整数
+            self.GDBM_ZRageLow,  # 格式：整数
+            self.GDBM_ZRageHigh,  # 格式：整数
+            self.GDB_MHPostive,  # 格式：bool
+            self.GDB_MPostive,  # 格式：bool
+            self.GDB_MHNegative,  # 格式：bool
+            self.GDB_MNegative  # 格式：bool
+        ]
         self.GDBResult = None  # 数据库生成：最终返回的结果（格式：list二维数组，有表头）
         self.GDBIsFinished = False  # 数据库生成：记录数据库生成过程是否完成
 
@@ -994,17 +1165,17 @@ class MainWin(QMainWindow):
         # 1~100（整数）
         self.DelIsoIsotopeIntensityDeviation = ConstValues.PsDelIsoIsotopeIntensityDeviation
         self.DelIsoList = [
-                               self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                               self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                               self.deleteBlankIntensity,
-                               self.DelIsoIntensityX,  # 格式：整数
-                               self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                               self.DelIsoMassDeviation,  # 格式：浮点数
-                               self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                               self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                           ]
+            self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+            self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+            self.deleteBlankIntensity,
+            self.DelIsoIntensityX,  # 格式：整数
+            self.DelIso_13C2RelativeIntensity,  # 格式：整数
+            self.DelIsoMassDeviation,  # 格式：浮点数
+            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+        ]
         self.DelIsoResult = None  # 搜同位素：最终返回的结果（格式：list二维数组，有表头）
-        self.DelIsoIsFinished = False   # 搜同位素：记录去同位素过程是否完成
+        self.DelIsoIsFinished = False  # 搜同位素：记录去同位素过程是否完成
 
         # 峰识别全过程所需要的数据
         self.TICFilePath = ""  # 总离子流图路径，第一部分
@@ -1024,14 +1195,14 @@ class MainWin(QMainWindow):
         self.PeakDisClassIsNeed = ConstValues.PsPeakDisClassIsNeed
         self.PeakDisClass = ConstValues.PsPeakDisClass
         self.PeakDisList = [
-                                self.TICDataDictionary,
-                                self.DelIsoResult,
-                                self.PeakDisContinuityNum,
-                                self.PeakDisMassDeviation,
-                                self.PeakDisDiscontinuityPointNum,
-                                self.PeakDisClassIsNeed,  # 第二部分
-                                self.PeakDisClass
-                            ]
+            self.TICDataDictionary,
+            self.DelIsoResult,
+            self.PeakDisContinuityNum,
+            self.PeakDisMassDeviation,
+            self.PeakDisDiscontinuityPointNum,
+            self.PeakDisClassIsNeed,  # 第二部分
+            self.PeakDisClass
+        ]
         # 结果是一个列表，有三个元素，
         # 第一个是峰识别的结果（格式：list二维数组，有表头）
         # 第二个是需要需要峰检测（第二部分）的详细数据，二维列表，无表头
@@ -1046,12 +1217,12 @@ class MainWin(QMainWindow):
         # 0~100（整数）
         self.RemoveFPContinue_DBENum = ConstValues.PsRemoveFPContinue_DBENum  # 连续DBE数
         self.RemoveFPList = [
-                                 self.DelIsoResult,
-                                 self.PeakDisResult,
-                                 self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                 self.RemoveFPContinue_CNum,
-                                 self.RemoveFPContinue_DBENum
-                             ]
+            self.DelIsoResult,
+            self.PeakDisResult,
+            self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPContinue_CNum,
+            self.RemoveFPContinue_DBENum
+        ]
         # 结果是一个列表，有两个元素
         # 第一个所有类别去假阳性的结果，二维列表，或者1：去同位素之后的内容，或者2：峰识别之后的内容 都有表头
         # 第二个是去假阳性后需要峰检测（第二部分）的数据，二维列表，无表头，即self.PeakDisResult[1]去假阳性后的数据
@@ -1067,14 +1238,14 @@ class MainWin(QMainWindow):
         # 该参数决定是否生成图片信息
         self.PeakDivNeedGenImage = ConstValues.PsPeakDivNeedGenImage
         self.PeakDivList = [
-                                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
-                                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
-                                self.PeakDivNoiseThreshold,
-                                self.PeakDivRelIntensity,
-                                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                            ]
+            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+            self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+            self.PeakDivNoiseThreshold,
+            self.PeakDivRelIntensity,
+            self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+            self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+        ]
         self.PeakDivResult = None
         self.PeakDivIsFinished = False
 
@@ -1100,21 +1271,21 @@ class MainWin(QMainWindow):
         self.PlotRawData = []
 
         self.PlotList = [
-                            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                            self.PlotTitleName,
-                            self.PlotTitleColor,
-                            self.PlotXAxisName,
-                            self.PlotXAxisColor,
-                            self.PlotYAxisName,
-                            self.PlotYAxisColor,
-                            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                            self.PlotType,  # 绘图类型
-                            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-                            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-                            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                            self.PlotConfirm
-                        ]
+            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+            self.PlotTitleName,
+            self.PlotTitleColor,
+            self.PlotXAxisName,
+            self.PlotXAxisColor,
+            self.PlotYAxisName,
+            self.PlotYAxisColor,
+            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+            self.PlotType,  # 绘图类型
+            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+            self.PlotConfirm
+        ]
 
         # 运行模式
         # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
@@ -1128,9 +1299,9 @@ class MainWin(QMainWindow):
         self.startModeConfirm = False
 
         self.startModeList = [
-                                self.startMode,
-                                self.startModeConfirm
-                              ]
+            self.startMode,
+            self.startModeConfirm
+        ]
 
     # 使窗口居中
     def center(self):
@@ -1156,9 +1327,13 @@ class MainWin(QMainWindow):
         file.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction("离子图", self)  # 添加二级菜单
+        TICFile = QAction("样本TIC", self)  # 添加二级菜单
         file.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
+
+        intermediateFiles = QAction("导入", self)  # 添加二级菜单
+        file.addAction(intermediateFiles)
+        intermediateFiles.triggered.connect(self.importIntermediateFiles)
 
         OutFilesPath = QAction("输出", self)  # 添加二级菜单
         file.addAction(OutFilesPath)
@@ -1200,31 +1375,122 @@ class MainWin(QMainWindow):
         plot.addAction(addPlot)
         addPlot.triggered.connect(self.SetupAndPlot)
 
+        # 创建第四个主菜单
+        theme = bar.addMenu("主题")
+        themeMacintosh = QAction("Macintosh", self)  # 添加二级菜单
+        theme.addAction(themeMacintosh)
+        themeMacintosh.triggered.connect(lambda: self.ThemeSelect("Macintosh"))
+
+        themeQdarkstyle = QAction("Qdarkstyle", self)  # 添加二级菜单
+        theme.addAction(themeQdarkstyle)
+        themeQdarkstyle.triggered.connect(lambda: self.ThemeSelect("Qdarkstyle"))
+
+        themeWindows = QAction("Windows", self)  # 添加二级菜单
+        theme.addAction(themeWindows)
+        themeWindows.triggered.connect(lambda: self.ThemeSelect("Windows"))
+
+        themeFusion = QAction("Fusion", self)  # 添加二级菜单
+        theme.addAction(themeFusion)
+        themeFusion.triggered.connect(lambda: self.ThemeSelect("Fusion"))
+
+        # 创建第五个主菜单
+        help = bar.addMenu("帮助")
+        uiHelp = QAction("界面介绍", self)  # 添加二级菜单
+        help.addAction(uiHelp)
+        uiHelp.triggered.connect(lambda: self.Help("UIHelp"))
+
+        fileHelp = QAction("文件帮助", self)  # 添加二级菜单
+        help.addAction(fileHelp)
+        fileHelp.triggered.connect(lambda: self.Help("FileHelp"))
+
+        editHelp = QMenu("编辑帮助", self)  # 添加二级菜单
+        help.addMenu(editHelp)
+        editHelpDeleteBlank = QAction("去空白", self)  # 添加三级菜单
+        editHelp.addAction(editHelpDeleteBlank)
+        editHelpDeleteBlank.triggered.connect(lambda: self.Help("EditHelpDeleteBlank"))
+        editHelpGDB = QAction("数据库生成", self)
+        editHelp.addAction(editHelpGDB)
+        editHelpGDB.triggered.connect(lambda: self.Help("EditHelpGDB"))
+        editHelpDeleteIso = QAction("搜同位素", self)
+        editHelp.addAction(editHelpDeleteIso)
+        editHelpDeleteIso.triggered.connect(lambda: self.Help("EditHelpDeleteIso"))
+        editHelpPeakDis = QAction("峰提取", self)
+        editHelp.addAction(editHelpPeakDis)
+        editHelpPeakDis.triggered.connect(lambda: self.Help("EditHelpPeakDis"))
+        editHelpRFP = QAction("去假阳性", self)
+        editHelp.addAction(editHelpRFP)
+        editHelpRFP.triggered.connect(lambda: self.Help("EditHelpRFP"))
+        editHelpPeakDiv = QAction("峰检测", self)
+        editHelp.addAction(editHelpPeakDiv)
+        editHelpPeakDiv.triggered.connect(lambda: self.Help("EditHelpPeakDiv"))
+
+        plotHelp = QAction("绘图帮助", self)  # 添加二级菜单
+        help.addAction(plotHelp)
+        plotHelp.triggered.connect(lambda: self.Help("PlotHelp"))
+
+        modeHelp = QAction("模式帮助", self)  # 添加二级菜单
+        help.addAction(modeHelp)
+        modeHelp.triggered.connect(lambda: self.Help("ModeHelp"))
+
+        otherHelp = QAction("其他帮助", self)  # 添加二级菜单
+        help.addAction(otherHelp)
+        otherHelp.triggered.connect(lambda: self.Help("OtherHelp"))
+
+        about = QAction("关于", self)  # 添加二级菜单
+        help.addAction(about)
+        about.triggered.connect(lambda: self.Help("About"))
+
         # 设置字体，图标等
         elementList = [
-            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            importSampleFile, importBlankFile, TICFile, intermediateFiles, OutFilesPath, exitProgram,
             deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
-            peakDivision, addPlot
+            peakDivision, addPlot,
+            themeMacintosh, themeQdarkstyle, themeWindows, themeFusion,
+            uiHelp, fileHelp, editHelp, editHelpDeleteBlank, editHelpGDB,
+            editHelpDeleteIso, editHelpPeakDis, editHelpRFP, editHelpPeakDiv,
+            plotHelp, modeHelp, otherHelp, about
         ]
         IconFromImage = [
-            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
-            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
-            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis,
+            ConstValues.PsIconRemoveFP,
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot,
+            None, None, None, None,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconHelpEdit,
+            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB,
+            ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP, ConstValues.PsIconpeakDiv,
+            ConstValues.PsIconPlot, ConstValues.PsIconAllStart, ConstValues.PsIconHelpOther, ConstValues.PsIconHelpAbout
         ]
         IconFromQta = [
-            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
-            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
-            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt,
+            ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso,
+            ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot,
+            ConstValues.PsqtathemeMacintosh, ConstValues.PsqtathemeQdarkstyle, ConstValues.PsqtathemeWindows,
+            ConstValues.PsqtathemeFusion,
+            ConstValues.PsqtaIconHelpWindows, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconHelpEdit,
+            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB,
+            ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
+            ConstValues.PsqtaIconpeakDiv,
+            ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconHelpOther,
+            ConstValues.PsqtaIconHelpAbout
         ]
+        color = ConstValues.PsqtaColor
+        if self.MainWindowsStyle == "Qdarkstyle":
+            color = "white"
         bar.setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
         for i in range(len(elementList)):
             # 设置字体大小
-            elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
+            elementList[i].setFont(QFont(ConstValues.PsMenuFontType, ConstValues.PsMenuFontSize))
             # 设置图标
             if ConstValues.PsIconType == 1:  # 从图片读取
-                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+                if IconFromImage[i] == None:
+                    continue
+                elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=color))
 
     # 设置工具栏
     def toolbar(self):
@@ -1242,10 +1508,15 @@ class MainWin(QMainWindow):
         tb1.addAction(importBlankFile)
         importBlankFile.triggered.connect(self.ImportBlankFile)
 
-        TICFile = QAction("离子图", self)
+        TICFile = QAction("样本TIC", self)
         TICFile.setToolTip("选择需要导入的总离子图文件")
         tb1.addAction(TICFile)
         TICFile.triggered.connect(self.ImportTICFile)
+
+        intermediateFiles = QAction("导入", self)
+        intermediateFiles.setToolTip("从生成的结果文件夹中导入数据")
+        tb1.addAction(intermediateFiles)
+        intermediateFiles.triggered.connect(self.importIntermediateFiles)
 
         OutFilesPath = QAction("输出", self)
         OutFilesPath.setToolTip("选择生成文件位置")
@@ -1256,6 +1527,7 @@ class MainWin(QMainWindow):
         exitProgram.setToolTip("退出程序")
         tb1.addAction(exitProgram)
         exitProgram.triggered.connect(self.QuitApplication)
+        exitProgram.setShortcut("Esc")
 
         # 添加第二个工具栏
         tb2 = self.addToolBar("单项处理开始按钮")
@@ -1306,43 +1578,56 @@ class MainWin(QMainWindow):
 
         # 设置字体，图标等
         elementList = [
-            importSampleFile, importBlankFile, TICFile, OutFilesPath, exitProgram,
+            importSampleFile, importBlankFile, TICFile, intermediateFiles, OutFilesPath, exitProgram,
             deleteBlank, DBSearch, deleteIsotope, peakDistinguish, RemoveFP,
             self.TBpeakDivision, plot, allStart, allReset
         ]
         IconFromImage = [
-            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
-            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis, ConstValues.PsIconRemoveFP,
-            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconAllStart,ConstValues.PsIconAllReset
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile,
+            ConstValues.PsIconOpenFile, ConstValues.PsIconOpenFile, ConstValues.PsIconExit,
+            ConstValues.PsIconDeleteBlank, ConstValues.PsIconGDB, ConstValues.PsIcondelIso, ConstValues.PsIconpeakDis,
+            ConstValues.PsIconRemoveFP,
+            ConstValues.PsIconpeakDiv, ConstValues.PsIconPlot, ConstValues.PsIconAllStart, ConstValues.PsIconAllReset
         ]
         IconFromQta = [
-            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
-            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso, ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
-            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart, ConstValues.PsqtaIconAllReset
+            ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileExcel, ConstValues.PsqtaIconOpenFileTxt,
+            ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconOpenFileOut, ConstValues.PsqtaIconExit,
+            ConstValues.PsqtaIconDeleteBlank, ConstValues.PsqtaIconGDB, ConstValues.PsqtaIcondelIso,
+            ConstValues.PsqtaIconpeakDis, ConstValues.PsqtaIconRemoveFP,
+            ConstValues.PsqtaIconpeakDiv, ConstValues.PsqtaIconPlot, ConstValues.PsqtaIconAllStart,
+            ConstValues.PsqtaIconAllReset
         ]
+        color = ConstValues.PsqtaColor
+        if self.MainWindowsStyle == "Qdarkstyle":
+            color = "white"
         for i in range(len(elementList)):
             # 设置字体大小
             elementList[i].setFont(QFont(ConstValues.PsToolbarFontType, ConstValues.PsToolbarFontSize))
             # 设置图标
             if ConstValues.PsIconType == 1:  # 从图片读取
-                importSampleFile.setIcon(QIcon(IconFromImage[i]))
+                elementList[i].setIcon(QIcon(IconFromImage[i]))
             elif ConstValues.PsIconType == 2:  # 来自 qtawesome
-                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=ConstValues.PsqtaColor))
+                elementList[i].setIcon(qtawesome.icon(IconFromQta[i], color=color))
 
     # 设置主窗口底部状态栏
     def status(self):
         self.statusBar = self.statusBar()
         # 设置状态栏背景颜色
-        self.statusBar.setStyleSheet(ConstValues.PsStatusStyle)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.statusBar.setStyleSheet(ConstValues.PsStatusStyle)
         # 设置字体显示样式
-        style = "color:rgb(0,0,0,250); font-size:15px; font-family: Microsoft YaHei;"
+        style = "color:rgb(0,0,0,250); font-family: Microsoft YaHei;"
         # 第一条显示的信息
         nowDate = str(QDate.currentDate().toString("yyyy.MM.dd"))
         self.statusContext1 = QLabel(ConstValues.PsMainWindowStatusMessage + "|   日期：" + nowDate)
-        self.statusContext1.setStyleSheet(style)
+        self.statusContext1.setFont(QFont(ConstValues.PsStatusFontType, ConstValues.PsStatusFontSize))
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.statusContext1.setStyleSheet(style)
         # 第二条显示的信息
         self.statusContext2 = QLabel("当前处于空闲状态.")
-        self.statusContext2.setStyleSheet(style)
+        self.statusContext2.setFont(QFont(ConstValues.PsStatusFontType, ConstValues.PsStatusFontSize))
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.statusContext2.setStyleSheet(style)
         # 状态栏添加显示的信息
         self.statusBar.addPermanentWidget(self.statusContext1, stretch=2)
         self.statusBar.addPermanentWidget(self.statusContext2, stretch=1)
@@ -1386,73 +1671,180 @@ class MainWin(QMainWindow):
         # 程序开始运行后收尾工作
         self.AfterRunning("ImportTICFile")
 
+    # 导入中间生成的文件，直接选择中间文件所在的总文件夹，如果默认是 intermediateFiles
+    def importIntermediateFiles(self):
+        # 导入文件，并得到文件名称
+        self.intermediateFilesPath = QFileDialog.getExistingDirectory(self, '选择生成的文件所在的总文件夹', './')
+        if ConstValues.PsIsDebug:
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.intermediateFilesPath:", self.intermediateFilesPath
+            )
+        # 如果为空，直接返回
+        if self.intermediateFilesPath == "":
+            return
+        # 用户选择导入哪个假阳性文件
+        RFPPath = ""
+        RFPName = None
+        RFPPath1 = self.intermediateFilesPath + "/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult
+        RFPPath2 = self.intermediateFilesPath + "/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
+        if os.path.exists(RFPPath1) and (not os.path.exists(RFPPath2)):
+            RFPPath = RFPPath1
+            RFPName = ConstValues.PsNameRemoveFPFrom_DelIsoResult
+            self.RemoveFPId = 1
+        elif os.path.exists(RFPPath2) and (not os.path.exists(RFPPath1)):
+            RFPPath = RFPPath2
+            RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
+            self.RemoveFPId = 2
+        elif os.path.exists(RFPPath1) and os.path.exists(RFPPath2):
+            chooseRFPPath1 = PromptBox().informationMessage(
+                "去假阳性可以有两种方式生成:\n1.选择搜同位素后去假阳性文件点击：Yes\n2.选择峰提取后去假阳性文件点击：No")
+            if chooseRFPPath1:
+                RFPPath = RFPPath1
+                RFPName = ConstValues.PsNameRemoveFPFrom_DelIsoResult
+                self.RemoveFPId = 1
+            else:
+                RFPPath = RFPPath2
+                RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
+                self.RemoveFPId = 2
+
+        # if ConstValues.PsIsShowGif:
+        #     self.promptGif.showGif("正在导入数据，请稍后...", ConstValues.PsIconLoading)
+
+        if os.path.exists(RFPPath):
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "开始导入数据.")
+            # 是否存在去假阳性后的文件，如果存在，读取并显示
+            parent = self.mainTreeChild6
+            name = RFPName
+            data = ReadExcelToList(RFPPath, hasNan=True)
+            icon = ConstValues.PsqtaIconOpenFileExcel
+            functionStr = "峰提取数据导入完毕！"
+            # self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
+
+            self.RemoveFPResult = [data, []]
+            self.RemoveFPIsFinished = True
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据导入完毕.")
+        else:
+            PromptBox().informationMessageAutoClose("没有内容可以导入!", ConstValues.PsPromptBoxTime)
+
     # 选择输入的文件存放的文件夹
     def GetOutputFilesPath(self):
         # 导入文件，并得到文件名称
         self.outputFilesPath = QFileDialog.getExistingDirectory(self, '选择文件生成到的文件夹', './')
         if ConstValues.PsIsDebug:
-            print(self.outputFilesPath)
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.outputFilesPath:", self.outputFilesPath
+            )
 
     # -------------------------------------- 重置软件，参数重置
     def ResetProgram(self):
         if PromptBox().informationMessage("是否重置?"):
             self.dataInit()
             self.ResetAssembly()
-            PromptBox().informationMessage("已重置.")
+            PromptBox().informationMessageAutoClose("已重置.", ConstValues.PsPromptBoxTime / 2)
 
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
+        self.plotStack.removeWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])
         self.Layout.removeWidget(self.mainTreeWidget)
         self.Layout.removeWidget(self.plotStack)
         # initShow 初始化数据
         self.initShowDataInit()
         # self.Layout 添加控件
         self.MainLayoutAddWidget()
+        # 更新状态栏
+        self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
 
     # 退出程序
     @staticmethod
     def QuitApplication(self):
-        app = QApplication.instance()
+        if not PromptBox().questionMessage("是否要退出程序？"):
+            return
 
+        app = QApplication.instance()
         # 退出应用程序
         app.quit()
 
     # 扣空白参数设置  #######################################
     def DeleteBlankSetup(self):
-        # 重新设置参数
-        newParameters = SetupInterface().DeleteBlankSetup(self.deleteBlankList[2:])
-        # 更新数据
-        self.UpdateData("DeleteBlankSetup", newParameters)
+        try:
+            # 重新设置参数
+            newParameters = SetupInterface(self.MainWindowsStyle).DeleteBlankSetup(self.deleteBlankList[2:])
+            # 更新数据
+            self.UpdateData("DeleteBlankSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_DeleteBlankSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("删空白设置出现错误!")
 
     # 数据库生成参数设置
     def GenerateDataBaseSetup(self):
-        newParameters = SetupInterface().GenerateDataBaseSetup(self.GDBList)
-        self.UpdateData("GenerateDataBaseSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).GenerateDataBaseSetup(self.GDBList)
+            self.UpdateData("GenerateDataBaseSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_GenerateDataBaseSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("数据库生成设置出现错误!")
 
-    # 去同位素参数设置
+    # 搜同位素参数设置
     def DeleteIsotopeSetup(self):
-        newParameters = SetupInterface().DeleteIsotopeSetup(self.DelIsoList[3:])
-        self.UpdateData("DeleteIsotopeSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).DeleteIsotopeSetup(self.DelIsoList[3:])
+            self.UpdateData("DeleteIsotopeSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_DeleteIsotopeSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("搜同位素设置出现错误!")
 
-    # 峰识别参数设置
+    # 峰提取参数设置
     def PeakDistinguishSetup(self):
-        newParameters = SetupInterface().PeakDistinguishSetup(self.PeakDisList[2:])
-        self.UpdateData("PeakDistinguishSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).PeakDistinguishSetup(self.PeakDisList[2:])
+            self.UpdateData("PeakDistinguishSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PeakDistinguishSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("峰提取设置出现错误!")
 
     # 去假阳性参数设置
     def RemoveFalsePositiveSetup(self):
-        newParameters = SetupInterface().RemoveFalsePositiveSetup(self.RemoveFPList[2:])
-        self.UpdateData("RemoveFalsePositiveSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).RemoveFalsePositiveSetup(self.RemoveFPList[2:])
+            self.UpdateData("RemoveFalsePositiveSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_RemoveFalsePositiveSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("去假阳性设置出现错误!")
 
     # 峰检测参数设置
     def PeakDivisionSetup(self):
-        newParameters = SetupInterface().PeakDivisionSetup(self.PeakDivList[3:])
-        self.UpdateData("PeakDivisionSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).PeakDivisionSetup(self.PeakDivList[3:])
+            self.UpdateData("PeakDivisionSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PeakDivisionSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("峰检测设置出现错误!")
 
+    # 绘图设置
     def PlotSetup(self):
         if ConstValues.PsIsSingleRun:  # 读取文件需要花费一些时间，所以界面会延迟一下
             self.RemoveFPIsFinished = True
-            filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
+            filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult
+            if self.RemoveFPId == 2:
+                filePath = "./intermediateFiles/_5_removeFalsePositive/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult
             self.RemoveFPResult[0] = ReadExcelToList(filepath=filePath, hasNan=True)
         # 画图前前需要先读入数据
         if not self.RemoveFPIsFinished:
@@ -1476,12 +1868,20 @@ class MainWin(QMainWindow):
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
             self.PlotConfirm
         ]
-        newParameters = SetupInterface().PlotSetup(self.PlotList)
-        self.UpdateData("PlotSetup", newParameters)
+
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).PlotSetup(self.PlotList)
+            self.UpdateData("PlotSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_PlotSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("绘图设置出现错误!")
 
         # 判断是否要绘图
         return self.PlotConfirm
 
+    # 模式选择设置
     def StartModeSetup(self):
 
         self.startModeConfirm = False  # 每次运行前需要重置
@@ -1490,8 +1890,14 @@ class MainWin(QMainWindow):
             self.startModeConfirm
         ]
 
-        newParameters = SetupInterface().StartModeSetup(self.startModeList)
-        self.UpdateData("StartModeSetup", newParameters)
+        try:
+            newParameters = SetupInterface(self.MainWindowsStyle).StartModeSetup(self.startModeList)
+            self.UpdateData("StartModeSetup", newParameters)
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_StartModeSetup_MainWin : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("模式选择设置出现错误!")
 
         return self.startModeConfirm
 
@@ -1627,13 +2033,69 @@ class MainWin(QMainWindow):
                 # 画图原始数据
                 self.PlotRawData = retList[2]  # 必须为二维列表，并且第二个维度必须相同
                 if ConstValues.PsIsDebug:
-                    print(self.PlotImagePath)
-                    print(self.PlotRawData)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotImagePath：", self.PlotImagePath
+                    )
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotRawData：", self.PlotRawData
+                    )
                 # 检查数据合法性
                 if self.PlotImagePath is None:
                     return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
+            elif retList[0] == "ImportSampleFile":
+                # 读入数据，并显示到主界面
+                self.sampleData = retList[1]
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.sampleData：", self.sampleData
+                    )
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.sampleFilePath.split("/")[-1]
+                self.sampleNameList[0] = name
+                data = self.sampleData
+                icon = ConstValues.PsqtaIconOpenFileExcel
+                functionStr = "样本导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            elif retList[0] == "ImportBlankFile":
+                # 读入数据，并显示到主界面
+                self.blankData = retList[1]
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.blankData：", self.blankData
+                    )
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.blankFilePath.split("/")[-1]
+                self.blankNameList[0] = name
+                data = self.blankData
+                icon = ConstValues.PsqtaIconOpenFileExcel
+                functionStr = "空白导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            elif retList[0] == "ImportTICFile":
+                # 读入数据，并显示到主界面
+                self.TICData = retList[1]
+                self.TICDataDictionary = retList[2]
+                # if ConstValues.PsIsDebug:
+                #     print(self.TICData)
+                # 处理过程
+                parent = self.mainTreeChild1
+                name = self.TICFilePath.split("/")[-1]
+                self.TICNameList[0] = name
+                data = self.TICData
+                icon = ConstValues.PsqtaIconOpenFileTxt
+                functionStr = "总离子流图导入完成!"
+                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
             elif retList[0] == "StartMode":
                 # 更新状态
                 if ConstValues.PsIsShowGif:
@@ -1702,74 +2164,56 @@ class MainWin(QMainWindow):
                 data = self.PeakDivResult
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
-            elif retList[0] == "ClassDeleteBlank Error":
+            elif retList[0] == "Error_CDB_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
-            elif retList[0] == "ClassGenerateDataBase Error":
+            elif retList[0] == "Error_CGDB_MultiThread":
                 if ConstValues.PsIsShowGif:
-                    self.GDBPromptBox.closeGif()
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
-            elif retList[0] == "ClassDeleteIsotope Error":
+            elif retList[0] == "Error_CDI_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
-            elif retList[0] == "ClassPeakDistinguish Error":
+            elif retList[0] == "Error_CPD1_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
-            elif retList[0] == "ClassRemoveFalsePositive Error":
+            elif retList[0] == "Error_CRFP_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
-            elif retList[0] == "ClassPeakDivision Error":
+            elif retList[0] == "Error_CPD2_MultiThread":
                 if ConstValues.PsIsShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
-            elif retList[0] == "StartMode Error":
+            elif retList[0] == "Error_CPlot_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("绘图出现错误!")
+            elif retList[0] == "Error_ImSample_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入样本文件出现错误!")
+            elif retList[0] == "Error_ImBlank_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入空白文件出现错误!")
+            elif retList[0] == "Error_ImTIC_MultiThread":
+                if ConstValues.PsIsShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("导入样本总离子图文件出现错误!")
+            elif retList[0] == "Error_StartMode_MultiThread":
                 # 关闭弹出的程序运行指示对话框
                 self.promptGif.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
-            elif retList[0] == "ImportSampleFile":
-                # 读入数据，并显示到主界面
-                self.sampleData = retList[1]
-                if ConstValues.PsIsDebug:
-                    print(self.sampleData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.sampleFilePath.split("/")[-1]
-                data = self.sampleData
-                icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "样本导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
-            elif retList[0] == "ImportBlankFile":
-                # 读入数据，并显示到主界面
-                self.blankData = retList[1]
-                if ConstValues.PsIsDebug:
-                    print(self.blankData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.blankFilePath.split("/")[-1]
-                data = self.blankData
-                icon = ConstValues.PsqtaIconOpenFileExcel
-                functionStr = "空白导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
-            elif retList[0] == "ImportTICFile":
-                # 读入数据，并显示到主界面
-                self.TICData = retList[1]
-                self.TICDataDictionary = retList[2]
-                # if ConstValues.PsIsDebug:
-                #     print(self.TICData)
-                # 处理过程
-                parent = self.mainTreeChild1
-                name = self.TICFilePath.split("/")[-1]
-                data = self.TICData
-                icon = ConstValues.PsqtaIconOpenFileTxt
-                functionStr = "总离子流图导入完成!"
-                self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
         except Exception as e:
             if ConstValues.PsIsDebug:
-                print("HandleData Error : ", e)
+                print("Error_HandleData : ", e)
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
+                    self.promptGif.closeGif()
+                PromptBox().errorMessage("出现错误！错误标识：Error_HandleData")
                 traceback.print_exc()
 
     # 设置：数据更新
@@ -1779,12 +2223,12 @@ class MainWin(QMainWindow):
             self.deleteBlankPPM = newParameters[1]
             self.deleteBlankPercentage = newParameters[2]
             self.deleteBlankList = [
-                                        self.sampleFilePath,  # 格式：字符串
-                                        self.blankFilePath,  # 格式：字符串
-                                        self.deleteBlankIntensity,  # 格式：整数
-                                        self.deleteBlankPPM,  # 格式：浮点数
-                                        self.deleteBlankPercentage  # 格式：整数
-                                    ]
+                self.sampleFilePath,  # 格式：字符串
+                self.blankFilePath,  # 格式：字符串
+                self.deleteBlankIntensity,  # 格式：整数
+                self.deleteBlankPPM,  # 格式：浮点数
+                self.deleteBlankPercentage  # 格式：整数
+            ]
             if ConstValues.PsIsDebug:
                 print(self.deleteBlankList[2:])
         elif Type == "GenerateDataBaseSetup":
@@ -1800,18 +2244,18 @@ class MainWin(QMainWindow):
             self.GDB_MHNegative = newParameters[9]
             self.GDB_MNegative = newParameters[10]
             self.GDBList = [
-                                self.GDBClass,  # 格式：列表，列表中均为字符串
-                                self.GDBCarbonRangeLow,  # 格式：整数
-                                self.GDBCarbonRangeHigh,  # 格式：整数
-                                self.GDBDBERageLow,  # 格式：整数
-                                self.GDBDBERageHigh,  # 格式：整数
-                                self.GDBM_ZRageLow,  # 格式：整数
-                                self.GDBM_ZRageHigh,  # 格式：整数
-                                self.GDB_MHPostive,  # 格式：bool
-                                self.GDB_MPostive,  # 格式：bool
-                                self.GDB_MHNegative,  # 格式：bool
-                                self.GDB_MNegative  # 格式：bool
-                            ]
+                self.GDBClass,  # 格式：列表，列表中均为字符串
+                self.GDBCarbonRangeLow,  # 格式：整数
+                self.GDBCarbonRangeHigh,  # 格式：整数
+                self.GDBDBERageLow,  # 格式：整数
+                self.GDBDBERageHigh,  # 格式：整数
+                self.GDBM_ZRageLow,  # 格式：整数
+                self.GDBM_ZRageHigh,  # 格式：整数
+                self.GDB_MHPostive,  # 格式：bool
+                self.GDB_MPostive,  # 格式：bool
+                self.GDB_MHNegative,  # 格式：bool
+                self.GDB_MNegative  # 格式：bool
+            ]
 
             if ConstValues.PsIsDebug:
                 print(self.GDBList)
@@ -1822,15 +2266,15 @@ class MainWin(QMainWindow):
             self.DelIsoIsotopeMassDeviation = newParameters[3]
             self.DelIsoIsotopeIntensityDeviation = newParameters[4]
             self.DelIsoList = [
-                                   self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                                   self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                                   self.deleteBlankIntensity,
-                                   self.DelIsoIntensityX,  # 格式：整数
-                                   self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                                   self.DelIsoMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                               ]
+                self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                self.deleteBlankIntensity,
+                self.DelIsoIntensityX,  # 格式：整数
+                self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                self.DelIsoMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+            ]
 
             if ConstValues.PsIsDebug:
                 print(self.DelIsoList[3:])
@@ -1841,14 +2285,14 @@ class MainWin(QMainWindow):
             self.PeakDisClassIsNeed = newParameters[3]
             self.PeakDisClass = newParameters[4]
             self.PeakDisList = [
-                                    self.TICDataDictionary,
-                                    self.DelIsoResult,
-                                    self.PeakDisContinuityNum,
-                                    self.PeakDisMassDeviation,
-                                    self.PeakDisDiscontinuityPointNum,
-                                    self.PeakDisClassIsNeed,  # 第二部分
-                                    self.PeakDisClass,
-                                ]
+                self.TICDataDictionary,
+                self.DelIsoResult,
+                self.PeakDisContinuityNum,
+                self.PeakDisMassDeviation,
+                self.PeakDisDiscontinuityPointNum,
+                self.PeakDisClassIsNeed,  # 第二部分
+                self.PeakDisClass,
+            ]
 
             # 更新状态栏
             self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
@@ -1859,12 +2303,12 @@ class MainWin(QMainWindow):
             self.RemoveFPContinue_CNum = newParameters[1]
             self.RemoveFPContinue_DBENum = newParameters[2]
             self.RemoveFPList = [
-                                     self.DelIsoResult,
-                                     self.PeakDisResult,
-                                     self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                     self.RemoveFPContinue_CNum,
-                                     self.RemoveFPContinue_DBENum
-                                 ]
+                self.DelIsoResult,
+                self.PeakDisResult,
+                self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPContinue_CNum,
+                self.RemoveFPContinue_DBENum
+            ]
 
             if ConstValues.PsIsDebug:
                 print(self.RemoveFPList[2:])
@@ -1874,14 +2318,14 @@ class MainWin(QMainWindow):
             self.PeakDivNeedMerge = newParameters[2]
             self.PeakDivNeedGenImage = newParameters[3]
             self.PeakDivList = [
-                                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
-                                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
-                                    self.PeakDivNoiseThreshold,
-                                    self.PeakDivRelIntensity,
-                                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                                ]
+                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+                self.PeakDivNoiseThreshold,
+                self.PeakDivRelIntensity,
+                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+            ]
 
             if ConstValues.PsIsDebug:
                 print(self.PeakDivList[3:])
@@ -1928,7 +2372,11 @@ class MainWin(QMainWindow):
             ]
 
             if ConstValues.PsIsDebug:
-                print(self.startModeList)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.startModeList：", self.startModeList
+                )
 
     # 程序运行前准备工作
     def BeforeRunning(self, Type):
@@ -1939,12 +2387,12 @@ class MainWin(QMainWindow):
                 return False
             # 因为有self.sampleFilePath，self.blankFilePath，所以需要更新self.sampleFilePath,self.blankFilePath（最开始前两项为空字符串）
             self.deleteBlankList = [
-                                        self.sampleFilePath,  # 格式：字符串
-                                        self.blankFilePath,  # 格式：字符串
-                                        self.deleteBlankIntensity,  # 格式：整数
-                                        self.deleteBlankPPM,  # 格式：浮点数
-                                        self.deleteBlankPercentage  # 格式：整数
-                                    ]
+                self.sampleFilePath,  # 格式：字符串
+                self.blankFilePath,  # 格式：字符串
+                self.deleteBlankIntensity,  # 格式：整数
+                self.deleteBlankPPM,  # 格式：浮点数
+                self.deleteBlankPercentage  # 格式：整数
+            ]
             if ConstValues.PsNameDeleteBlank in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1973,15 +2421,15 @@ class MainWin(QMainWindow):
                 return False
             # 因为有self.deleteBlankResult和self.GDBResult，所以需要更新self.DelIsoList（最开始前两项为空）
             self.DelIsoList = [
-                                   self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                                   self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                                   self.deleteBlankIntensity,
-                                   self.DelIsoIntensityX,  # 格式：整数
-                                   self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                                   self.DelIsoMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                               ]
+                self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+                self.deleteBlankIntensity,
+                self.DelIsoIntensityX,  # 格式：整数
+                self.DelIso_13C2RelativeIntensity,  # 格式：整数
+                self.DelIsoMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+            ]
             if ConstValues.PsNameDeleteIsotope in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2001,14 +2449,14 @@ class MainWin(QMainWindow):
                 return False
             # 因为有self.TICFilePath，self.DelIsoResult，所以需要更新self.TICFilePath，self.PeakDisList（最开始第一项为空字符串，第二项为空）
             self.PeakDisList = [
-                                    self.TICDataDictionary,
-                                    self.DelIsoResult,
-                                    self.PeakDisContinuityNum,
-                                    self.PeakDisMassDeviation,
-                                    self.PeakDisDiscontinuityPointNum,
-                                    self.PeakDisClassIsNeed,  # 第二部分
-                                    self.PeakDisClass,
-                                ]
+                self.TICDataDictionary,
+                self.DelIsoResult,
+                self.PeakDisContinuityNum,
+                self.PeakDisMassDeviation,
+                self.PeakDisDiscontinuityPointNum,
+                self.PeakDisClassIsNeed,  # 第二部分
+                self.PeakDisClass,
+            ]
             if ConstValues.PsNamePeakDistinguish in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2033,12 +2481,12 @@ class MainWin(QMainWindow):
                     return False
             # 更新数据
             self.RemoveFPList = [
-                                     self.DelIsoResult,
-                                     self.PeakDisResult,  # 列表，有三个数据
-                                     self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                     self.RemoveFPContinue_CNum,
-                                     self.RemoveFPContinue_DBENum
-                                 ]
+                self.DelIsoResult,
+                self.PeakDisResult,  # 列表，有三个数据
+                self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPContinue_CNum,
+                self.RemoveFPContinue_DBENum
+            ]
             if (ConstValues.PsNameRemoveFPFrom_DelIsoResult in self.mainDataNameSetAll) or \
                     (ConstValues.PsNameRemoveFPFrom_PeakDisResult in self.mainDataNameSetAll):
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
@@ -2055,14 +2503,14 @@ class MainWin(QMainWindow):
                 return False
             # 更新数据
             self.PeakDivList = [
-                                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头，第5步
-                                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)，第4步
-                                    self.PeakDivNoiseThreshold,
-                                    self.PeakDivRelIntensity,
-                                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                                ]
+                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头，第5步
+                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)，第4步
+                self.PeakDivNoiseThreshold,
+                self.PeakDivRelIntensity,
+                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+            ]
             if ConstValues.PsNamePeakDivision in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2112,18 +2560,43 @@ class MainWin(QMainWindow):
                 return self.mainNeedCover
         elif Type == "ImportSampleFile":
             # 导入文件，并得到文件名称
-            openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', ConstValues.PsReadFileDefaultDirectoy, 'Excel files(*.xlsx , *.xls)')
+            openfile_name = QFileDialog.getOpenFileName(self, '选择样本文件', ConstValues.PsReadFileDefaultDirectoy,
+                                                        'Excel files(*.xlsx , *.xls)')
             self.sampleFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.sampleFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.sampleFilePath：", self.sampleFilePath
+                )
             if self.sampleFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
+            # 检查是否重名
             name = self.sampleFilePath.split("/")[-1]
-            # 用户确认是否为样本文件
-            isSampleFile = PromptBox().questionMessage("确定文件" + name + "是样本文件？")
-            if not isSampleFile:
+            if (name in self.blankNameList) or (name in self.TICNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.sampleNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过样本文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.sampleNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(
+                                self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
+            else:
+                return PromptBox().questionMessage(name + "是否为样本文件？")
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -2132,23 +2605,44 @@ class MainWin(QMainWindow):
                 self.deleteBlankPPM,  # 格式：浮点数
                 self.deleteBlankPercentage  # 格式：整数
             ]
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
         elif Type == "ImportBlankFile":
             # 导入文件，并得到文件名称
-            openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', ConstValues.PsReadFileDefaultDirectoy, 'Excel files(*.xlsx , *.xls)')
+            openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', ConstValues.PsReadFileDefaultDirectoy,
+                                                        'Excel files(*.xlsx , *.xls)')
             self.blankFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.blankFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.blankFilePath：", self.blankFilePath
+                )
             if self.blankFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
             name = self.blankFilePath.split("/")[-1]
-            # 用户确认是否为空白文件
-            isBlankFile = PromptBox().questionMessage("确定文件" + name + "是空白文件？")
-            if not isBlankFile:
+            if (name in self.sampleNameList) or (name in self.TICNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.blankNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过空白文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.blankNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(
+                                self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
+            else:
+                return PromptBox().questionMessage(name + "是否为空白文件？")
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -2157,26 +2651,44 @@ class MainWin(QMainWindow):
                 self.deleteBlankPPM,  # 格式：浮点数
                 self.deleteBlankPercentage  # 格式：整数
             ]
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
         elif Type == "ImportTICFile":
             # 导入文件，并得到文件名称
-            openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', ConstValues.PsReadFileDefaultDirectoy, 'Txt files(*.txt)')
+            openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', ConstValues.PsReadFileDefaultDirectoy,
+                                                        'Txt files(*.txt)')
             self.TICFilePath = openfile_name[0]
             if ConstValues.PsIsDebug:
-                print(self.TICFilePath)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.TICFilePath：", self.TICFilePath
+                )
             if self.TICFilePath == "":
                 return False
-            # # 读入文件合法性检查（是否重名）
             name = self.TICFilePath.split("/")[-1]
-            # 用户确认是否为空白文件
-            isTICFile = PromptBox().questionMessage("确定文件" + name + "是总离子图文件文件？")
-            if not isTICFile:
+            if (name in self.sampleNameList) or (name in self.blankNameList):
+                PromptBox().informationMessageAutoClose("和其他文件重名，导入失败！", ConstValues.PsPromptBoxTime)
                 return False
-            if name in self.mainDataNameSetAll:
-                self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
-                return self.mainNeedCover
+            # 如果已经存在样本文件，则需要确定是否替换
+            if self.TICNameList[0] is not None:
+                if PromptBox().questionMessage("已经导入过TIC文件，是否替换？"):
+                    # 遍历所有节点，删除对应样本文件
+                    oldNmae = self.TICNameList[0]
+                    item = QTreeWidgetItemIterator(self.mainTreeWidget)
+                    while item.value():
+                        treeWidgetItem = item.value()
+                        if treeWidgetItem.text(0) == oldNmae:
+                            treeWidgetItem.parent().removeChild(treeWidgetItem)
+                            self.tabWidgetShowData.removeTab(
+                                self.tabWidgetShowData.indexOf(globals()["tableWidget_" + oldNmae]))
+                            self.mainDataNameSetAll.remove(oldNmae)
+                            self.mainNeedCover = False
+                            break
+                        # 到下一个节点
+                        item += 1
+                else:
+                    return False
+            else:
+                return PromptBox().questionMessage(name + "是否为TIC文件？")
 
         return True
 
@@ -2228,7 +2740,7 @@ class MainWin(QMainWindow):
                     self.GDBList,
                     self.DelIsoList,
                     self.RemoveFPList
-                                 ]
+                ]
             elif self.startMode == 2:
                 # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
                 self.RemoveFPId = 2  # 设置为 峰提取
@@ -2370,6 +2882,7 @@ class MainWin(QMainWindow):
 
     # 程序开始运行后收尾工作
     def AfterRunning(self, Type):
+        self.whetherShowGif = True
         if Type == "DeleteBlank":
             # 更新状态栏消息
             self.statusSetup(ConstValues.PsMainWindowStatusMessage, "正在处理扣空白，请稍后...")
@@ -2430,33 +2943,48 @@ class MainWin(QMainWindow):
             # 弹出提示框
             if ConstValues.PsIsShowGif:
                 self.promptGif.showGif("正在导入总离子图文件，请稍后...", ConstValues.PsIconLoading)
+        else:
+            self.whetherShowGif = False
 
     # 画图
     def SetupAndPlot(self):
-        try:
-            # 参数设置
-            if self.PlotSetup():
-                # 绘图
-                self.Plot()
-        except Exception as e:
-            if ConstValues.PsIsDebug:
-                print("SetupAndPlot Error : ", e)
-                traceback.print_exc()
+        # 参数设置
+        if self.PlotSetup():
+            # 绘图
+            self.Plot()
 
     # 模式选择
     def SetupAndStartMode(self):
+        # 参数设置
+        if self.StartModeSetup():
+            # 绘图
+            self.StartMode()
+
+    # 主题选择
+    def ThemeSelect(self, theme):
+        PromptBox().informationMessageAutoClose(theme + "主题选择成功，下次重启生效。", 2)
         try:
-            # 参数设置
-            if self.StartModeSetup():
-                # 绘图
-                self.StartMode()
+            with open("./__system/config.txt", "w") as f:
+                f.write(theme)
         except Exception as e:
             if ConstValues.PsIsDebug:
-                print("SetupAndStartMode Error : ", e)
+                print("Error_WriteConfig : ", e)
+                PromptBox().errorMessage("出现错误！错误标识：Error_WriteConfig")
                 traceback.print_exc()
 
+    # 帮助界面
+    def Help(self, functionStr):
+        if ConstValues.PsIsDebug:
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "functionStr:", functionStr
+            )
+        # 创建对话框
+        ClassHelp(functionStr, self.MainWindowsStyle).Help()
+
 # 删空白
-class ClassDeleteBlank():
+class ClassDeleteBlank:
     def __init__(self, parameterList, outputFilesPath):
         """
         :param parameterList: 程序运行所需要的参数列表
@@ -2491,8 +3019,13 @@ class ClassDeleteBlank():
         self.sampleData = self.sampleData[self.sampleData.Intensity > self.deleteBlankIntensity]
         self.blankData = self.blankData[self.blankData.Intensity > self.deleteBlankIntensity]
         if ConstValues.PsIsDebug:
-            print(self.sampleData.shape[0])  # 180-onescan-external.xlsx处理后：5888
-            print(self.blankData.shape[0])  # blank-3.xlsx处理后：3778
+            # 180-onescan-external.xlsx处理后：5888
+            # blank-3.xlsx处理后：3778
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "self.sampleData.shape[0]:", self.sampleData.shape[0], "self.blankData.shape[0]:", self.blankData.shape[0]
+            )
 
     # 删去样本和空白中相同的mass且intensity相近的mass，必须调过DeleteSmallIntensity函数调用此函数才有意义
     def DeleteSimilarToBlank(self):
@@ -2512,8 +3045,11 @@ class ClassDeleteBlank():
         in2 = self.blankData["Intensity"].values      # 空白中的intensity
         result = np.hstack([m1.reshape(-1, 1), in1.reshape(-1, 1)])  # 两个一维数组拼接为二维数组
         if ConstValues.PsIsDebug:
-            print(type(result))
-            print(result[:6, :])
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "type(result):", type(result), "result[:6, :]:", result[:6, :]
+            )
 
         # 核心处理逻辑
         deleteList = []  # 记录需要删除的索引
@@ -2545,10 +3081,11 @@ class ClassDeleteBlank():
         result = header + result
 
         if ConstValues.PsIsDebug:
-            print(len(deleteList))
-            print(len(result))
-            print(type(result))
-            print(result[:6])
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "len(deleteList):", len(deleteList), "len(result):", len(result), "result[:6]:", result[:6]
+            )
 
         # 数据写入excel文件中
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_1_deleteBlank")
@@ -2557,7 +3094,7 @@ class ClassDeleteBlank():
         return result, True
 
 # 生成数据库
-class ClassGenerateDataBase():
+class ClassGenerateDataBase:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 11, "ClassGenerateDataBase参数不对"
         self.GDBClass = parameterList[0]  # 数据库生成(参数)：Class类型
@@ -2705,7 +3242,7 @@ class ClassGenerateDataBase():
         return item
 
 # 搜同位素
-class ClassDeleteIsotope():
+class ClassDeleteIsotope:
     def __init__(self, parameterList, outputFilesPath):
         assert len(parameterList) == 8, "ClassDeleteIsotope参数个数不对"
         self.deleteBlankResult = parameterList[0]  # 删空白的结果（格式：list二维数组，有表头）
@@ -2727,14 +3264,12 @@ class ClassDeleteIsotope():
         result = []
         header = ["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
         result.append(header)
-        try:
-            for sampleItem in self.deleteBlankResult:
-                # sampleItem均为列表，列表：[Mass, Intensity]，都是浮点数
-                ret = self.DelIsoHandleItem(sampleItem)
-                for item in ret:
-                    result.append(item)
-        except Exception as e:
-            print("Error : ", e)
+
+        for sampleItem in self.deleteBlankResult:
+            # sampleItem均为列表，列表：[Mass, Intensity]，都是浮点数
+            ret = self.DelIsoHandleItem(sampleItem)
+            for item in ret:
+                result.append(item)
 
         # 去同位素按照Formula（主键），C（次主键）从小到大顺序排序
         result = self.DelIsoSort(result)
@@ -2817,16 +3352,20 @@ class ClassDeleteIsotope():
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     ret.append(True)
                     ret.append(item)
                     break
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C2) * 1000000.0 / DBItem_13C2)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity) * 100.0 / DBItem_13C2Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C2Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     if len(ret) == 0:
                         ret.append(True)
                     ret.append(item)
@@ -2843,8 +3382,10 @@ class ClassDeleteIsotope():
             for item in self.deleteBlankResult:
                 Mass = item[0]
                 Intensity = item[1]
+                # if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
+                #         (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
                 if (abs((Mass - DBItem_13C1) * 1000000.0 / DBItem_13C1)) <= self.DelIsoIsotopeMassDeviation and \
-                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity) * 100.0 / DBItem_13C1Intensity) < self.DelIsoIsotopeIntensityDeviation):
+                        (abs((Intensity * 100.0 / sampleItemIntensity - DBItem_13C1Intensity)) < self.DelIsoIsotopeIntensityDeviation):
                     ret.append(True)
                     ret.append(item)
                     break
@@ -2854,7 +3395,11 @@ class ClassDeleteIsotope():
 
         # 传入的参数个数错误
         if ConstValues.PsIsDebug:
-            print("ClassDeleteIsotope 中的函数 DelIsoHasCorrespondInSample(self, parameterList)参数错误！")
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "parameterList参数错误！"
+            )
 
         return False
 
@@ -2951,24 +3496,26 @@ class ClassPeakDistinguish:
         # self.resultPart1Detail中所有的数据都是是用户输入的需要进行峰检测（第二部分）的类别
         self.resultPart1Detail = []
         flag = 1
-        try:
-            for sampleItem in self.DelIsoResult:
-                # sampleItem均为列表，有多种类型：
-                # 类型一：["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
-                # 类型二：["SampleMass", "SampleIntensity"]
-                # 类型三：[DBItem_13C1, DBItem_13C1Intensity, "iostope"]或者[DBItem_13C2, DBItem_13C2Intensity, "iostope"]
-                # 类型四：[]
-                if len(sampleItem) == 8:
-                    ret, retDetail = self.PeakDisHandleItem(sampleItem)
-                    for item in ret:
-                        self.resultPart1.append(item)
-                    if len(retDetail) != 0:
-                        if flag == 1 and ConstValues.PsIsDebug:
-                            print("------------The length of retDetail : ", len(retDetail))
-                            flag = 0
-                        self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
-        except Exception as e:
-            print("Error : ", e)
+
+        for sampleItem in self.DelIsoResult:
+            # sampleItem均为列表，有多种类型：
+            # 类型一：["SampleMass", "SampleIntensity", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
+            # 类型二：["SampleMass", "SampleIntensity"]
+            # 类型三：[DBItem_13C1, DBItem_13C1Intensity, "iostope"]或者[DBItem_13C2, DBItem_13C2Intensity, "iostope"]
+            # 类型四：[]
+            if len(sampleItem) == 8:
+                ret, retDetail = self.PeakDisHandleItem(sampleItem)
+                for item in ret:
+                    self.resultPart1.append(item)
+                if len(retDetail) != 0:
+                    if flag == 1 and ConstValues.PsIsDebug:
+                        print(
+                            "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                            sys._getframe().f_code.co_name, "\" method***：",
+                            "len(retDetail):", len(retDetail)
+                        )
+                        flag = 0
+                    self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
 
         # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
         self.resultPart1 = self.PeakDisSort()
@@ -2977,9 +3524,6 @@ class ClassPeakDistinguish:
         # 数据写入excel文件中
         WriteDataToExcel(self.resultPart1, newDirectory + "/" + ConstValues.PsNamePeakDistinguish)
         WriteDataToExcel(self.resultPart1Detail, newDirectory + "/PeakDisPart1DetailPlot.xlsx")
-
-        # # 第二部分需要处理的数据，将图像输出到文件中
-        # self.PeakDisPlotPeak()
 
         # # 为了录屏演示用，直接从文件读取
         # self.resultPart1 = ReadExcelToList("./intermediateFiles/_4_peakDistinguish/" + ConstValues.PsNamePeakDistinguish)
@@ -3056,7 +3600,16 @@ class ClassPeakDistinguish:
                 startRTValue = keysList[startRT]  # 开始的扫描点的值
                 endRT = startRT + len(continuityItems) - 1  # 结束的扫描点在TIC中属于第几个扫描点
                 endRTValue = keysList[endRT]  # 结束的扫描点的值
-                MassMedian = np.median(continuityMasses2)  # TIC中所有符合条件的连续的记录的
+
+                # 计算中位数：应该是先计算最大值，然后各个intensity／最大值，选取大于60的 m/z，取中位数
+                thresholdValue = np.max(continuityMasses2) * 0.6
+                greaterThanThresholdList = []
+                for value in continuityMasses2:
+                    if value > thresholdValue:
+                        greaterThanThresholdList.append(value)
+                MassMedian = -1  # 代表不存在这样的中位数，理论上一定存在
+                if len(greaterThanThresholdList) > 0:
+                    MassMedian = np.median(np.array(greaterThanThresholdList))  # TIC中所有符合条件的连续的记录的
 
                 ret.append([sampleMass, Area, startRT, startRTValue, endRT, endRTValue, MassMedian] + sampleItem[2:])
             elif needDetectPeak:  # 需要将连续的但扫描点数目不符合要求的数据值清零
@@ -3083,43 +3636,6 @@ class ClassPeakDistinguish:
             if abs((TICMass - sampleMass) * 1000000.0 / sampleMass) < self.PeakDisMassDeviation:
                 return item
         return None
-
-    # # 负责读取总离子流图文件(txt)
-    # def ReadTIC(self):
-    #     """
-    #     文件格式必须为：每行三个数据，一个表头，数据之间用制表符(\t)分割，无其他无关字符
-    #     :return:返回结果为字典：{key:value,...,key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-    #     """
-    #     startTime = time.time()
-    #     # 读取数据，数据分割
-    #     f = open(self.TICFilePath, "r")
-    #     content = f.read().strip().replace("\n", "\t").replace(" ", "").split("\t")
-    #     # 去除表头
-    #     content = content[3:]
-    #     if len(content) / 3 != int(len(content) / 3):
-    #         # raise Exception("Error in ClassPeakDistinguish ReadTIC.")
-    #         PromptBox().warningMessage("总离子流图文件(txt)存在问题，请重新选择！")
-    #         return None
-    #     # str全部转为float
-    #     content = [float(item) for item in content]
-    #     # 返回结果为字典：{key:value}，value为二维列表[[Mass, Intensity],...,[Mass, Intensity]]
-    #     res = {}
-    #
-    #     key = content[0]
-    #     value = []
-    #     for i in range(int(len(content) / 3)):
-    #         if content[i * 3] != key:
-    #             res[key] = value  # 字典中添加元素（二维列表）
-    #             key = content[i * 3]
-    #             value = []
-    #         value.append([content[i * 3 + 1], content[i * 3 + 2]])
-    #
-    #     if ConstValues.PsIsDebug:
-    #         print("扫描点的个数： ", len(res))
-    #     endTime = time.time()
-    #     if ConstValues.PsIsDebug:
-    #         print("读入和处理文件费时： ",endTime - startTime, " s")
-    #     return res
 
     # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
     def PeakDisSort(self):
@@ -3262,6 +3778,7 @@ class ClassRemoveFalsePositive:
         newData = []
         if self.RemoveFPId == 2:
             newData = self.RemoveFPFromPeakDisPlot(result)  # 从读取PeakDisPart1DetailPlot.xlsx去假阳性后生成newData
+            WriteDataToExcel(newData, newDirectory + "/PeakDisPart1DetailPlotAfterRFP.xlsx")
             # self.PlotAfterRemoveFP(newData)
 
         return [result, newData], True
@@ -3479,8 +3996,6 @@ class ClassRemoveFalsePositive:
         for item in self.PeakDisResultDetail:
             if item[0] in massSet:
                 newData.append(item)
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_5_removeFalsePositive")
-        WriteDataToExcel(newData, newDirectory + "/PeakDisPart1DetailPlotAfterRFP.xlsx")
         return newData
 
     # 过滤峰识别第一阶段生成的PeakDistinguishPart1Detail.xlsx文件，并绘制图形
@@ -3525,31 +4040,26 @@ class ClassPeakDivision:
 
     # 第二部分，峰检测分割  ######################################################################
     def PeakDivision(self):
-        try:
-            resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
-            headerPart2 = ["SampleMass", "Area", "PeakRTIndex", "PeakRT", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion", "orderOfMagnitude"]
-            resultPart2.append(headerPart2)
-            # 峰检测预处理
-            ret1DetailPreprocessing = self.PeakDivPreprocessing()
-            # 统计连续区间的个数
-            ret1DetailContinueList = self.PeakDivSeekContinue(ret1DetailPreprocessing)
-            # 为生成图片准备数据
-            parametersList = self.PeakDivPrepareParams(ret1DetailPreprocessing, ret1DetailContinueList)
-            # 生成图片，同时生成结果
-            for parameters in parametersList:
-                ret = self.PlotAfterRemoveFP(parameters)  # 返回结果为二维列表
-                for item in ret:
-                    resultPart2.append(item)
-            # 数据写入文件
-            newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision")
-            WriteDataToExcel(ret1DetailPreprocessing, newDirectory + "/ret1DetailPreprocessing.xlsx")
-            WriteDataToExcel(resultPart2, newDirectory + "/" + ConstValues.PsNamePeakDivision)
+        resultPart2 = []  # 第二部分，峰检测与分割，即将多个峰分开输出
+        headerPart2 = ["SampleMass", "Area", "PeakRTIndex", "PeakRT", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion", "orderOfMagnitude"]
+        resultPart2.append(headerPart2)
+        # 峰检测预处理
+        ret1DetailPreprocessing = self.PeakDivPreprocessing()
+        # 统计连续区间的个数
+        ret1DetailContinueList = self.PeakDivSeekContinue(ret1DetailPreprocessing)
+        # 为生成图片准备数据
+        parametersList = self.PeakDivPrepareParams(ret1DetailPreprocessing, ret1DetailContinueList)
+        # 生成图片，同时生成结果
+        for parameters in parametersList:
+            ret = self.PlotAfterRemoveFP(parameters)  # 返回结果为二维列表
+            for item in ret:
+                resultPart2.append(item)
+        # 数据写入文件
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision")
+        WriteDataToExcel(ret1DetailPreprocessing, newDirectory + "/ret1DetailPreprocessing.xlsx")
+        WriteDataToExcel(resultPart2, newDirectory + "/" + ConstValues.PsNamePeakDivision)
 
-            return resultPart2, True
-        except Exception as e:
-            if ConstValues.PsIsDebug:
-                print("plt Error : ", e)
-                traceback.print_exc()
+        return resultPart2, True
 
     # 峰检测预处理
     def PeakDivPreprocessing(self):
@@ -3656,24 +4166,19 @@ class ClassPeakDivision:
         orderValueList = [10 ** int(math.log10(maxValue+1)) for maxValue in maxValueList]  # +1是为了防止maxValue=0
         # 存储每个数据的数量级（字符串），例如：1e4
         orderStrList = ["1e" + str(int(math.log10(maxValue+1))) for maxValue in maxValueList]
-        # 获取数据个数
-        length = len(rawData[0])
-        # 将数据进行平滑处理，分为两段平滑：[0...shortEdge]，[longEdge...length-1]
-        shortWinLength = 101          # 平滑数据窗口大小
-        longWinLength = 201
-        shortEdge = int(length / 6)  # 3
-        bufferLength = int(length / 20)  # 15
-        longEdge = shortEdge - 2*bufferLength
+
+        # 拟合数据
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:
-            data = item[9:]
-            y1 = savgol_filter(data[:shortEdge], window_length=shortWinLength, polyorder=2)
-            y2 = savgol_filter(data[longEdge:], window_length=longWinLength, polyorder=2)
-            # 合并平滑后的数据：[0...shortEdge-bufferLength]，[bufferLength...length-1]
-            y = np.hstack([y1[: shortEdge-bufferLength], y2[bufferLength:]])
-            smoothData.append(y)
+            # # 拟合滤波算法
+            # smoothData.append(self.FilterPoly(item[9:]))
+
+            # 普通滤波算法
+            smoothData.append(self.Filter(item[9:], "mean"))
+
         # 主逻辑
         ret = []
+        length = len(rawData[0])  # 获取数据个数（扫描点个数）
         for i in range(len(ContinueList)):
             ContinueItem = ContinueList[i]  # 是个二维列表，最前面一项是个列表，表示该物质信息
             ret.append([dataProcessing[i], smoothData[i]])
@@ -3696,6 +4201,49 @@ class ClassPeakDivision:
             ret[i].append(parameters)
 
         return ret
+
+    # 滤波算法
+    def Filter(self, data, filterType="median", filterSize=10):
+        rawDataLength = len(data)
+        if rawDataLength <= filterSize:
+            return data
+
+        newData = []
+        halfFilterSize = int(filterSize / 2)  # 开始滤波的位置
+        endEdge = rawDataLength - halfFilterSize  # 滤波结束位置
+        # 前面halfFilterSize个数据
+        for i in range(halfFilterSize):
+            newData.append(data[i])
+        # 滤波
+        if filterType == "median":  # 中位值滤波法
+            for i in range(halfFilterSize, endEdge):
+                newData.append(np.median(np.array(data[i - halfFilterSize:i + halfFilterSize])))
+        elif filterType == "mean":  # 滑动平均数滤波
+            for i in range(halfFilterSize, endEdge):
+                newData.append(np.mean(np.array(data[i - halfFilterSize:i + halfFilterSize])))
+        # 后面halfFilterSize个数据
+        for i in range(endEdge, rawDataLength):
+            newData.append(data[i])
+
+        return np.array(newData)
+
+    # 拟合滤波算法
+    def FilterPoly(self, data):
+        # 获取数据个数（扫描点个数）
+        length = len(data)
+        # 将数据进行平滑处理，分为两段平滑：[0...shortEdge]，[longEdge...length-1]
+        shortWinLength = 101  # 平滑数据窗口大小
+        longWinLength = 201
+        shortEdge = int(length / 6)  # 500
+        bufferLength = int(length / 20)  # 150
+        longEdge = shortEdge - 2 * bufferLength
+
+        y1 = savgol_filter(data[:shortEdge], window_length=shortWinLength, polyorder=2)
+        y2 = savgol_filter(data[longEdge:], window_length=longWinLength, polyorder=2)
+        # 合并平滑后的数据：[0...shortEdge-bufferLength]，[bufferLength...length-1]
+        y = np.hstack([y1[: shortEdge - bufferLength], y2[bufferLength:]])
+
+        return y
 
     # 重点逻辑，峰分割
     def PeakDivSplit(self, rawdata, smoothdata, ordervalue):
@@ -3845,51 +4393,46 @@ class ClassPeakDivision:
         if self.PeakDivNeedGenImage:  # 根据参数决定是否生成图片
             # 创建对应的文件夹
             newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_6_peakDivision/peakImages/" + Class + "_DBE" + str(DBENum))
-            try:
-                # 画图
-                step = 0.05
-                # 改变y坐标的范围
-                bottomNum = 2 if len(peakInfo) <= 2 else len(peakInfo)
-                plt.ylim(-(step * (bottomNum + 1) * max), (1+step*6) * max)
-                # 添加坐标提示，标题
-                plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='k')
-                plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='k')
-                title = "Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula
-                plt.title(title, fontproperties='SimHei', fontsize=12, color='red')
-                # 画出线图，原始数据
-                plt.vlines(x=x, ymin=0, ymax=data, colors="b", linewidth=1)
-                # 画出峰之间以及两侧的分割线，+15为了修正画出来的偏移
-                for splitIndex in redList:
-                    plt.vlines(x=splitIndex+15, ymin=-int((step*2) * max), ymax=int((1+step*4) * max), colors="g", linewidth=0.5)
-                # 添加峰面积信息
-                for k in range(len(areas)):
-                    start = redList[k*2]
-                    end = redList[k*2+1]
-                    middle = int((start + end) / 2 - 50)
-                    plt.text(middle, int((1+step*(k % 2+1))*(max+1)), areas[k], fontproperties='SimHei', fontsize=5, color="k")
-                # 添加数量级标识
-                plt.text(int(4 * len(data) / 5), int((1+step*4.4) * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=8, color="k")
-                # 添加三元组含义提示
-                plt.text(int(len(data) / 50), int((1+step*4.6) * (max + 1)), "三元组含义:(Index, RT, Intensity)", fontproperties='SimHei', fontsize=6, color="k")
-                # 画出平滑后的曲线
-                plt.plot(x, smoothItem, color="r", linewidth=0.6)
-                # 添加峰顶标记信息
-                for i in range(len(peakInfo)):
-                    peak = peakInfo[i]
-                    index = peak[0]  # int
-                    RT = peak[1]  # float
-                    Intensity = peak[2]  # str
-                    plt.vlines(x=x[index], ymin=-int(step * max), ymax=int((1+step*2) * max), colors="r", linewidth=0.5, linestyle="--")
-                    text = "(" + str(index) + ", " + str(RT) + ", " + Intensity + ")"
-                    plt.text(index-200, -int(step * (i % 4 + 1) * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
-                # 保存图像
-                plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
-                # 关闭当前图像
-                plt.close()
-            except Exception as e:
-                if ConstValues.PsIsDebug:
-                    print("plt Error : ", e)
-                    traceback.print_exc()
+            # 画图
+            step = 0.05
+            # 改变y坐标的范围
+            bottomNum = 2 if len(peakInfo) <= 2 else len(peakInfo)
+            plt.ylim(-(step * (bottomNum + 1) * max), (1+step*6) * max)
+            # 添加坐标提示，标题
+            plt.xlabel('RT', fontproperties='SimHei', fontsize=15, color='k')
+            plt.ylabel('Intensity', fontproperties='SimHei', fontsize=15, color='k')
+            title = "Mass:" + str(SampleMass) + "  DBE:" + str(DBENum) + "  formula:" + formula
+            plt.title(title, fontproperties='SimHei', fontsize=12, color='red')
+            # 画出线图，原始数据
+            plt.vlines(x=x, ymin=0, ymax=data, colors="b", linewidth=1)
+            # 画出峰之间以及两侧的分割线，+15为了修正画出来的偏移
+            for splitIndex in redList:
+                plt.vlines(x=splitIndex+15, ymin=-int((step*2) * max), ymax=int((1+step*4) * max), colors="g", linewidth=0.5)
+            # 添加峰面积信息
+            for k in range(len(areas)):
+                start = redList[k*2]
+                end = redList[k*2+1]
+                middle = int((start + end) / 2 - 50)
+                plt.text(middle, int((1+step*(k % 2+1))*(max+1)), areas[k], fontproperties='SimHei', fontsize=5, color="k")
+            # 添加数量级标识
+            plt.text(int(4 * len(data) / 5), int((1+step*4.4) * (max + 1)), "数量级:" + orderOfMagnitude, fontproperties='SimHei', fontsize=8, color="k")
+            # 添加三元组含义提示
+            plt.text(int(len(data) / 50), int((1+step*4.6) * (max + 1)), "三元组含义:(Index, RT, Intensity)", fontproperties='SimHei', fontsize=6, color="k")
+            # 画出平滑后的曲线
+            plt.plot(x, smoothItem, color="r", linewidth=0.6)
+            # 添加峰顶标记信息
+            for i in range(len(peakInfo)):
+                peak = peakInfo[i]
+                index = peak[0]  # int
+                RT = peak[1]  # float
+                Intensity = peak[2]  # str
+                plt.vlines(x=x[index], ymin=-int(step * max), ymax=int((1+step*2) * max), colors="r", linewidth=0.5, linestyle="--")
+                text = "(" + str(index) + ", " + str(RT) + ", " + Intensity + ")"
+                plt.text(index-200, -int(step * (i % 4 + 1) * (max + 1)), text, fontproperties='SimHei', fontsize=5, color="k")
+            # 保存图像
+            plt.savefig(fname=newDirectory + "/" + Class + "_DBE" + str(DBENum) + "_C" + str(CNum), dpi=200)
+            # 关闭当前图像
+            plt.close()
 
         return ret
 
@@ -3908,133 +4451,104 @@ class MultiThread(QThread):
 
         if self.__function == "ClassDeleteBlank":
             try:
-                retList = ["ClassDeleteBlank"]
                 cdb = ClassDeleteBlank(self.__parameters, self.outputFilesPath)
                 deleteBlankResult, deleteBlankIsFinished = cdb.DeleteBlank()
-                retList.append(deleteBlankResult)
-                retList.append(deleteBlankIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassDeleteBlank", deleteBlankResult, deleteBlankIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassDeleteBlank Error : ", e)
-                self.signal.emit(["ClassDeleteBlank Error"])
+                    print("Error_CDB_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CDB_MultiThread"])
         elif self.__function == "ClassGenerateDataBase":
             try:
-                retList = ["ClassGenerateDataBase"]
                 cgdb = ClassGenerateDataBase(self.__parameters, self.outputFilesPath)
                 GDBResult, GDBIsFinished = cgdb.GenerateData()
-                retList.append(GDBResult)
-                retList.append(GDBIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassGenerateDataBase", GDBResult, GDBIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassGenerateDataBase Error : ", e)
-                self.signal.emit(["ClassGenerateDataBase Error"])
+                    print("Error_CGDB_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CGDB_MultiThread"])
         elif self.__function == "ClassDeleteIsotope":
             try:
-                retList = ["ClassDeleteIsotope"]
                 cdi = ClassDeleteIsotope(self.__parameters, self.outputFilesPath)
                 DelIsoResult, DelIsoIsFinished = cdi.DeleteIsotope()
-                retList.append(DelIsoResult)
-                retList.append(DelIsoIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassDeleteIsotope", DelIsoResult, DelIsoIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassDeleteIsotope Error : ", e)
-                self.signal.emit(["ClassDeleteIsotope Error"])
+                    print("Error_CDI_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CDI_MultiThread"])
         elif self.__function == "ClassPeakDistinguish":
             try:
-                retList = ["ClassPeakDistinguish"]
                 cpd = ClassPeakDistinguish(self.__parameters, self.outputFilesPath)
-                # cpd.PeakDisPlotPeak()
                 PeakDisResult, PeakDisIsFinished = cpd.PeakDistinguish()
-                time.sleep(5)  # 认为睡眠20s
-                retList.append(PeakDisResult)
-                retList.append(PeakDisIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPeakDistinguish", PeakDisResult, PeakDisIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPeakDistinguish Error : ", e)
-                self.signal.emit(["ClassPeakDistinguish Error"])
+                    print("Error_CPD1_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CPD1_MultiThread"])
         elif self.__function == "ClassRemoveFalsePositive":
             try:
-                retList = ["ClassRemoveFalsePositive"]
                 crfp = ClassRemoveFalsePositive(self.__parameters, self.outputFilesPath)
                 RemoveFPResult, RemoveFPIsFinished = crfp.RemoveFalsePositive()
-                retList.append(RemoveFPResult)
-                retList.append(RemoveFPIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassRemoveFalsePositive", RemoveFPResult, RemoveFPIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassRemoveFalsePositive Error : ", e)
-                self.signal.emit(["ClassRemoveFalsePositive Error"])
+                    print("Error_CRFP_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CRFP_MultiThread"])
         elif self.__function == "ClassPeakDivision":
             try:
-                retList = ["ClassPeakDivision"]
                 cpd = ClassPeakDivision(self.__parameters, self.outputFilesPath)
                 PeakDivResult, PeakDivIsFinished = cpd.PeakDivision()
-                retList.append(PeakDivResult)
-                retList.append(PeakDivIsFinished)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPeakDivision", PeakDivResult, PeakDivIsFinished])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPeakDivision Error : ", e)
-                self.signal.emit(["ClassPeakDivision Error"])
+                    print("Error_CPD2_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_CPD2_MultiThread"])
         elif self.__function == "ClassPlot":
             try:
-                retList = ["ClassPlot"]
                 cp = ClassPlot(self.__parameters, self.outputFilesPath)
                 PlotImagePath, PlotRawData = cp.Plot()
-                retList.append(PlotImagePath)
-                retList.append(PlotRawData)
-                self.signal.emit(retList)
+                self.signal.emit(["ClassPlot", PlotImagePath, PlotRawData])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ClassPlot Error : ", e)
+                    print("Error_CPlot_MultiThread : ", e)
                     traceback.print_exc()
-                # self.signal.emit(["Plot Error"])
+                self.signal.emit(["Error_CPlot_MultiThread"])
         elif self.__function == "ImportSampleFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportSampleFile"]
-                # 提取参数
-                sampleFilePath = self.__parameters[0]
-                # 弹出提示框
-                sampleData = np.array(pd.read_excel(sampleFilePath, header=None)).tolist()
-                # 返回结果
-                retList.append(sampleData)
-                self.signal.emit(retList)
+                sampleFilePath = self.__parameters[0]  # 提取参数
+                sampleData = np.array(pd.read_excel(sampleFilePath, header=None)).tolist()  # 弹出提示框
+                self.signal.emit(["ImportSampleFile", sampleData])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportSampleFile : ", e)
-                # self.signal.emit(["ImportSampleFile"])
+                    print("Error_ImSample_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImSample_MultiThread"])
         elif self.__function == "ImportBlankFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportBlankFile"]
-                # 提取参数
-                blankFilePath = self.__parameters[0]
-                # 弹出提示框
-                blankData = np.array(pd.read_excel(blankFilePath, header=None)).tolist()
-                # 返回结果
-                retList.append(blankData)
-                self.signal.emit(retList)
+                blankFilePath = self.__parameters[0]  # 提取参数
+                blankData = np.array(pd.read_excel(blankFilePath, header=None)).tolist()  # 弹出提示框
+                self.signal.emit(["ImportBlankFile", blankData])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportBlankFile : ", e)
-                # self.signal.emit(["ImportBlankFile"])
+                    print("Error_ImBlank_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImBlank_MultiThread"])
         elif self.__function == "ImportTICFile":  # 读入数据显示，后台处理
             try:
-                retList = ["ImportTICFile"]
-                # 提取参数
-                TICFilePath = self.__parameters[0]
-                # 弹出提示框
-                TICData, TICDataDictionary = self.ReadTIC(TICFilePath)
-                # 返回结果
-                retList.append(TICData)
-                retList.append(TICDataDictionary)
-                self.signal.emit(retList)
+                TICFilePath = self.__parameters[0]  # 提取参数
+                TICData, TICDataDictionary = self.ReadTIC(TICFilePath)  # 弹出提示框
+                self.signal.emit(["ImportTICFile", TICData, TICDataDictionary])  # 返回结果
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread ImportTICFile : ", e)
+                    print("Error_ImTIC_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_ImTIC_MultiThread"])
         elif self.__function == "StartMode1":
             try:
                 # 提取参数
@@ -4078,9 +4592,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode1 Error : ", e)
+                    print("Error_StartMode1_MultiThread : ", e)
                     traceback.print_exc()
-                self.signal.emit(["StartMode Error"])
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode2":
             try:
                 # 提取参数
@@ -4133,8 +4647,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode2 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode2_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode3":
             try:
                 # 提取参数
@@ -4199,8 +4714,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode3 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode3_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode4":
             try:
                 # 提取参数
@@ -4236,8 +4752,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode4 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode4_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode5":
             try:
                 # 提取参数
@@ -4281,8 +4798,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode5 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode5_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         elif self.__function == "StartMode6":
             try:
                 # 提取参数
@@ -4338,8 +4856,9 @@ class MultiThread(QThread):
                 self.signal.emit(["StartMode"])
             except Exception as e:
                 if ConstValues.PsIsDebug:
-                    print("MultiThread StartMode3 Error : ", e)
-                self.signal.emit(["StartMode Error"])
+                    print("Error_StartMode6_MultiThread : ", e)
+                    traceback.print_exc()
+                self.signal.emit(["Error_StartMode_MultiThread"])
         endTime = time.time()
         if ConstValues.PsIsDebug:
             if endTime - startTime > 60:
@@ -4382,10 +4901,18 @@ class MultiThread(QThread):
             value.append([content[i * 3 + 1], content[i * 3 + 2]])
 
         if ConstValues.PsIsDebug:
-            print("扫描点的个数： ", len(resDictionary))
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "扫描点的个数 len(resDictionary):", len(resDictionary)
+            )
         endTime = time.time()
         if ConstValues.PsIsDebug:
-            print("读入和处理文件费时： ", endTime - startTime, " s")
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "读入和处理文件费时: ", endTime - startTime, " s"
+            )
         return resList, resDictionary
 
 # 绘图
@@ -4447,6 +4974,8 @@ class ClassPlot:
             PlotClassDictionary = dict(zip(self.PlotClassList, [i for i in range(len(self.PlotClassList))]))
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]
                     if itemClass in self.PlotClassList:
                         itemIndex = PlotClassDictionary[itemClass]  # 查询对应类别的下标
@@ -4477,6 +5006,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     if itemClass in self.PlotClassItem:
@@ -4519,6 +5050,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
@@ -4562,6 +5095,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
@@ -4613,6 +5148,8 @@ class ClassPlot:
             yList = []  # KMD
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     # 获取sampleMass
                     sampleMass = item[sampleMassIndex]
                     # 记录数据
@@ -4636,7 +5173,7 @@ class ClassPlot:
             # 返回图片路径
             return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
         elif self.PlotType == 6:  # Retention time vs carbon number
-            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
                 plt.close()
                 return None, []
 
@@ -4648,6 +5185,8 @@ class ClassPlot:
 
             for item in self.RemoveFPResult:
                 if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
                     itemClass = item[ClassIndex]  # 获取类别
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]  # C的数目
@@ -4666,15 +5205,228 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList]
+
+# 帮助
+class ClassHelp:
+
+    def __init__(self, function, theme=""):
+        self.__function = function
+        self.MainWindowsStyle = theme
+
+    # 设置QLabel
+    def GetQLabel(self, text, style="", alignment=""):
+        label = QLabel()
+        label.setText(text)
+        label.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        label.setStyleSheet(style)
+        if alignment == "AlignCenter":
+            label.setAlignment(Qt.AlignCenter)
+        elif alignment == "AlignLeft":
+            label.setAlignment(Qt.AlignLeft)
+        elif alignment == "AlignRight":
+            label.setAlignment(Qt.AlignRight)
+        return label
+
+    # 创建Dialog
+    def CreateDialog(self, title, xNum, yNum):
+        # 创建QDialog
+        dialog = QDialog()
+        dialog.setWindowTitle(title)
+        dialog.setFixedSize(ConstValues.PsSetupFontSize * xNum, ConstValues.PsSetupFontSize * yNum)  # 固定窗口大小
+        if ConstValues.PsIconType == 1:
+            dialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
+        elif ConstValues.PsIconType == 2:
+            dialog.setWindowIcon(
+                qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
+        return dialog
+
+    def Help(self):
+        if self.__function == "UIHelp":
+            dialog = self.CreateDialog("界面介绍", 60, 40)
+            dialog.setWindowOpacity(0.94)  # 设置透明度
+
+            label = QLabel()
+            imagePath = "./__system/images/help/uiExplain1.png"
+            if self.MainWindowsStyle == "Qdarkstyle":
+                imagePath = "./__system/images/help/uiExplainDark1.png"
+            pixmap = QPixmap(imagePath)
+            pixmap = pixmap.scaled(ConstValues.PsSetupFontSize * 55, 4000, Qt.KeepAspectRatio, Qt.SmoothTransformation) # 限制一个即可
+            label.setPixmap(pixmap)  # 设置图片
+            label.setAlignment(Qt.AlignCenter)  # 居中对齐
+
+            layout = QVBoxLayout(dialog)  # 创建栅格布局
+            # 栅格布局添加控件
+            layout.addWidget(label)
+
+            dialog.exec()  # 运行
+        elif self.__function == "FileHelp":
+            dialog = self.CreateDialog("文件帮助", 60, 40)
+            dialog.setWindowOpacity(0.94)  # 设置透明度
+
+            label = self.GetQLabel("菜单栏 “文件” 下各项功能解释：", "color:red; font-size:15pt")
+            textEdit = QTextEdit()
+            textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+            textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            # 显示内容编辑
+            sampleExplain = "样本：该文件应该为excel文件，前" + str(ConstValues.PsHeaderLine) + "行为仪器输出信息概况，" \
+                            "第" + str(ConstValues.PsHeaderLine+1) + "行为表头:(Mass, Intensity)，之后为两列数据。这个" \
+                            "文件生成过程：添加石油的样本经过仪器处理后生成总离子图文件(TIC)，对于每个扫描点的所有Mass" \
+                             "和Intensity求平均后得到的结果。"
+            blankExplain = "空白：格式同“样本”。这个文件的生成过程：未添加石油的样本经过仪器处理后生成总离子图文件(" \
+                           "TIC)，对于每个扫描点的所有Mass和Intensity求平均后得到的结果。"
+            TICExplain = "样本TIC：该文件应该为txt文件，第一行是表头(labels, masses, intensity)，之后为数据。这个文件" \
+                         "的生成过程：从仪器生成的.raw或者.mzXML文件经处理得到的结果。"
+            importExplain = "导入：导入上次运行生成的文件夹中的文件，从而方便绘制图形。如果“输出”未选择的话，应该选择" \
+                            "默认生成的intermediateFiles导入，否则应该选择你所选择“输出”文件夹。"
+            outputExplain = "输出：选择软件运行过程中文件输出到的文件夹，如果不选择的话，中间文件会生成在intermediateFiles" \
+                            "文件夹中。"
+            ExitExplain = "退出：退出整个程序。"
+            taskbarExplain = "工具栏和菜单栏对应功能一致。"
+            showStr = sampleExplain + "\n\n" + blankExplain + "\n\n" + TICExplain + "\n\n" + importExplain + "\n\n" + outputExplain + "\n\n" + ExitExplain + "\n\n\n" + taskbarExplain
+            textEdit.setPlainText(showStr)
+
+            layout = QGridLayout(dialog)  # 创建栅格布局
+            # 栅格布局添加控件
+            layout.addWidget(label, 0, 0, 1, 1)
+            layout.addWidget(textEdit, 1, 0, 1, 1)
+            dialog.exec()  # 运行
+        elif self.__function == "EditHelpDeleteBlank":
+            explain = "这是一个参数设置界面，如果没有导入“空白”，虽然能设置数据，但不能运行这一步。" \
+                      "这一步的目的：去除样品中无关物质以及仪器产生的影响，使得分析结果更加准确。"
+            self.EditShow("去空白", explain)
+        elif self.__function == "EditHelpGDB":
+            explain = "这是一个参数设置界面，这一步不需要任何输入文件即可运行，根据用户输出参数自动生成信息，" \
+                      "信息格式为：（Class, Neutral, Formula, Calc m/z, C, ion），即（类别，不饱和度，分子式，质荷比，" \
+                      "碳的数目，仪器离子模式），生成的数据最终存储在excel中。这一步的目的：为后续分子式匹配做准备。"
+            self.EditShow("数据库生成", explain)
+        elif self.__function == "EditHelpDeleteIso":
+            explain = "这是一个参数设置界面，这一步需要“（去空白后的）样本文件”（记为file_A）和生成的数据库文件，我们根据file_A里的内" \
+                      "容根据Mass去匹配数据库，如果未匹配到，当前Mass结束，不记录任何信息，继续file_A中下一条记录的匹配；如果匹配到，则计算匹" \
+                      "配到的分子式分子量为12的C元素替换为分子量为13的C元素，分别替换一个和两个，根据替换后分子量在file_A中搜" \
+                      "索是否有对应的记录，并记录下来；信息格式为（SampleMass，SampleIntensity，Class, Neutral, Formula," \
+                      " Calc m/z, C, ion），即（file_A中的Mass，file_A中的Intensity，类别，不饱和度，分子式，质荷比，碳的数目，仪器" \
+                      "离子模式）；如果搜到同位素，则记下来，格式为（Mass，Intensity，iostope）。这个步骤最终生成一个excel文件，excel中" \
+                      "的内容都是匹配到分子的记录。"
+            self.EditShow("搜同位素", explain)
+        elif self.__function == "EditHelpPeakDis":
+            explain = "这是一个参数设置界面，这一步需要“搜同位素后的结果”（记为file_B）和总离子流图文件（TIC），我们根据file_B中的" \
+                      "SampleMass去TIC中搜索是否有基本连续的Mass，并记录TIC中连续的Mass，信息格式为：（SampleMass，Area，startRT，" \
+                      "startRTValue，endRT，endRTValue，TICMassMedian，Class，Neutral DBE，Formula，Calc m/z，C，ion），即（file_B" \
+                      "中的Mass，TIC中区间[startRT,endRT]对应的Intensity之和，TIC中连续Mass开始的索引（从0开始，到扫描点个数-1结束），" \
+                      "开始索引对应的保留时间（RT）的值，TIC中连续Mass结束的索引，结束索引对应的保留时间（RT）的值，TIC中区间[startRT," \
+                      "endRT]对应的Mass大于该区间中最大Mass的60%的数据集合的中位数，类别，不饱和度，分子式，质荷比，碳的数目，仪器离子" \
+                      "模式）。这个步骤最终生成一个excel文件。"
+            self.EditShow("峰匹配", explain)
+        elif self.__function == "EditHelpRFP":
+            explain = "这是一个参数设置界面，这一步需要“搜同位素后的结果”（记为file_B）或者“峰匹配后的结果”（记为file_C），根据不饱" \
+                      "和度（Neutral DBE）以及碳数（C）的连续性，判断是否需要去除，不满足连续条件的会被删除。这个步骤最终生成一个excel文" \
+                      "件，格式和file_B或者file_C的格式一致。"
+            self.EditShow("去假阳性", explain)
+        elif self.__function == "EditHelpPeakDiv":
+            explain = "这是一个参数设置界面，这一步需要“去假阳性后的结果（并且去假阳性需要选择的是“峰匹配后的结果”）”（记为file_D），" \
+                      "我们已经进行了峰匹配，根据峰匹配的功能解释，我们相当于总离子流图（TIC）提取出一个个提取离子流图（EIC），这一步的" \
+                      "目的就是：提取出每一个m/z的色峰谱，并计算峰面积。"
+            self.EditShow("峰识别", explain)
+        elif self.__function == "PlotHelp":
+            dialog = self.CreateDialog("绘图帮助", 60, 40)
+            dialog.setWindowOpacity(0.94)  # 设置透明度
+
+            label = self.GetQLabel("菜单栏 “绘图->添加” 下解释：", "color:red; font-size:15pt")
+            textEdit = QTextEdit()
+            textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+            textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            # 显示内容编辑
+            showStr = "需要去假阳性后生成的文件，去假阳性选择了哪个文件，就选择该文件去假阳性之后" \
+                      "的文件进行可视化。"
+            plot1Explain = "Class distribution：比较不同种类杂原子化合物（class）的相对含量差异。"
+            plot2Explain = "DBE distribution by class：比较具有相同class的化合物，DBE的分布情况。"
+            plot3Explain = "Carbon number distribution by class and DBEn：比较相同相同class且相" \
+                           "同DBE的化合物碳数分布情况（根据这个情况，可以推测一定化合物结构信息）。"
+            plot4Explain = "DBE vs carbon number by class：比较相同class化合物的DBE和碳数分布情况。"
+            plot5Explain = "Kendrick mass defect （KMD）：KMD图（辅助判断排除假阳性的充分性）。"
+            plot6Explain = "Retention time vs carbon number：同系物之间保留时间和碳数的关系（" \
+                           "体现液相色谱方法的优越性）。"
+            taskbarExplain = "工具栏和菜单栏对应功能一致。"
+            showStr = showStr + "\n\n" + plot1Explain + "\n\n" + plot2Explain + "\n\n" + plot3Explain + \
+                      "\n\n" + plot4Explain + "\n\n" + plot5Explain + "\n\n" + plot6Explain + "\n\n" + taskbarExplain
+            textEdit.setPlainText(showStr)
+
+            layout = QGridLayout(dialog)  # 创建栅格布局
+            # 栅格布局添加控件
+            layout.addWidget(label, 0, 0, 1, 1)
+            layout.addWidget(textEdit, 1, 0, 1, 1)
+            dialog.exec()  # 运行
+        elif self.__function == "ModeHelp":
+            dialog = self.CreateDialog("模式选择帮助", 60, 40)
+            dialog.setWindowOpacity(0.94)  # 设置透明度
+
+            label = self.GetQLabel("工具栏 “模式选择” 解释：", "color:red; font-size:15pt")
+            textEdit = QTextEdit()
+            textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+            textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            # 显示内容编辑
+            showStr = "模式选择：此软件一共有6个主要的步骤（除了绘图之外），有些功能可以不必运行，但某些" \
+                      "功能运行前必须运行某些功能，用户可以根据需要选择需要运行哪些内容。"
+            textEdit.setPlainText(showStr)
+
+            layout = QGridLayout(dialog)  # 创建栅格布局
+            # 栅格布局添加控件
+            layout.addWidget(label, 0, 0, 1, 1)
+            layout.addWidget(textEdit, 1, 0, 1, 1)
+            dialog.exec()  # 运行
+        elif self.__function == "OtherHelp":
+            dialog = self.CreateDialog("其他帮助", 60, 40)
+            dialog.setWindowOpacity(0.94)  # 设置透明度
+
+            label = self.GetQLabel("其他帮助：", "color:red; font-size:15pt")
+            textEdit = QTextEdit()
+            textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+            textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            # 显示内容编辑
+            showStr = "用户点击重置软件后，所有参数会重置为默认参数，并且需要重新读入各个文件才能运行"
+            textEdit.setPlainText(showStr)
+
+            layout = QGridLayout(dialog)  # 创建栅格布局
+            # 栅格布局添加控件
+            layout.addWidget(label, 0, 0, 1, 1)
+            layout.addWidget(textEdit, 1, 0, 1, 1)
+            dialog.exec()  # 运行
+        elif self.__function == "About":
+            dialog = self.CreateDialog("关于", 20, 10)
+            label = self.GetQLabel("石油组学软件：" + ConstValues.PsSoftwareEdition, alignment="AlignCenter")  # 创建label
+            layout = QVBoxLayout(dialog)  # 创建垂直布局
+            layout.addWidget(label)
+            dialog.exec()
+
+    def EditShow(self, name, explain):
+        dialog = self.CreateDialog("编辑->" + name, 60, 40)
+        dialog.setWindowOpacity(0.94)  # 设置透明度
+
+        label = self.GetQLabel("菜单栏 “编辑->" + name + "” 下功能解释：", "color:red; font-size:15pt")
+        textEdit = QTextEdit()
+        textEdit.setFocusPolicy(Qt.NoFocus)  # 禁止编辑
+        textEdit.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        # 显示内容编辑
+        explain = name + ":" + explain
+        taskbarExplain = "工具栏对应的“" + name + "”是运行按钮，菜单栏对应的“" + name + "”是参数设置。"
+        showStr = explain + "\n\n\n" + taskbarExplain
+        textEdit.setPlainText(showStr)
+
+        layout = QGridLayout(dialog)  # 创建栅格布局
+        # 栅格布局添加控件
+        layout.addWidget(label, 0, 0, 1, 1)
+        layout.addWidget(textEdit, 1, 0, 1, 1)
+        dialog.exec()  # 运行
 
 # 设置界面
 class SetupInterface:
-    def __init__(self):
+    def __init__(self, theme=""):
         # 全局变量初始化
-        self.dataInit()
+        self.dataInit(theme)
 
-    def dataInit(self):
+    def dataInit(self, theme):
+        self.MainWindowsStyle = theme
         # 扣空白所需要返回的数据，数据初值无所谓
         # 0~10000（整数）
         self.deleteBlankIntensity = None
@@ -4812,7 +5564,8 @@ class SetupInterface:
         label = QLabel()
         label.setText(text)
         label.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        label.setStyleSheet(style)
+        if self.MainWindowsStyle != "Qdarkstyle":
+            label.setStyleSheet(style)
         if alignment == "AlignCenter":
             label.setAlignment(Qt.AlignCenter)
         elif alignment == "AlignLeft":
@@ -4831,8 +5584,8 @@ class SetupInterface:
             dialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             dialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
-            dialog.setStyleSheet(ConstValues.PsSetupStyle)
+        # if ConstValues.PsSetupStyleEnabled:
+        #     dialog.setStyleSheet(ConstValues.PsSetupStyle)
         return dialog
 
     #################################################################################################################
@@ -4842,7 +5595,7 @@ class SetupInterface:
         self.DeleteBlankSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 25, 16)
+        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 30, 16)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -5172,7 +5925,7 @@ class SetupInterface:
         self.DeleteIsotopeSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 35, 25)
+        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 40, 25)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))
@@ -5458,7 +6211,7 @@ class SetupInterface:
         self.RemoveFalsePositiveDefaultParameters(parameters)
 
         # 创建QDialog
-        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 35, 20)
+        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 45, 20)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -5702,6 +6455,8 @@ class SetupInterface:
             DBEIndex = 8
         for item in self.RemoveFPResult:
             if len(item) != 0:
+                if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                    continue
                 itemClass = item[ClassIndex]  # 获取类别
                 itemDBE = item[DBEIndex]  # DBE数目
                 # 更新集合
@@ -5832,13 +6587,18 @@ class SetupInterface:
         self.PlotMainUIRadioButton4 = QRadioButton("DBE vs carbon number by class")
         self.PlotMainUIRadioButton5 = QRadioButton("Kendrick mass defect （KMD）")
         self.PlotMainUIRadioButton6 = QRadioButton("Retention time vs carbon number")
-        self.PlotMainUIRadioButton1.setChecked(True)
-        self.PlotMainUIRadioButton1.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton2.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton3.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton4.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton5.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
-        self.PlotMainUIRadioButton6.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        if self.RemoveFPId == 1:
+            self.PlotMainUIRadioButton6.setEnabled(False)
+        PlotMainUIRadioButtonList = [
+            self.PlotMainUIRadioButton1, self.PlotMainUIRadioButton2, self.PlotMainUIRadioButton3,
+            self.PlotMainUIRadioButton4, self.PlotMainUIRadioButton5, self.PlotMainUIRadioButton6,
+        ]
+        flag = False
+        for i in range(6):
+            PlotMainUIRadioButtonList[i].setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+            if (self.PlotType == i+1) and (not flag):
+                PlotMainUIRadioButtonList[i].setChecked(True)
+                flag = True
         # Next/Cancel
         self.PlotMainUIButton1 = QPushButton("Next")
         self.PlotMainUIButton1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
@@ -5913,7 +6673,11 @@ class SetupInterface:
         if radioButton.isChecked():
             self.PlotType = Id
             if ConstValues.PsIsDebug:
-                print("PlotMainUIRadioButtonState self.PlotType : ", self.PlotType)
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "self.PlotType:", self.PlotType
+                )
 
     # -------------------------------------- 一级子界面
     def PlotMainToSubUI(self):
@@ -5927,7 +6691,7 @@ class SetupInterface:
         self.PlotSubUI_1ButtonPrev = QPushButton("back")
         self.PlotSubUI_1ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_1ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_1ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_1ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_1LabelPrev = self.GetQLabel("")  # 标签
@@ -5941,7 +6705,8 @@ class SetupInterface:
         self.PlotSubUI_1CheckBoxNone.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
         # 复选按钮，根据类别数目（self.PlotClass：一个列表，里面是种类str）生成复选框
         self.PlotSubUI_1ListWidget = QListWidget()  # 列表控件
-        self.PlotSubUI_1ListWidget.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_1ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["checkBox_1" + item] is None:
                 globals()["checkBox_1" + item] = QCheckBox(item)
@@ -6021,13 +6786,14 @@ class SetupInterface:
         self.PlotSubUI_2ButtonPrev = QPushButton("back")
         self.PlotSubUI_2ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_2ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_2ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_2ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_2LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_2ListWidget = QListWidget()  # 列表控件
-        self.PlotSubUI_2ListWidget.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_2ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_2" + item] is None:
                 globals()["radioBox_2" + item] = QRadioButton(item)
@@ -6077,7 +6843,11 @@ class SetupInterface:
             if globals()["radioBox_2" + item].isChecked():
                 self.PlotClassItem[0] = globals()["radioBox_2" + item].text()
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0]
+                    )
                 break
 
     # -------------------------------------- 第三个：Carbon number distribution by class and DBE，创建控件
@@ -6086,13 +6856,14 @@ class SetupInterface:
         self.PlotSubUI_3ButtonPrev = QPushButton("back")
         self.PlotSubUI_3ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_3ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_3ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_3ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_3LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_3ListWidget1 = QListWidget()  # 列表控件1
-        self.PlotSubUI_3ListWidget1.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_3ListWidget1.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_3_1" + item] is None:
                 globals()["radioBox_3_1" + item] = QRadioButton(item)
@@ -6105,7 +6876,8 @@ class SetupInterface:
 
         # 单选按钮
         self.PlotSubUI_3ListWidget2 = QListWidget()  # 列表控件1
-        self.PlotSubUI_3ListWidget2.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_3ListWidget2.setStyleSheet("background-color: white;")
         key = self.PlotClass[0]
         for num in self.PlotDictionary[key]:
             if globals()["radioBox_3_2" + str(key) + str(num)] is None:
@@ -6177,7 +6949,11 @@ class SetupInterface:
                 # 默认勾选第一个
                 globals()["radioBox_3_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
                 if ConstValues.PsIsDebug:
-                    print("PlotSubUI_3RadioButtonClass self.PlotDBENum : ", self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "key（self.PlotClassItem[0]）:", key, "self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # 一级子界面第三个界面 选择需要绘制的DBE
@@ -6187,8 +6963,11 @@ class SetupInterface:
                 self.PlotClassItem[0] = Class
                 self.PlotDBENum = num
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
-                    print(self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0], "; self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # -------------------------------------- 第四个：DBE vs carbon number by class，创建控件
@@ -6197,13 +6976,14 @@ class SetupInterface:
         self.PlotSubUI_4ButtonPrev = QPushButton("back")
         self.PlotSubUI_4ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_4ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_4ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_4ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_4LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_4ListWidget = QListWidget()  # 列表控件
-        self.PlotSubUI_4ListWidget.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_4ListWidget.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_4" + item] is None:
                 globals()["radioBox_4" + item] = QRadioButton(item)
@@ -6253,7 +7033,11 @@ class SetupInterface:
             if globals()["radioBox_4" + item].isChecked():
                 self.PlotClassItem[0] = globals()["radioBox_4" + item].text()
                 if ConstValues.PsIsDebug:
-                    print(self.PlotClassItem[0])
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0]
+                    )
                 break
 
     # -------------------------------------- 第五个：Kendrick mass defect （KMD），创建控件
@@ -6262,13 +7046,14 @@ class SetupInterface:
         self.PlotSubUI_5ButtonPrev = QPushButton("back")
         self.PlotSubUI_5ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_5ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_5ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_5ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_5LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_5ListWidget = QListWidget()  # 列表控件
-        self.PlotSubUI_5ListWidget.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_5ListWidget.setStyleSheet("background-color: white;")
         listWidgetItem = QListWidgetItem()
         self.PlotSubUI_5ListWidget.addItem(listWidgetItem)
         self.PlotSubUI_5ListWidget.setItemWidget(listWidgetItem, self.GetQLabel("请直接下一步"))
@@ -6310,13 +7095,14 @@ class SetupInterface:
         self.PlotSubUI_6ButtonPrev = QPushButton("back")
         self.PlotSubUI_6ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUI_6ButtonPrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUI_6ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUI_6ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUI_6LabelPrev = self.GetQLabel("")  # 标签
         # 单选按钮
         self.PlotSubUI_6ListWidget1 = QListWidget()  # 列表控件1
-        self.PlotSubUI_6ListWidget1.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_6ListWidget1.setStyleSheet("background-color: white;")
         for item in self.PlotClass:
             if globals()["radioBox_6_1" + item] is None:
                 globals()["radioBox_6_1" + item] = QRadioButton(item)
@@ -6329,7 +7115,8 @@ class SetupInterface:
 
         # 单选按钮
         self.PlotSubUI_6ListWidget2 = QListWidget()  # 列表控件1
-        self.PlotSubUI_6ListWidget2.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_6ListWidget2.setStyleSheet("background-color: white;")
         key = self.PlotClass[0]
         for num in self.PlotDictionary[key]:
             if globals()["radioBox_6_2" + str(key) + str(num)] is None:
@@ -6403,19 +7190,26 @@ class SetupInterface:
                 # 默认勾选第一个
                 globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
                 if ConstValues.PsIsDebug:
-                    print("PlotSubUI_6RadioButtonClass self.PlotDBENum : ", self.PlotDBENum)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "key（self.PlotClassItem[0]）:", key, "self.PlotDBENum:", self.PlotDBENum
+                    )
                 break
 
     # 一级子界面第三个界面 选择需要绘制的DBE
     def PlotSubUI_6RadioButtonDBE(self, Class):
-            for num in self.PlotDictionary[Class]:
-                if globals()["radioBox_6_2" + str(Class) + str(num)].isChecked():
-                    self.PlotClassItem[0] = Class
-                    self.PlotDBENum = num
-                    if ConstValues.PsIsDebug:
-                        print(self.PlotClassItem[0])
-                        print(self.PlotDBENum)
-                    break
+        for num in self.PlotDictionary[Class]:
+            if globals()["radioBox_6_2" + str(Class) + str(num)].isChecked():
+                self.PlotClassItem[0] = Class
+                self.PlotDBENum = num
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.PlotClassItem[0]:", self.PlotClassItem[0], "; self.PlotDBENum:", self.PlotDBENum
+                    )
+                break
 
     # -------------------------------------- 一级子界面对应的二级子界面，命名功能等
     def PlotSubUINameCreateWidget(self):
@@ -6423,7 +7217,7 @@ class SetupInterface:
         self.PlotSubUINamePrev = QPushButton("back")
         self.PlotSubUINamePrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
         if ConstValues.PsIconType == 1:
-            self.PlotSubUINamePrev.setIcon(QIcon(QPixmap('./images/back.png')))
+            self.PlotSubUINamePrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
         elif ConstValues.PsIconType == 2:
             self.PlotSubUINamePrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
         self.PlotSubUINameLabelPrev = self.GetQLabel("")
@@ -6433,27 +7227,30 @@ class SetupInterface:
         # 第一行输入内容
         self.PlotSubUINameLabel1 = self.GetQLabel("标题")
         self.PlotSubUINameEdit1 = self.RegExpQLineEdit(text=self.PlotTitleName)
-        self.PlotSubUINameEdit1.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUINameEdit1.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel1_ = self.GetQLabel(text="标题", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel1_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton1 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotTitleColor))
         self.PlotSubUINameLabel1_.setPalette(pa)
         # 第二行输入内容
         self.PlotSubUINameLabel2 = self.GetQLabel("x轴名称")
         self.PlotSubUINameEdit2 = self.RegExpQLineEdit(text=self.PlotXAxisName)
-        self.PlotSubUINameEdit2.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUINameEdit2.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel2_ = self.GetQLabel(text="x轴", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel2_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton2 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotXAxisColor))
         self.PlotSubUINameLabel2_.setPalette(pa)
         # 第三行输入内容
         self.PlotSubUINameLabel3 = self.GetQLabel("y轴名称")
         self.PlotSubUINameEdit3 = self.RegExpQLineEdit(text=self.PlotYAxisName)
-        self.PlotSubUINameEdit3.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUINameEdit3.setStyleSheet("background-color: white;")
         self.PlotSubUINameLabel3_ = self.GetQLabel(text="y轴", style=style, alignment="AlignCenter")
-        self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 4, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUINameLabel3_.setFixedSize(ConstValues.PsSetupFontSize * 5, ConstValues.PsSetupFontSize * 3)
         self.PlotSubUINameButton3 = QPushButton("color")
         pa.setColor(QPalette.WindowText, QColor(*self.PlotYAxisColor))
         self.PlotSubUINameLabel3_.setPalette(pa)
@@ -6557,12 +7354,17 @@ class SetupInterface:
     def PlotSubUINameSetColor(self, DType):
         color = QColorDialog.getColor()
         if ConstValues.PsIsDebug:
-            print(color.getRgb())
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "color.getRgb():", color.getRgb()
+            )
         p = QPalette()
         p.setColor(QPalette.WindowText, color)
         if DType == 1:  # 标题颜色
             self.PlotSubUINameLabel1_.setPalette(p)
             self.PlotTitleColor = color.getRgb()
+            pass
         elif DType == 2:  # x轴颜色
             self.PlotSubUINameLabel2_.setPalette(p)
             self.PlotXAxisColor = color.getRgb()
@@ -6627,14 +7429,15 @@ class SetupInterface:
             self.StartModeDialog.setWindowIcon(QIcon(ConstValues.PsWindowIcon))
         elif ConstValues.PsIconType == 2:
             self.StartModeDialog.setWindowIcon(qtawesome.icon(ConstValues.PsqtaWindowIcon, color=ConstValues.PsqtaWindowIconColor))
-        if ConstValues.PsSetupStyleEnabled:
+        if ConstValues.PsSetupStyleEnabled and (self.MainWindowsStyle != "Qdarkstyle"):
             self.StartModeDialog.setStyleSheet(ConstValues.PsSetupStyle)
 
         # 创建控件
         StartModeLabel = self.GetQLabel("Select Run Mode", "font:15pt '楷体'; color:blue;")
         # 单选按钮
         StartModeListWidget = QListWidget()  # 列表控件
-        StartModeListWidget.setStyleSheet("background-color: white;")
+        if self.MainWindowsStyle != "Qdarkstyle":
+            StartModeListWidget.setStyleSheet("background-color: white;")
         self.modeList = [
                         "1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性",
                         "2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性",
@@ -6702,7 +7505,11 @@ class SetupInterface:
             if globals()["mode" + str(i)].isChecked():  # 确定是哪个按钮被选中
                 self.startMode = i + 1
                 if ConstValues.PsIsDebug:
-                    print(self.startMode)
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "self.startMode:", self.startMode
+                    )
                 break
 
 

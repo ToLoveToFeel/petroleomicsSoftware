@@ -169,17 +169,7 @@ class MainWin(QMainWindow):
         self.tabWidgetShowData.tabCloseRequested.connect(self.TabWidgetCloseTab)  # 点击叉号后关闭
         self.plotStack.addWidget(self.tabWidgetShowData)  # 添加 QTabWidget，0
 
-        titleList = [
-            "sky.png",
-            "people.png",
-            "dandelion.png",
-            "lake.png",
-            "botchi.png",
-            "castle.png",
-            "flower.png",
-            "sea.png",
-            "road.png",
-        ]
+        titleList = ConstValues.PstitleList
         imagePathList = [
             "./__system/images/show/sky.png",
             "./__system/images/show/people.png",
@@ -191,7 +181,7 @@ class MainWin(QMainWindow):
             "./__system/images/show/sea.png",
             "./__system/images/show/road.png",
         ]
-        globals()["Plot_" + ConstValues.PsTreePlotInit] = self.CreateQTabWidgetImages(titleList, imagePathList)  # 创建 QTabWidget
+        globals()["Plot_" + ConstValues.PsTreePlotInit] = self.CreateQTabWidgetImages(titleList)  # 创建 QTabWidget
         self.plotStack.addWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])  # 添加 QTabWidget，1
         self.mainTreeChild8_1 = QTreeWidgetItem(self.mainTreeChild8)
         self.mainTreeChild8_1.setText(0, ConstValues.PsTreePlotInit)
@@ -246,15 +236,7 @@ class MainWin(QMainWindow):
             )
 
     # 创建图像选项卡控件（初始化显示）
-    def CreateQTabWidgetImages(self, titleList, imagePathList):
-        if len(titleList) != len(imagePathList):
-            if ConstValues.PsIsDebug:
-                print(
-                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
-                    sys._getframe().f_code.co_name, "\" method***：",
-                    "CreateQTabWidgetImages 列表长度不一致!"
-                )
-                return
+    def CreateQTabWidgetImages(self, titleList):
         tabWidget = QTabWidget()
         tabWidget.setFont(QFont(ConstValues.PsMainFontType, ConstValues.PsMainFontSize))
         style = "QTabBar::tab{background-color: #DCDCDC;}" + \
@@ -271,8 +253,8 @@ class MainWin(QMainWindow):
         if self.MainWindowsStyle == "Qdarkstyle":
             width = ConstValues.PsMainWindowWidth * 90 / 120
         for i in shuffleList:
-            imagePath = imagePathList[i]
             title = titleList[i]
+            imagePath = "./__system/images/show/" + title
 
             tb = QScrollArea()
             tb.setAlignment(Qt.AlignCenter)
@@ -470,114 +452,141 @@ class MainWin(QMainWindow):
 
     # 右击选项菜单（Plot / Raw Plot Data）
     def rightMenuShow(self, Type):
-        sender = self.sender()
-        self.currentFunction = Type
+        try:
+            sender = self.sender()
+            self.currentFunction = Type
 
-        self.currentPixmapName = "plot.png"
-        # 获取当前图片名称
-        item = QTreeWidgetItemIterator(self.mainTreeWidget)
-        while item.value():
-            treeWidgetItem = item.value()
-            if treeWidgetItem.isSelected():
-                self.currentPixmapName = treeWidgetItem.text(0)
-                break
-            item += 1  # 到下一个节点
+            self.currentPixmapName = "plot.png"
+            # 获取当前图片名称
+            item = QTreeWidgetItemIterator(self.mainTreeWidget)
+            while item.value():
+                treeWidgetItem = item.value()
+                if treeWidgetItem.isSelected():
+                    self.currentPixmapName = treeWidgetItem.text(0)
+                    break
+                item += 1  # 到下一个节点
 
-        if Type == 1:
-            # 获取当前图片
-            self.currentPixmap = sender.pixmap()
-        elif Type == 2:
-            # 从QTableWigget获取数据
-            rowNum = sender.rowCount()  # 获取行数
-            columnNum = sender.columnCount()  # 获取列数
-            self.currentPixmapData = []
-            for i in range(rowNum):
-                tempList = []
-                for j in range(columnNum):
-                    if i != 0:
-                        tempList.append(float(sender.item(i, j).text()))
-                    else:
-                        tempList.append(sender.item(i, j).text())
-                self.currentPixmapData.append(tempList)
-        menu = QMenu()
-        menu.addAction(QAction("导出到", menu))
-        menu.triggered.connect(self.MenuSlot)
-        menu.exec_(QCursor.pos())
+            if Type == 1:
+                # 获取当前图片
+                self.currentPixmap = sender.pixmap()
+            elif Type == 2:
+                # 从QTableWigget获取数据
+                rowNum = sender.rowCount()  # 获取行数
+                columnNum = sender.columnCount()  # 获取列数
+                self.currentPixmapData = []
+                for i in range(rowNum):
+                    tempList = []
+                    for j in range(columnNum):
+                        text = sender.item(i, j).text()
+                        try:
+                            textFloat = float(sender.item(i, j).text())
+                            tempList.append(textFloat)
+                        except ValueError:
+                            tempList.append(text)
+
+                    self.currentPixmapData.append(tempList)
+            menu = QMenu()
+            menu.addAction(QAction("导出到", menu))
+            menu.triggered.connect(self.MenuSlot)
+            menu.exec_(QCursor.pos())
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_rightMenuShow : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键导出出现错误1!")
 
     # 右击后处理函数（Plot / Raw Plot Data）
     def MenuSlot(self, act):
-        if act.text() == "导出到":
-            outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
+        try:
+            if act.text() == "导出到":
+                outputImagePath = QFileDialog.getExistingDirectory(self, '选择导出到的文件夹', './')
+                if ConstValues.PsIsDebug:
+                    print(
+                        "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                        sys._getframe().f_code.co_name, "\" method***：",
+                        "outputImagePath:", outputImagePath
+                    )
+                if self.currentFunction == 1:
+                    if outputImagePath != "":
+                        self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
+                elif self.currentFunction == 2:
+                    WriteDataToExcel(self.currentPixmapData, outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
+        except Exception as e:
             if ConstValues.PsIsDebug:
-                print(
-                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
-                    sys._getframe().f_code.co_name, "\" method***：",
-                    "outputImagePath:", outputImagePath
-                )
-            if self.currentFunction == 1:
-                if outputImagePath != "":
-                    self.currentPixmap.save(outputImagePath + "/" + self.currentPixmapName)
-            elif self.currentFunction == 2:
-                WriteDataToExcel(self.currentPixmapData, outputImagePath + "/" + self.currentPixmapName[:-4] + ".xlsx")
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键导出出现错误2!")
 
     # 右击选项菜单（树控件），就是为了删除导入的数据
     def rightTreeShow(self):
-        # 遍历所有节点，如果选择，记录下来，根据后续逻辑决定是否需要删除
-        item = QTreeWidgetItemIterator(self.mainTreeWidget)
-        treeItemSelected = None
-        while item.value():
-            treeWidgetItem = item.value()
-            if treeWidgetItem.isSelected():
-                treeItemSelected = treeWidgetItem
-                break
-            # 到下一个节点
-            item += 1
-        returnList = [
-            ConstValues.PsTreeProject, ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank, ConstValues.PsTreeGDB, ConstValues.PsTreeDelIso,
-            ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv, ConstValues.PsTreePlot, ConstValues.PsTreePlotInit,
-        ]
-        if treeItemSelected is None:  # 为空返回
-            return
-        treeItemName = treeItemSelected.text(0)
-        if treeItemName in returnList:  # 不是需要删除的内容返回
-            return
+        try:
+            # 遍历所有节点，如果选择，记录下来，根据后续逻辑决定是否需要删除
+            item = QTreeWidgetItemIterator(self.mainTreeWidget)
+            treeItemSelected = None
+            while item.value():
+                treeWidgetItem = item.value()
+                if treeWidgetItem.isSelected():
+                    treeItemSelected = treeWidgetItem
+                    break
+                # 到下一个节点
+                item += 1
+            returnList = [
+                ConstValues.PsTreeProject, ConstValues.PsTreeInputFiles, ConstValues.PsTreeDeleteBlank, ConstValues.PsTreeGDB, ConstValues.PsTreeDelIso,
+                ConstValues.PsTreePeakDis, ConstValues.PsTreeRemoveFP, ConstValues.PsTreePeakDiv, ConstValues.PsTreePlot, ConstValues.PsTreePlotInit,
+            ]
+            if treeItemSelected is None:  # 为空返回
+                return
+            treeItemName = treeItemSelected.text(0)
+            if treeItemName in returnList:  # 不是需要删除的内容返回
+                return
 
-        if ConstValues.PsIsDebug:  # 调试输出名称
-            print(
-                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
-                sys._getframe().f_code.co_name, "\" method***：",
-                "treeItemName:", treeItemName
-            )
-        menu = QMenu()
-        menu.addAction(QAction("删除", menu))
-        menu.triggered.connect(lambda: self.TreeSlot(treeItemName))
-        menu.exec_(QCursor.pos())
+            if ConstValues.PsIsDebug:  # 调试输出名称
+                print(
+                    "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                    sys._getframe().f_code.co_name, "\" method***：",
+                    "treeItemName:", treeItemName
+                )
+            menu = QMenu()
+            menu.addAction(QAction("删除", menu))
+            menu.triggered.connect(lambda: self.TreeSlot(treeItemName))
+            menu.exec_(QCursor.pos())
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键删除出现错误1!")
 
     # 右击后处理函数（树控件），就是删除功能
     def TreeSlot(self, name):
-        if name in self.mainDataNameSetAll:  # 说明是数据
-            for item in self.mainTreeWidget.selectedItems():
-                item.parent().removeChild(item)
-                self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + name]))
-                if name in self.mainDataNameSet:
-                    self.mainDataNameSet.remove(name)
-                self.mainDataNameSetAll.remove(name)
-            # 判断是否为样本文件，或者空白文件，或者TIC
-            if name in self.sampleNameList:
-                self.sampleFilePath = ""  # 重置
-                self.sampleData = []
-                self.sampleNameList = [None]
-            elif name in self.blankNameList:
-                self.blankFilePath = ""
-                self.blankData = []
-                self.blankNameList = [None]
-            elif name in self.TICNameList:
-                self.TICFilePath = ""  # 总离子流图路径，第一部分
-                self.TICData = None
-                self.TICDataDictionary = None
-                self.TICNameList = [None]
-        else:  # 一定是图形
-            pass
+        try:
+            if name in self.mainDataNameSetAll:  # 说明是数据
+                for item in self.mainTreeWidget.selectedItems():
+                    item.parent().removeChild(item)
+                    self.tabWidgetShowData.removeTab(self.tabWidgetShowData.indexOf(globals()["tableWidget_" + name]))
+                    if name in self.mainDataNameSet:
+                        self.mainDataNameSet.remove(name)
+                    self.mainDataNameSetAll.remove(name)
+                # 判断是否为样本文件，或者空白文件，或者TIC
+                if name in self.sampleNameList:
+                    self.sampleFilePath = ""  # 重置
+                    self.sampleData = []
+                    self.sampleNameList = [None]
+                elif name in self.blankNameList:
+                    self.blankFilePath = ""
+                    self.blankData = []
+                    self.blankNameList = [None]
+                elif name in self.TICNameList:
+                    self.TICFilePath = ""  # 总离子流图路径，第一部分
+                    self.TICData = None
+                    self.TICDataDictionary = None
+                    self.TICNameList = [None]
+            else:  # 一定是图形
+                pass
+        except Exception as e:
+            if ConstValues.PsIsDebug:
+                print("Error_MenuSlot : ", e)
+                traceback.print_exc()
+            PromptBox().errorMessage("右键删除出现错误2!")
 
     # -------------------------------------- 全局数据初始化
     def dataInit(self):
@@ -1172,7 +1181,7 @@ class MainWin(QMainWindow):
             RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
             self.RemoveFPId = 2
         elif os.path.exists(RFPPath1) and os.path.exists(RFPPath2):
-            chooseRFPPath1 = PromptBox().informationMessage("去假阳性可以有两种方式生成:\n1.选择搜同位素后去假阳性文件点击确定\n2.选择峰提取后去假阳性文件点击取消")
+            chooseRFPPath1 = PromptBox().informationMessage("去假阳性可以有两种方式生成:\n1.选择搜同位素后去假阳性文件点击：Yes\n2.选择峰提取后去假阳性文件点击：No")
             if chooseRFPPath1:
                 RFPPath = RFPPath1
                 RFPName = ConstValues.PsNameRemoveFPFrom_DelIsoResult
@@ -1182,22 +1191,26 @@ class MainWin(QMainWindow):
                 RFPName = ConstValues.PsNameRemoveFPFrom_PeakDisResult
                 self.RemoveFPId = 2
 
-        # 否则，遍历文件夹中的所有文件夹，对于每个文件夹，读取其中的文件，并显示到界面上
-        self.statusSetup(ConstValues.PsMainWindowStatusMessage, "开始导入数据.")
+        # if ConstValues.PsIsShowGif:
+        #     self.promptGif.showGif("正在导入数据，请稍后...", ConstValues.PsIconLoading)
+
         if os.path.exists(RFPPath):
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "开始导入数据.")
             # 是否存在去假阳性后的文件，如果存在，读取并显示
             parent = self.mainTreeChild6
             name = RFPName
             data = ReadExcelToList(RFPPath, hasNan=True)
             icon = ConstValues.PsqtaIconOpenFileExcel
             functionStr = "峰提取数据导入完毕！"
-            self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            # self.AddTreeItemShowData(parent, name, data, self.promptGif, icon, functionStr)
+            self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
 
             self.RemoveFPResult = [data, []]
             self.RemoveFPIsFinished = True
-
-        # 更新状态栏消息
-        self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据导入完毕.")
+            # 更新状态栏消息
+            self.statusSetup(ConstValues.PsMainWindowStatusMessage, "数据导入完毕.")
+        else:
+            PromptBox().informationMessageAutoClose("没有内容可以导入!", ConstValues.PsPromptBoxTime)
 
     # 选择输入的文件存放的文件夹
     def GetOutputFilesPath(self):
@@ -2062,6 +2075,8 @@ class MainWin(QMainWindow):
                         item += 1
                 else:
                     return False
+            else:
+                return PromptBox().questionMessage(name + "是否为样本文件？")
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -2105,6 +2120,8 @@ class MainWin(QMainWindow):
                         item += 1
                 else:
                     return False
+            else:
+                return PromptBox().questionMessage(name + "是否为空白文件？")
             # 更新数据
             self.deleteBlankList = [
                 self.sampleFilePath,  # 格式：字符串
@@ -2148,6 +2165,8 @@ class MainWin(QMainWindow):
                         item += 1
                 else:
                     return False
+            else:
+                return PromptBox().questionMessage(name + "是否为TIC文件？")
 
         return True
 
@@ -2432,15 +2451,15 @@ class MainWin(QMainWindow):
                 traceback.print_exc()
 
     # 帮助界面
-    def Help(self, function):
+    def Help(self, functionStr):
         if ConstValues.PsIsDebug:
             print(
                 "***Debug In \"", self.__class__.__name__, "\" class，In \"",
                 sys._getframe().f_code.co_name, "\" method***：",
-                "function:", function
+                "functionStr:", functionStr
             )
         # 创建对话框
-        ClassHelp(function, self.MainWindowsStyle).Help()
+        ClassHelp(functionStr, self.MainWindowsStyle).Help()
 
 
 

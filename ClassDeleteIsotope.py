@@ -77,7 +77,9 @@ class ClassDeleteIsotope:
                 break
             else:
                 # 3.sampleItemIntensity>self.DelIsoIntensityX 且 DBItem_13C2Intensity>self.DelIso_13C2RelativeIntensity
-                if (sampleItemIntensity > self.DelIsoIntensityX) and (DBItem_13C2Intensity > self.DelIso_13C2RelativeIntensity):
+                # if (sampleItemIntensity > self.DelIsoIntensityX) and (DBItem_13C2Intensity > self.DelIso_13C2RelativeIntensity):
+                # 3.sampleItemIntensity * DBItem_13C2Intensity > self.deleteBlankIntensity
+                if sampleItemIntensity * DBItem_13C2Intensity > self.deleteBlankIntensity:
                     # 4.样本(self.deleteBlankResult)中所有mass是否有对应的“13C1”和“13C2”及intensity相近
                     parameterList = [DBItem_13C1, DBItem_13C1Intensity, DBItem_13C2, DBItem_13C2Intensity, sampleItemIntensity]
                     retValue = self.DelIsoHasCorrespondInSample(parameterList)

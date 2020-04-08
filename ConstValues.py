@@ -11,8 +11,6 @@ class ConstValues:
     PsIsDebug = False
     # 用于是否可以单独运行
     PsIsSingleRun = False
-    # 软件版本
-    PsSoftwareEdition = "v1.1"
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -149,7 +147,7 @@ class ConstValues:
     # 主页面最多显示的表格行数
     PsMainMaxRowNum = 10000
     # 读入文件默认目录
-    PsReadFileDefaultDirectoy = "./"
+    PsReadFileDefaultDirectoy = "./inputData/test"
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
@@ -293,4 +291,13 @@ class ConstValues:
             "notebook.png",
         ]
     # 初始化是否是只显示指定数目图片，大于图片总数目则全部显示
-    PsShowImageNum = 12
+    PsShowImageNum = 2
+
+    # 软件版本
+    """
+    v1.2相对于v1.1更改3处错误：
+        （1）MultiThread之前需要更新列表数据
+        （2）ClassPeakDivision中if len(ContinueItem) == 1:之后不应改变area
+        （3）ClassDeleteIsotope更改第三个判断条件
+    """
+    PsSoftwareEdition = "v1.2"

@@ -2018,7 +2018,6 @@ class MainWin(QMainWindow):
             if self.PlotTitleName in self.mainPlotNameSetAll:
                 self.mainPlotNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainPlotNeedCover
-            pass
         elif Type == "StartMode":
             if self.startMode == 1:
                 if self.sampleFilePath == "" or self.blankFilePath == "":
@@ -2205,13 +2204,8 @@ class MainWin(QMainWindow):
             if self.startMode == 1:
                 # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
                 self.RemoveFPId = 1  # 设置为去假阳性
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.deleteBlankList,
@@ -2222,13 +2216,8 @@ class MainWin(QMainWindow):
             elif self.startMode == 2:
                 # 2：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
                 self.RemoveFPId = 2  # 设置为 峰提取
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.deleteBlankList,
@@ -2240,13 +2229,8 @@ class MainWin(QMainWindow):
             elif self.startMode == 3:
                 # 3：去空白 --> 数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
                 self.RemoveFPId = 2  # 设置为 峰提取
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.deleteBlankList,
@@ -2259,24 +2243,9 @@ class MainWin(QMainWindow):
             elif self.startMode == 4:
                 # 4：数据库生成 --> 搜同位素 --> 去假阳性
                 self.RemoveFPId = 1  # 设置为去假阳性
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
                 self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
-                self.DelIsoList = [
-                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                    self.deleteBlankIntensity,
-                    self.DelIsoIntensityX,  # 格式：整数
-                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                    self.DelIsoMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.GDBList,
@@ -2286,24 +2255,9 @@ class MainWin(QMainWindow):
             elif self.startMode == 5:
                 # 5：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性
                 self.RemoveFPId = 2  # 设置为 峰提取
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
                 self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
-                self.DelIsoList = [
-                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                    self.deleteBlankIntensity,
-                    self.DelIsoIntensityX,  # 格式：整数
-                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                    self.DelIsoMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.GDBList,
@@ -2314,24 +2268,9 @@ class MainWin(QMainWindow):
             elif self.startMode == 6:
                 # 6：数据库生成 --> 搜同位素 --> 峰提取 --> 去假阳性 --> 峰检测
                 self.RemoveFPId = 2  # 设置为 峰提取
-                self.RemoveFPList = [  # 更新数据
-                    self.DelIsoResult,
-                    self.PeakDisResult,
-                    self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                    self.RemoveFPContinue_CNum,
-                    self.RemoveFPContinue_DBENum
-                ]
                 self.deleteBlankResult = self.sampleData[ConstValues.PsHeaderLine:]
-                self.DelIsoList = [
-                    self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                    self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                    self.deleteBlankIntensity,
-                    self.DelIsoIntensityX,  # 格式：整数
-                    self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                    self.DelIsoMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                    self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                ]
+                # 更新数据
+                self.UpdateList()
                 # 需要传入另一个线程的数据
                 startModeData = [
                     self.GDBList,
@@ -2461,5 +2400,81 @@ class MainWin(QMainWindow):
         # 创建对话框
         ClassHelp(functionStr, self.MainWindowsStyle).Help()
 
-
+    # 更新数据
+    def UpdateList(self):
+        self.deleteBlankList = [
+            self.sampleFilePath,  # 格式：字符串
+            self.blankFilePath,  # 格式：字符串
+            self.deleteBlankIntensity,  # 格式：整数
+            self.deleteBlankPPM,  # 格式：浮点数
+            self.deleteBlankPercentage  # 格式：整数
+        ]
+        self.GDBList = [
+            self.GDBClass,  # 格式：列表，列表中均为字符串
+            self.GDBCarbonRangeLow,  # 格式：整数
+            self.GDBCarbonRangeHigh,  # 格式：整数
+            self.GDBDBERageLow,  # 格式：整数
+            self.GDBDBERageHigh,  # 格式：整数
+            self.GDBM_ZRageLow,  # 格式：整数
+            self.GDBM_ZRageHigh,  # 格式：整数
+            self.GDB_MHPostive,  # 格式：bool
+            self.GDB_MPostive,  # 格式：bool
+            self.GDB_MHNegative,  # 格式：bool
+            self.GDB_MNegative  # 格式：bool
+        ]
+        self.DelIsoList = [
+            self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
+            self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
+            self.deleteBlankIntensity,
+            self.DelIsoIntensityX,  # 格式：整数
+            self.DelIso_13C2RelativeIntensity,  # 格式：整数
+            self.DelIsoMassDeviation,  # 格式：浮点数
+            self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
+            self.DelIsoIsotopeIntensityDeviation  # 格式：整数
+        ]
+        self.PeakDisList = [
+            self.TICDataDictionary,
+            self.DelIsoResult,
+            self.PeakDisContinuityNum,
+            self.PeakDisMassDeviation,
+            self.PeakDisDiscontinuityPointNum,
+            self.PeakDisClassIsNeed,  # 第二部分
+            self.PeakDisClass
+        ]
+        self.RemoveFPList = [
+            self.DelIsoResult,
+            self.PeakDisResult,
+            self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPContinue_CNum,
+            self.RemoveFPContinue_DBENum
+        ]
+        self.PeakDivList = [
+            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
+            self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
+            self.PeakDivNoiseThreshold,
+            self.PeakDivRelIntensity,
+            self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
+            self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
+        ]
+        self.PlotList = [
+            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
+            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
+            self.PlotTitleName,
+            self.PlotTitleColor,
+            self.PlotXAxisName,
+            self.PlotXAxisColor,
+            self.PlotYAxisName,
+            self.PlotYAxisColor,
+            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+            self.PlotType,  # 绘图类型
+            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
+            self.PlotConfirm
+        ]
+        self.startModeList = [
+            self.startMode,
+            self.startModeConfirm
+        ]
 

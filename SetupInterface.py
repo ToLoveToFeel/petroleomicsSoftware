@@ -5,6 +5,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ConstValues import ConstValues
 from PromptBox import PromptBox
+from ClassPlot import ClassPlot
+from Utils import *
 import qtawesome
 import sys
 
@@ -542,12 +544,12 @@ class SetupInterface:
 
         # 创建栅格布局
         layout = QGridLayout(self.deleteIsotopeDialog)
-        # 第一行内容，IntensityX
-        layout.addWidget(self.GetQLabel("IntensityX(" + str(ConstValues.PsDelIsoIntensityXMin) + "~" + ConstValues.PsDelIsoIntensityXMaxStr + ") :"), 0, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit1, 0, 4, 1, 2)
-        # 第二行内容，13C2RelativeIntensity
-        layout.addWidget(self.GetQLabel("13C2RelativeIntensity(" + str(ConstValues.PsDelIso_13C2RelativeIntensityMin) + "~" + str(ConstValues.PsDelIso_13C2RelativeIntensityMax) + "):"), 1, 0, 1, 4)
-        layout.addWidget(deleteIsotopeEdit2, 1, 4, 1, 2)
+        # # 第一行内容，IntensityX
+        # layout.addWidget(self.GetQLabel("IntensityX(" + str(ConstValues.PsDelIsoIntensityXMin) + "~" + ConstValues.PsDelIsoIntensityXMaxStr + ") :"), 0, 0, 1, 4)
+        # layout.addWidget(deleteIsotopeEdit1, 0, 4, 1, 2)
+        # # 第二行内容，13C2RelativeIntensity
+        # layout.addWidget(self.GetQLabel("13C2RelativeIntensity(" + str(ConstValues.PsDelIso_13C2RelativeIntensityMin) + "~" + str(ConstValues.PsDelIso_13C2RelativeIntensityMax) + "):"), 1, 0, 1, 4)
+        # layout.addWidget(deleteIsotopeEdit2, 1, 4, 1, 2)
         # 第三行内容，Mass Deviation
         layout.addWidget(self.GetQLabel("Mass Deviation(" + str(ConstValues.PsDelIsoMassDeviationMin) + "~" + str(ConstValues.PsDelIsoMassDeviationMax) + ") :"), 2, 0, 1, 4)
         layout.addWidget(deleteIsotopeEdit3, 2, 4, 1, 2)
@@ -1100,6 +1102,27 @@ class SetupInterface:
 
         # 主界面添加控件
         self.PlotMainUIAddWidget()
+
+        # # 绘制 Retention time vs carbon number 图，探究如何去除假阳性
+        # for key in self.PlotDictionary:  # 用户带勾选DBE初始化
+        #     for num in self.PlotDictionary[key]:
+        #         params = [
+        #             2,
+        #             self.RemoveFPResult,
+        #             self.PlotTitleName,  # 标题名称
+        #             self.PlotTitleColor,  # 标题颜色
+        #             self.PlotXAxisName,  # x轴名称
+        #             self.PlotXAxisColor,  # x轴颜色
+        #             self.PlotYAxisName,  # y轴名称
+        #             self.PlotYAxisColor,  # y轴颜色
+        #             self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
+        #             6,  # 绘图类型
+        #             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
+        #             [key],  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
+        #             num,  # 整数，记录用户选择的DBE数目
+        #             self.PlotConfirm  # 是否确认要画图
+        #         ]
+        #         ClassPlot(params, "").Plot()
 
         # 运行
         self.PlotDialog.exec()

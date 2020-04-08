@@ -175,7 +175,7 @@ class ClassPeakDivision:
             areas = []  # 一维列表
             peakInfo = []  # 记录峰顶信息：二维列表，因为可能有多个峰[[index, RT, Intensity], ..., [...]]
             if len(ContinueItem) == 1:  # 说明该图为空图
-                areas.append(0)
+                pass
             elif (len(ContinueItem) == 2) and \
                     ((ContinueItem[1][1]-ContinueItem[1][0]) <= int(length/10)):  # 说明只有一项连续的数据，并且很窄
                 redList = ContinueItem[1][:2]
@@ -376,6 +376,7 @@ class ClassPeakDivision:
         # 返回值
         ret = []
         for i in range(len(areas)):
+            # print(len(areas), len(peakInfo))
             ret.append([SampleMass, float(areas[i]), peakInfo[i][0], peakInfo[i][1]] + information[2:8] + [orderOfMagnitude])
         if len(ret) != 0:
             ret.append([])

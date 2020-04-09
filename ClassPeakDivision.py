@@ -159,11 +159,11 @@ class ClassPeakDivision:
         # 拟合数据
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:
-            # # 拟合滤波算法
-            # smoothData.append(self.FilterPoly(item[9:]))
+            # 拟合滤波算法
+            smoothData.append(self.FilterPoly(item[9:]))
 
-            # 普通滤波算法
-            smoothData.append(self.Filter(item[9:], "mean"))
+            # # 普通滤波算法
+            # smoothData.append(self.Filter(item[9:], "mean"))
 
         # 主逻辑
         ret = []

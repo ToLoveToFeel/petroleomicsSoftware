@@ -300,4 +300,12 @@ class ConstValues:
         （2）ClassPeakDivision中if len(ContinueItem) == 1:之后不应改变area
         （3）ClassDeleteIsotope更改第三个判断条件
     """
-    PsSoftwareEdition = "v1.2"
+    """
+        v1.3相对于v1.2更改1处错误：
+            （1）ClassPeakDivision中滤波算法换成拟合滤波
+    """
+    """
+            v1.4相对于v1.3更改1处错误：
+                （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
+    """
+    PsSoftwareEdition = " v1.4"

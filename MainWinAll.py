@@ -378,7 +378,15 @@ class ConstValues:
         （2）ClassPeakDivision中if len(ContinueItem) == 1:之后不应改变area
         （3）ClassDeleteIsotope更改第三个判断条件
     """
-    PsSoftwareEdition = "v1.2"
+    """
+        v1.3相对于v1.2更改1处错误：
+            （1）ClassPeakDivision中滤波算法换成拟合滤波
+    """
+    """
+            v1.4相对于v1.3更改1处错误：
+                （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
+    """
+    PsSoftwareEdition = " v1.4"
 
 # 弹出对话框
 class PromptBox:
@@ -3518,6 +3526,7 @@ class ClassPeakDistinguish:
         # self.resultPart1Detail中所有的数据都是是用户输入的需要进行峰检测（第二部分）的类别
         self.resultPart1Detail = []
         flag = 1
+        runTime = 0
 
         for sampleItem in self.DelIsoResult:
             # sampleItem均为列表，有多种类型：
@@ -3527,18 +3536,23 @@ class ClassPeakDistinguish:
             # 类型四：[]
             if len(sampleItem) == 8:
                 ret, retDetail = self.PeakDisHandleItem(sampleItem)
+                # 结果数据显示
                 for item in ret:
                     self.resultPart1.append(item)
+                # 峰检测过程使用的数据
                 if len(retDetail) != 0:
-                    if flag == 1 and ConstValues.PsIsDebug:
-                        print(
-                            "***Debug In \"", self.__class__.__name__, "\" class，In \"",
-                            sys._getframe().f_code.co_name, "\" method***：",
-                            "len(retDetail):", len(retDetail)
-                        )
-                        flag = 0
                     self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
+                # 运行过程中调试输出信息
+                runTime += 1
+                if ConstValues.PsIsDebug and runTime % 100 == 0:
+                    print("程序正在运行... runTime:", runTime)
 
+        if ConstValues.PsIsDebug:
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "Finished!"
+            )
         # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
         self.resultPart1 = self.PeakDisSort()
         self.resultPart1Detail = self.PeakDisSortDetail()
@@ -4192,11 +4206,11 @@ class ClassPeakDivision:
         # 拟合数据
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:
-            # # 拟合滤波算法
-            # smoothData.append(self.FilterPoly(item[9:]))
+            # 拟合滤波算法
+            smoothData.append(self.FilterPoly(item[9:]))
 
-            # 普通滤波算法
-            smoothData.append(self.Filter(item[9:], "mean"))
+            # # 普通滤波算法
+            # smoothData.append(self.Filter(item[9:], "mean"))
 
         # 主逻辑
         ret = []
@@ -5079,7 +5093,7 @@ class ClassPlot:
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
                     if (itemClass in self.PlotClassItem) and (self.PlotDBENum == itemDBE):
-                        if itemDBE not in CDictionary:
+                        if itemCNum not in CDictionary:
                             CDictionary[itemCNum] = item[sumIndex]
                         else:
                             CDictionary[itemCNum] += item[sumIndex]
@@ -5095,6 +5109,7 @@ class ClassPlot:
             sum = 0  # 计算总和
             for num in yList:
                 sum += num
+
             yList = [num * 100 / sum for num in yList]  # 计算比例
 
             # 添加标题

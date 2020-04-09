@@ -145,7 +145,7 @@ class ClassPlot:
                     itemDBE = item[DBEIndex]  # DBE数目
                     itemCNum = item[CIndex]
                     if (itemClass in self.PlotClassItem) and (self.PlotDBENum == itemDBE):
-                        if itemDBE not in CDictionary:
+                        if itemCNum not in CDictionary:
                             CDictionary[itemCNum] = item[sumIndex]
                         else:
                             CDictionary[itemCNum] += item[sumIndex]
@@ -161,6 +161,7 @@ class ClassPlot:
             sum = 0  # 计算总和
             for num in yList:
                 sum += num
+
             yList = [num * 100 / sum for num in yList]  # 计算比例
 
             # 添加标题

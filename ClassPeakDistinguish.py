@@ -44,6 +44,7 @@ class ClassPeakDistinguish:
         # self.resultPart1Detail中所有的数据都是是用户输入的需要进行峰检测（第二部分）的类别
         self.resultPart1Detail = []
         flag = 1
+        runTime = 0
 
         for sampleItem in self.DelIsoResult:
             # sampleItem均为列表，有多种类型：
@@ -53,18 +54,23 @@ class ClassPeakDistinguish:
             # 类型四：[]
             if len(sampleItem) == 8:
                 ret, retDetail = self.PeakDisHandleItem(sampleItem)
+                # 结果数据显示
                 for item in ret:
                     self.resultPart1.append(item)
+                # 峰检测过程使用的数据
                 if len(retDetail) != 0:
-                    if flag == 1 and ConstValues.PsIsDebug:
-                        print(
-                            "***Debug In \"", self.__class__.__name__, "\" class，In \"",
-                            sys._getframe().f_code.co_name, "\" method***：",
-                            "len(retDetail):", len(retDetail)
-                        )
-                        flag = 0
                     self.resultPart1Detail.append(sampleItem + [":"] + retDetail)
+                # 运行过程中调试输出信息
+                runTime += 1
+                if ConstValues.PsIsDebug and runTime % 100 == 0:
+                    print("程序正在运行... runTime:", runTime)
 
+        if ConstValues.PsIsDebug:
+            print(
+                "***Debug In \"", self.__class__.__name__, "\" class，In \"",
+                sys._getframe().f_code.co_name, "\" method***：",
+                "Finished!"
+            )
         # 峰识别按照Formula（主键），C（次主键）从小到大顺序排序
         self.resultPart1 = self.PeakDisSort()
         self.resultPart1Detail = self.PeakDisSortDetail()

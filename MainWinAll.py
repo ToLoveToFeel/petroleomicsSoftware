@@ -249,8 +249,8 @@ class ConstValues:
     PsDeleteBlankPercentageMax = 100
 
     # 数据库生成设置默认参数
-    # PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
-    PsGDBClass = ["N1", "N1O1", "CH", "N2", "N1S1", "N1O2", "O1S1", "O1", "O2", "O3"]  # 四组需要测试的数据
+    PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
+    # PsGDBClass = ["N1", "N1O1", "CH", "N2", "N1S1", "N1O2", "O1S1", "O1", "O2", "O3"]  # 四组需要测试的数据
     # 1~100（整数）
     PsGDBCarbonRangeLow = 1  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
     PsGDBCarbonRangeHigh = 100  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
@@ -383,10 +383,14 @@ class ConstValues:
             （1）ClassPeakDivision中滤波算法换成拟合滤波
     """
     """
-            v1.4相对于v1.3更改1处错误：
-                （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
+        v1.4相对于v1.3更改1处错误：
+            （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
     """
-    PsSoftwareEdition = " v1.4"
+    """
+        v1.5相对于v1.4更改1处错误：
+            （1）ClassPeakDistinguish.py 中 中位数错误改正
+    """
+    PsSoftwareEdition = " v1.5"
 
 # 弹出对话框
 class PromptBox:
@@ -3630,19 +3634,21 @@ class ClassPeakDistinguish:
                 continuityItems = np.array(continuityItems)
                 continuityItems2 = np.array(continuityItems2)
                 continuityMasses2 = continuityItems2[:, 0]
-                continuityIntensities = continuityItems[:, 1]
+                continuityIntensities = continuityItems2[:, 1]
 
                 Area = np.sum(continuityIntensities)  # 求面积
                 startRTValue = keysList[startRT]  # 开始的扫描点的值
                 endRT = startRT + len(continuityItems) - 1  # 结束的扫描点在TIC中属于第几个扫描点
                 endRTValue = keysList[endRT]  # 结束的扫描点的值
 
-                # 计算中位数：应该是先计算最大值，然后各个intensity／最大值，选取大于60的 m/z，取中位数
-                thresholdValue = np.max(continuityMasses2) * 0.6
+                # 计算中位数：应该是先计算最大值，然后各个intensity／最大值，选取大于最大值60%的 m/z，取中位数
+                thresholdValue = np.max(continuityIntensities) * 0.1
                 greaterThanThresholdList = []
-                for value in continuityMasses2:
+                for i in range(len(continuityMasses2)):
+                    mass = continuityMasses2[i]
+                    value = continuityIntensities[i]
                     if value > thresholdValue:
-                        greaterThanThresholdList.append(value)
+                        greaterThanThresholdList.append(mass)
                 MassMedian = -1  # 代表不存在这样的中位数，理论上一定存在
                 if len(greaterThanThresholdList) > 0:
                     MassMedian = np.median(np.array(greaterThanThresholdList))  # TIC中所有符合条件的连续的记录的
@@ -5633,7 +5639,7 @@ class SetupInterface:
         self.DeleteBlankSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 30, 16)
+        self.deleteBlankDialog = self.CreateDialog("去空白参数设置", 30, 16)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -5963,7 +5969,7 @@ class SetupInterface:
         self.DeleteIsotopeSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 40, 25)
+        self.deleteIsotopeDialog = self.CreateDialog("搜同位素参数设置", 40, 25)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))

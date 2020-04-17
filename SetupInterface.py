@@ -186,7 +186,7 @@ class SetupInterface:
         self.DeleteBlankSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteBlankDialog = self.CreateDialog("扣空白参数设置", 30, 16)
+        self.deleteBlankDialog = self.CreateDialog("去空白参数设置", 30, 16)
 
         # Intensity对话框
         deleteBlankEdit1 = self.IntQLineEdit(ConstValues.PsDeleteBlankIntensityMin, ConstValues.PsDeleteBlankIntensityMax, str(self.deleteBlankIntensity))
@@ -516,7 +516,7 @@ class SetupInterface:
         self.DeleteIsotopeSetDefaultParameters(parameters)
 
         # 创建QDialog
-        self.deleteIsotopeDialog = self.CreateDialog("去同位素参数设置", 40, 25)
+        self.deleteIsotopeDialog = self.CreateDialog("搜同位素参数设置", 40, 25)
 
         # IntensityX对话框
         deleteIsotopeEdit1 = self.IntQLineEdit(ConstValues.PsDelIsoIntensityXMin, ConstValues.PsDelIsoIntensityXMax, str(self.DelIsoIntensityX))

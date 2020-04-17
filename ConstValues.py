@@ -171,8 +171,8 @@ class ConstValues:
     PsDeleteBlankPercentageMax = 100
 
     # 数据库生成设置默认参数
-    # PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
-    PsGDBClass = ["N1", "N1O1", "CH", "N2", "N1S1", "N1O2", "O1S1", "O1", "O2", "O3"]  # 四组需要测试的数据
+    PsGDBClass = ["N1", "N1O1", "N1S1", "CH"]  # 数据库生成(参数)：Class类型
+    # PsGDBClass = ["N1", "N1O1", "CH", "N2", "N1S1", "N1O2", "O1S1", "O1", "O2", "O3"]  # 四组需要测试的数据
     # 1~100（整数）
     PsGDBCarbonRangeLow = 1  # 数据库生成(参数)：carbon rage(碳数范围)最小值(包含)
     PsGDBCarbonRangeHigh = 100  # 数据库生成(参数)：carbon rage(碳数范围)最大值(包含)
@@ -305,7 +305,11 @@ class ConstValues:
             （1）ClassPeakDivision中滤波算法换成拟合滤波
     """
     """
-            v1.4相对于v1.3更改1处错误：
-                （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
+        v1.4相对于v1.3更改1处错误：
+            （1）ClassPlot 中 Carbon number distribution by class and DBE 绘图错误
     """
-    PsSoftwareEdition = " v1.4"
+    """
+        v1.5相对于v1.4更改1处错误：
+            （1）ClassPeakDistinguish.py 中 中位数错误改正
+    """
+    PsSoftwareEdition = " v1.5"

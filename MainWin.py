@@ -762,6 +762,8 @@ class MainWin(QMainWindow):
         self.PlotDBENum = ConstValues.PsPlotDBENum  # 整数，记录用户选择的DBE数目
         # 用户是否确认要画图
         self.PlotConfirm = ConstValues.PsPlotConfirm
+        # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表
+        self.PlotAxisList = ConstValues.PsPlotAxisList
         # 输出文件路径
         self.PlotImagePath = ""
         # 画图原始数据
@@ -781,7 +783,8 @@ class MainWin(QMainWindow):
                             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
                             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                            self.PlotConfirm
+                            self.PlotConfirm,
+                            self.PlotAxisList
                         ]
 
         # 运行模式
@@ -1334,22 +1337,7 @@ class MainWin(QMainWindow):
             return False
         # 更新数据
         self.PlotConfirm = False  # 每次绘图前需要重置
-        self.PlotList = [
-            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-            self.PlotTitleName,
-            self.PlotTitleColor,
-            self.PlotXAxisName,
-            self.PlotXAxisColor,
-            self.PlotYAxisName,
-            self.PlotYAxisColor,
-            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-            self.PlotType,  # 绘图类型
-            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-            self.PlotConfirm
-        ]
+        self.UpdateList()
 
         try:
             newParameters = SetupInterface(self.MainWindowsStyle).PlotSetup(self.PlotList)
@@ -1527,6 +1515,8 @@ class MainWin(QMainWindow):
                     )
                 # 检查数据合法性
                 if self.PlotImagePath is None:
+                    if self.PlotType == 7:
+                        PromptBox().errorMessage("类别为空 或者 类别和横纵坐标不匹配!")
                     return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
@@ -1647,48 +1637,49 @@ class MainWin(QMainWindow):
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "Error_CDB_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
             elif retList[0] == "Error_CGDB_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
             elif retList[0] == "Error_CDI_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
             elif retList[0] == "Error_CPD1_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
             elif retList[0] == "Error_CRFP_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
             elif retList[0] == "Error_CPD2_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
             elif retList[0] == "Error_CPlot_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif  and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("绘图出现错误!")
             elif retList[0] == "Error_ImSample_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入样本文件出现错误!")
             elif retList[0] == "Error_ImBlank_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入空白文件出现错误!")
             elif retList[0] == "Error_ImTIC_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入样本总离子图文件出现错误!")
             elif retList[0] == "Error_StartMode_MultiThread":
                 # 关闭弹出的程序运行指示对话框
-                self.promptGif.closeGif()
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
         except Exception as e:
             if ConstValues.PsIsDebug:
@@ -1704,13 +1695,7 @@ class MainWin(QMainWindow):
             self.deleteBlankIntensity = newParameters[0]
             self.deleteBlankPPM = newParameters[1]
             self.deleteBlankPercentage = newParameters[2]
-            self.deleteBlankList = [
-                                        self.sampleFilePath,  # 格式：字符串
-                                        self.blankFilePath,  # 格式：字符串
-                                        self.deleteBlankIntensity,  # 格式：整数
-                                        self.deleteBlankPPM,  # 格式：浮点数
-                                        self.deleteBlankPercentage  # 格式：整数
-                                    ]
+            self.UpdateList()
             if ConstValues.PsIsDebug:
                 print(self.deleteBlankList[2:])
         elif Type == "GenerateDataBaseSetup":
@@ -1725,19 +1710,7 @@ class MainWin(QMainWindow):
             self.GDB_MPostive = newParameters[8]
             self.GDB_MHNegative = newParameters[9]
             self.GDB_MNegative = newParameters[10]
-            self.GDBList = [
-                                self.GDBClass,  # 格式：列表，列表中均为字符串
-                                self.GDBCarbonRangeLow,  # 格式：整数
-                                self.GDBCarbonRangeHigh,  # 格式：整数
-                                self.GDBDBERageLow,  # 格式：整数
-                                self.GDBDBERageHigh,  # 格式：整数
-                                self.GDBM_ZRageLow,  # 格式：整数
-                                self.GDBM_ZRageHigh,  # 格式：整数
-                                self.GDB_MHPostive,  # 格式：bool
-                                self.GDB_MPostive,  # 格式：bool
-                                self.GDB_MHNegative,  # 格式：bool
-                                self.GDB_MNegative  # 格式：bool
-                            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.GDBList)
@@ -1747,16 +1720,7 @@ class MainWin(QMainWindow):
             self.DelIsoMassDeviation = newParameters[2]
             self.DelIsoIsotopeMassDeviation = newParameters[3]
             self.DelIsoIsotopeIntensityDeviation = newParameters[4]
-            self.DelIsoList = [
-                                   self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                                   self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                                   self.deleteBlankIntensity,
-                                   self.DelIsoIntensityX,  # 格式：整数
-                                   self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                                   self.DelIsoMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                               ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.DelIsoList[3:])
@@ -1766,15 +1730,7 @@ class MainWin(QMainWindow):
             self.PeakDisDiscontinuityPointNum = newParameters[2]
             self.PeakDisClassIsNeed = newParameters[3]
             self.PeakDisClass = newParameters[4]
-            self.PeakDisList = [
-                                    self.TICDataDictionary,
-                                    self.DelIsoResult,
-                                    self.PeakDisContinuityNum,
-                                    self.PeakDisMassDeviation,
-                                    self.PeakDisDiscontinuityPointNum,
-                                    self.PeakDisClassIsNeed,  # 第二部分
-                                    self.PeakDisClass,
-                                ]
+            self.UpdateList()
 
             # 更新状态栏
             self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
@@ -1784,13 +1740,7 @@ class MainWin(QMainWindow):
             self.RemoveFPId = newParameters[0]
             self.RemoveFPContinue_CNum = newParameters[1]
             self.RemoveFPContinue_DBENum = newParameters[2]
-            self.RemoveFPList = [
-                                     self.DelIsoResult,
-                                     self.PeakDisResult,
-                                     self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                     self.RemoveFPContinue_CNum,
-                                     self.RemoveFPContinue_DBENum
-                                 ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.RemoveFPList[2:])
@@ -1799,15 +1749,7 @@ class MainWin(QMainWindow):
             self.PeakDivRelIntensity = newParameters[1]
             self.PeakDivNeedMerge = newParameters[2]
             self.PeakDivNeedGenImage = newParameters[3]
-            self.PeakDivList = [
-                                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
-                                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
-                                    self.PeakDivNoiseThreshold,
-                                    self.PeakDivRelIntensity,
-                                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                                ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.PeakDivList[3:])
@@ -1824,22 +1766,8 @@ class MainWin(QMainWindow):
             self.PlotClassItem = newParameters[9]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
             self.PlotConfirm = newParameters[11]
-            self.PlotList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotTitleName,
-                self.PlotTitleColor,
-                self.PlotXAxisName,
-                self.PlotXAxisColor,
-                self.PlotYAxisName,
-                self.PlotYAxisColor,
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                self.PlotConfirm
-            ]
+            self.PlotAxisList = newParameters[12]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.PlotList[2:])
@@ -1848,10 +1776,7 @@ class MainWin(QMainWindow):
             self.startMode = newParameters[0]
             # 确定开始运行
             self.startModeConfirm = newParameters[1]
-            self.startModeList = [
-                self.startMode,
-                self.startModeConfirm
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(
@@ -1868,13 +1793,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
                 return False
             # 因为有self.sampleFilePath，self.blankFilePath，所以需要更新self.sampleFilePath,self.blankFilePath（最开始前两项为空字符串）
-            self.deleteBlankList = [
-                                        self.sampleFilePath,  # 格式：字符串
-                                        self.blankFilePath,  # 格式：字符串
-                                        self.deleteBlankIntensity,  # 格式：整数
-                                        self.deleteBlankPPM,  # 格式：浮点数
-                                        self.deleteBlankPercentage  # 格式：整数
-                                    ]
+            self.UpdateList()
             if ConstValues.PsNameDeleteBlank in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1902,16 +1821,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
                 return False
             # 因为有self.deleteBlankResult和self.GDBResult，所以需要更新self.DelIsoList（最开始前两项为空）
-            self.DelIsoList = [
-                                   self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                                   self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                                   self.deleteBlankIntensity,
-                                   self.DelIsoIntensityX,  # 格式：整数
-                                   self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                                   self.DelIsoMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                                   self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-                               ]
+            self.UpdateList()
             if ConstValues.PsNameDeleteIsotope in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1930,15 +1840,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
                 return False
             # 因为有self.TICFilePath，self.DelIsoResult，所以需要更新self.TICFilePath，self.PeakDisList（最开始第一项为空字符串，第二项为空）
-            self.PeakDisList = [
-                                    self.TICDataDictionary,
-                                    self.DelIsoResult,
-                                    self.PeakDisContinuityNum,
-                                    self.PeakDisMassDeviation,
-                                    self.PeakDisDiscontinuityPointNum,
-                                    self.PeakDisClassIsNeed,  # 第二部分
-                                    self.PeakDisClass,
-                                ]
+            self.UpdateList()
             if ConstValues.PsNamePeakDistinguish in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -1962,13 +1864,7 @@ class MainWin(QMainWindow):
                     PromptBox().warningMessage(ConstValues.PsRemoveFPErrorMessage2)
                     return False
             # 更新数据
-            self.RemoveFPList = [
-                                     self.DelIsoResult,
-                                     self.PeakDisResult,  # 列表，有三个数据
-                                     self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                     self.RemoveFPContinue_CNum,
-                                     self.RemoveFPContinue_DBENum
-                                 ]
+            self.UpdateList()
             if (ConstValues.PsNameRemoveFPFrom_DelIsoResult in self.mainDataNameSetAll) or \
                     (ConstValues.PsNameRemoveFPFrom_PeakDisResult in self.mainDataNameSetAll):
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
@@ -1984,36 +1880,13 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsPeakDivErrorMessage)
                 return False
             # 更新数据
-            self.PeakDivList = [
-                                    self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                                    self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头，第5步
-                                    self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)，第4步
-                                    self.PeakDivNoiseThreshold,
-                                    self.PeakDivRelIntensity,
-                                    self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                                    self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-                                ]
+            self.UpdateList()
             if ConstValues.PsNamePeakDivision in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
         elif Type == "Plot":
             # 更新数据
-            self.PlotList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotTitleName,
-                self.PlotTitleColor,
-                self.PlotXAxisName,
-                self.PlotXAxisColor,
-                self.PlotYAxisName,
-                self.PlotYAxisColor,
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                self.PlotConfirm
-            ]
+            self.UpdateList()
             # 更新过参数后，检查是否重名
             if self.PlotTitleName in self.mainPlotNameSetAll:
                 self.mainPlotNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
@@ -2077,13 +1950,7 @@ class MainWin(QMainWindow):
             else:
                 return PromptBox().questionMessage(name + "是否为样本文件？")
             # 更新数据
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
         elif Type == "ImportBlankFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', ConstValues.PsReadFileDefaultDirectoy, 'Excel files(*.xlsx , *.xls)')
@@ -2122,13 +1989,7 @@ class MainWin(QMainWindow):
             else:
                 return PromptBox().questionMessage(name + "是否为空白文件？")
             # 更新数据
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
         elif Type == "ImportTICFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', ConstValues.PsReadFileDefaultDirectoy, 'Txt files(*.txt)')
@@ -2201,6 +2062,8 @@ class MainWin(QMainWindow):
             self.PlotMt.start()
         elif Type == "StartMode":
             startModeData = []
+            # 更新数据
+            self.UpdateList()
             if self.startMode == 1:
                 # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
                 self.RemoveFPId = 1  # 设置为去假阳性
@@ -2471,7 +2334,8 @@ class MainWin(QMainWindow):
             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-            self.PlotConfirm
+            self.PlotConfirm,
+            self.PlotAxisList
         ]
         self.startModeList = [
             self.startMode,

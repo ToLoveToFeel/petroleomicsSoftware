@@ -12,6 +12,7 @@ import traceback
 import xlsxwriter
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
+import copy
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -352,6 +353,7 @@ class ConstValues:
     PsPlotClassItem = []  # 需要绘制的类型，单选
     PsPlotDBENum = -1
     PsPlotConfirm = False  # 用户是否确认要画图
+    PsPlotAxisList = ["N", "C", "H", "C"]  # x轴：N/C，y轴：H/C
 
     # 初始化显示图片列表，必须在./__system/images/show文件夹中
     PstitleList = [
@@ -390,7 +392,11 @@ class ConstValues:
         v1.5相对于v1.4更改1处错误：
             （1）ClassPeakDistinguish.py 中 中位数错误改正
     """
-    PsSoftwareEdition = " v1.5"
+    """
+        v1.6相对于v1.5的变化：
+            （1）ClassPlot添加一种图形绘制
+    """
+    PsSoftwareEdition = " v1.6"
 
 # 弹出对话框
 class PromptBox:
@@ -1280,6 +1286,8 @@ class MainWin(QMainWindow):
         self.PlotDBENum = ConstValues.PsPlotDBENum  # 整数，记录用户选择的DBE数目
         # 用户是否确认要画图
         self.PlotConfirm = ConstValues.PsPlotConfirm
+        # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表
+        self.PlotAxisList = ConstValues.PsPlotAxisList
         # 输出文件路径
         self.PlotImagePath = ""
         # 画图原始数据
@@ -1299,7 +1307,8 @@ class MainWin(QMainWindow):
             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-            self.PlotConfirm
+            self.PlotConfirm,
+            self.PlotAxisList
         ]
 
         # 运行模式
@@ -1867,22 +1876,7 @@ class MainWin(QMainWindow):
             return False
         # 更新数据
         self.PlotConfirm = False  # 每次绘图前需要重置
-        self.PlotList = [
-            self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-            self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-            self.PlotTitleName,
-            self.PlotTitleColor,
-            self.PlotXAxisName,
-            self.PlotXAxisColor,
-            self.PlotYAxisName,
-            self.PlotYAxisColor,
-            self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-            self.PlotType,  # 绘图类型
-            self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-            self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-            self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-            self.PlotConfirm
-        ]
+        self.UpdateList()
 
         try:
             newParameters = SetupInterface(self.MainWindowsStyle).PlotSetup(self.PlotList)
@@ -2060,6 +2054,8 @@ class MainWin(QMainWindow):
                     )
                 # 检查数据合法性
                 if self.PlotImagePath is None:
+                    if self.PlotType == 7:
+                        PromptBox().errorMessage("类别为空 或者 类别和横纵坐标不匹配!")
                     return
                 # 将数据展示到界面上
                 self.AddTreeItemPlot(self.PlotImagePath, list(zip(*self.PlotRawData)), "图形绘制成功!")
@@ -2180,48 +2176,49 @@ class MainWin(QMainWindow):
                 icon = ConstValues.PsqtaIconOpenFileExcel
                 self.AddTreeItemShowData(parent, name, data, None, icon, functionStr)
             elif retList[0] == "Error_CDB_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去空白出现错误!")
             elif retList[0] == "Error_CGDB_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("数据库生成出现错误!")
             elif retList[0] == "Error_CDI_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去同位素出现错误!")
             elif retList[0] == "Error_CPD1_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰识别出现错误!")
             elif retList[0] == "Error_CRFP_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("去假阳性出现错误!")
             elif retList[0] == "Error_CPD2_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("峰检测出现错误!")
             elif retList[0] == "Error_CPlot_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("绘图出现错误!")
             elif retList[0] == "Error_ImSample_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入样本文件出现错误!")
             elif retList[0] == "Error_ImBlank_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入空白文件出现错误!")
             elif retList[0] == "Error_ImTIC_MultiThread":
-                if ConstValues.PsIsShowGif:
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
                     self.promptGif.closeGif()
                 PromptBox().errorMessage("导入样本总离子图文件出现错误!")
             elif retList[0] == "Error_StartMode_MultiThread":
                 # 关闭弹出的程序运行指示对话框
-                self.promptGif.closeGif()
+                if ConstValues.PsIsShowGif and self.whetherShowGif:
+                    self.promptGif.closeGif()
                 PromptBox().errorMessage("程序运行出现错误!")
         except Exception as e:
             if ConstValues.PsIsDebug:
@@ -2237,13 +2234,7 @@ class MainWin(QMainWindow):
             self.deleteBlankIntensity = newParameters[0]
             self.deleteBlankPPM = newParameters[1]
             self.deleteBlankPercentage = newParameters[2]
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
             if ConstValues.PsIsDebug:
                 print(self.deleteBlankList[2:])
         elif Type == "GenerateDataBaseSetup":
@@ -2258,19 +2249,7 @@ class MainWin(QMainWindow):
             self.GDB_MPostive = newParameters[8]
             self.GDB_MHNegative = newParameters[9]
             self.GDB_MNegative = newParameters[10]
-            self.GDBList = [
-                self.GDBClass,  # 格式：列表，列表中均为字符串
-                self.GDBCarbonRangeLow,  # 格式：整数
-                self.GDBCarbonRangeHigh,  # 格式：整数
-                self.GDBDBERageLow,  # 格式：整数
-                self.GDBDBERageHigh,  # 格式：整数
-                self.GDBM_ZRageLow,  # 格式：整数
-                self.GDBM_ZRageHigh,  # 格式：整数
-                self.GDB_MHPostive,  # 格式：bool
-                self.GDB_MPostive,  # 格式：bool
-                self.GDB_MHNegative,  # 格式：bool
-                self.GDB_MNegative  # 格式：bool
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.GDBList)
@@ -2280,16 +2259,7 @@ class MainWin(QMainWindow):
             self.DelIsoMassDeviation = newParameters[2]
             self.DelIsoIsotopeMassDeviation = newParameters[3]
             self.DelIsoIsotopeIntensityDeviation = newParameters[4]
-            self.DelIsoList = [
-                self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                self.deleteBlankIntensity,
-                self.DelIsoIntensityX,  # 格式：整数
-                self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                self.DelIsoMassDeviation,  # 格式：浮点数
-                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.DelIsoList[3:])
@@ -2299,15 +2269,7 @@ class MainWin(QMainWindow):
             self.PeakDisDiscontinuityPointNum = newParameters[2]
             self.PeakDisClassIsNeed = newParameters[3]
             self.PeakDisClass = newParameters[4]
-            self.PeakDisList = [
-                self.TICDataDictionary,
-                self.DelIsoResult,
-                self.PeakDisContinuityNum,
-                self.PeakDisMassDeviation,
-                self.PeakDisDiscontinuityPointNum,
-                self.PeakDisClassIsNeed,  # 第二部分
-                self.PeakDisClass,
-            ]
+            self.UpdateList()
 
             # 更新状态栏
             self.TBpeakDivision.setEnabled(self.PeakDisClassIsNeed)
@@ -2317,13 +2279,7 @@ class MainWin(QMainWindow):
             self.RemoveFPId = newParameters[0]
             self.RemoveFPContinue_CNum = newParameters[1]
             self.RemoveFPContinue_DBENum = newParameters[2]
-            self.RemoveFPList = [
-                self.DelIsoResult,
-                self.PeakDisResult,
-                self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPContinue_CNum,
-                self.RemoveFPContinue_DBENum
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.RemoveFPList[2:])
@@ -2332,15 +2288,7 @@ class MainWin(QMainWindow):
             self.PeakDivRelIntensity = newParameters[1]
             self.PeakDivNeedMerge = newParameters[2]
             self.PeakDivNeedGenImage = newParameters[3]
-            self.PeakDivList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头
-                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)
-                self.PeakDivNoiseThreshold,
-                self.PeakDivRelIntensity,
-                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.PeakDivList[3:])
@@ -2357,22 +2305,8 @@ class MainWin(QMainWindow):
             self.PlotClassItem = newParameters[9]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
             self.PlotConfirm = newParameters[11]
-            self.PlotList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotTitleName,
-                self.PlotTitleColor,
-                self.PlotXAxisName,
-                self.PlotXAxisColor,
-                self.PlotYAxisName,
-                self.PlotYAxisColor,
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                self.PlotConfirm
-            ]
+            self.PlotAxisList = newParameters[12]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(self.PlotList[2:])
@@ -2381,10 +2315,7 @@ class MainWin(QMainWindow):
             self.startMode = newParameters[0]
             # 确定开始运行
             self.startModeConfirm = newParameters[1]
-            self.startModeList = [
-                self.startMode,
-                self.startModeConfirm
-            ]
+            self.UpdateList()
 
             if ConstValues.PsIsDebug:
                 print(
@@ -2401,13 +2332,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsDeleteBlankErrorMessage)  # 弹出错误提示
                 return False
             # 因为有self.sampleFilePath，self.blankFilePath，所以需要更新self.sampleFilePath,self.blankFilePath（最开始前两项为空字符串）
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
             if ConstValues.PsNameDeleteBlank in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2435,16 +2360,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsDeleteIsotopeErrorMessage)
                 return False
             # 因为有self.deleteBlankResult和self.GDBResult，所以需要更新self.DelIsoList（最开始前两项为空）
-            self.DelIsoList = [
-                self.deleteBlankResult,  # 删空白的结果（格式：list二维数组，有表头）
-                self.GDBResult,  # 数据库生成的结果（格式：list二维数组，有表头）
-                self.deleteBlankIntensity,
-                self.DelIsoIntensityX,  # 格式：整数
-                self.DelIso_13C2RelativeIntensity,  # 格式：整数
-                self.DelIsoMassDeviation,  # 格式：浮点数
-                self.DelIsoIsotopeMassDeviation,  # 格式：浮点数
-                self.DelIsoIsotopeIntensityDeviation  # 格式：整数
-            ]
+            self.UpdateList()
             if ConstValues.PsNameDeleteIsotope in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2463,15 +2379,7 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsPeakDistinguishErrorMessage2)
                 return False
             # 因为有self.TICFilePath，self.DelIsoResult，所以需要更新self.TICFilePath，self.PeakDisList（最开始第一项为空字符串，第二项为空）
-            self.PeakDisList = [
-                self.TICDataDictionary,
-                self.DelIsoResult,
-                self.PeakDisContinuityNum,
-                self.PeakDisMassDeviation,
-                self.PeakDisDiscontinuityPointNum,
-                self.PeakDisClassIsNeed,  # 第二部分
-                self.PeakDisClass,
-            ]
+            self.UpdateList()
             if ConstValues.PsNamePeakDistinguish in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
@@ -2495,13 +2403,7 @@ class MainWin(QMainWindow):
                     PromptBox().warningMessage(ConstValues.PsRemoveFPErrorMessage2)
                     return False
             # 更新数据
-            self.RemoveFPList = [
-                self.DelIsoResult,
-                self.PeakDisResult,  # 列表，有三个数据
-                self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPContinue_CNum,
-                self.RemoveFPContinue_DBENum
-            ]
+            self.UpdateList()
             if (ConstValues.PsNameRemoveFPFrom_DelIsoResult in self.mainDataNameSetAll) or \
                     (ConstValues.PsNameRemoveFPFrom_PeakDisResult in self.mainDataNameSetAll):
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
@@ -2517,36 +2419,13 @@ class MainWin(QMainWindow):
                 PromptBox().warningMessage(ConstValues.PsPeakDivErrorMessage)
                 return False
             # 更新数据
-            self.PeakDivList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[1],  # 去假阳性后的需要峰识别（第二部分）结果，二维列表，无表头，第5步
-                self.PeakDisResult[2],  # 第三个是txt文件中RT值(从小到大排序)，第4步
-                self.PeakDivNoiseThreshold,
-                self.PeakDivRelIntensity,
-                self.PeakDivNeedMerge,  # 该参数决定是否需要将溶剂效应的第一个峰融合到第二个峰
-                self.PeakDivNeedGenImage  # 该参数决定是否生成图片信息
-            ]
+            self.UpdateList()
             if ConstValues.PsNamePeakDivision in self.mainDataNameSetAll:
                 self.mainNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
                 return self.mainNeedCover
         elif Type == "Plot":
             # 更新数据
-            self.PlotList = [
-                self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
-                self.RemoveFPResult[0],  # 所有类别去假阳性的结果，二维列表，有表头
-                self.PlotTitleName,
-                self.PlotTitleColor,
-                self.PlotXAxisName,
-                self.PlotXAxisColor,
-                self.PlotYAxisName,
-                self.PlotYAxisColor,
-                self.PlotHasEnter,  # 记录是否进入过PlotSetup()函数
-                self.PlotType,  # 绘图类型
-                self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
-                self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
-                self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                self.PlotConfirm
-            ]
+            self.UpdateList()
             # 更新过参数后，检查是否重名
             if self.PlotTitleName in self.mainPlotNameSetAll:
                 self.mainPlotNeedCover = PromptBox().warningMessage("是否确定覆盖当前文件?")
@@ -2612,13 +2491,7 @@ class MainWin(QMainWindow):
             else:
                 return PromptBox().questionMessage(name + "是否为样本文件？")
             # 更新数据
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
         elif Type == "ImportBlankFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择空白文件', ConstValues.PsReadFileDefaultDirectoy,
@@ -2658,13 +2531,7 @@ class MainWin(QMainWindow):
             else:
                 return PromptBox().questionMessage(name + "是否为空白文件？")
             # 更新数据
-            self.deleteBlankList = [
-                self.sampleFilePath,  # 格式：字符串
-                self.blankFilePath,  # 格式：字符串
-                self.deleteBlankIntensity,  # 格式：整数
-                self.deleteBlankPPM,  # 格式：浮点数
-                self.deleteBlankPercentage  # 格式：整数
-            ]
+            self.UpdateList()
         elif Type == "ImportTICFile":
             # 导入文件，并得到文件名称
             openfile_name = QFileDialog.getOpenFileName(self, '选择总离子流图文件', ConstValues.PsReadFileDefaultDirectoy,
@@ -2738,6 +2605,8 @@ class MainWin(QMainWindow):
             self.PlotMt.start()
         elif Type == "StartMode":
             startModeData = []
+            # 更新数据
+            self.UpdateList()
             if self.startMode == 1:
                 # 1：去空白 --> 数据库生成 --> 搜同位素 --> 去假阳性
                 self.RemoveFPId = 1  # 设置为去假阳性
@@ -3008,7 +2877,8 @@ class MainWin(QMainWindow):
             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-            self.PlotConfirm
+            self.PlotConfirm,
+            self.PlotAxisList
         ]
         self.startModeList = [
             self.startMode,
@@ -3341,14 +3211,16 @@ class ClassDeleteIsotope:
             DBItem_13C2 = DBItemM_Z + 1.00335 * 2
             DBItem_13C2Intensity = (1.081572829 * DBItemCNumber) ** 2 / 200
 
-            if sampleItemIntensity * DBItem_13C1Intensity / 100.0 < self.deleteBlankIntensity:
+            # if sampleItemIntensity * DBItem_13C1Intensity / 100.0 < self.deleteBlankIntensity:
+            if sampleItemIntensity * DBItem_13C1Intensity / 100.0 < 5000:
                 ret.append(sampleItem + DBItem)
                 break
             else:
                 # 3.sampleItemIntensity>self.DelIsoIntensityX 且 DBItem_13C2Intensity>self.DelIso_13C2RelativeIntensity
                 # if (sampleItemIntensity > self.DelIsoIntensityX) and (DBItem_13C2Intensity > self.DelIso_13C2RelativeIntensity):
                 # 3.sampleItemIntensity * DBItem_13C2Intensity > self.deleteBlankIntensity
-                if sampleItemIntensity * DBItem_13C2Intensity > self.deleteBlankIntensity:
+                # if sampleItemIntensity * DBItem_13C2Intensity > self.deleteBlankIntensity:
+                if sampleItemIntensity * DBItem_13C2Intensity > 5000:
                     # 4.样本(self.deleteBlankResult)中所有mass是否有对应的“13C1”和“13C2”及intensity相近
                     parameterList = [DBItem_13C1, DBItem_13C1Intensity, DBItem_13C2, DBItem_13C2Intensity, sampleItemIntensity]
                     retValue = self.DelIsoHasCorrespondInSample(parameterList)
@@ -4961,7 +4833,7 @@ class MultiThread(QThread):
 # 绘图
 class ClassPlot:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 14, "ClassPlot参数个数不对!"
+        assert len(parameterList) == 15, "ClassPlot参数个数不对!"
         self.RemoveFPId = parameterList[0]  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
         self.RemoveFPResult = parameterList[1]  # 所有类别去假阳性的结果，二维列表，有表头
         self.PlotTitleName = parameterList[2]  # 标题名称
@@ -4976,6 +4848,7 @@ class ClassPlot:
         self.PlotClassItem = parameterList[11]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
         self.PlotDBENum = parameterList[12]  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = parameterList[13]  # 是否需要绘图
+        self.PlotAxisList = parameterList[14]  # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表，x轴：N/C，y轴：H/C
 
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
@@ -4986,8 +4859,10 @@ class ClassPlot:
     # 主逻辑，画图
     def Plot(self):
         # 添加坐标名称，标题
-        plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotXAxisColor])
-        plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotYAxisColor])
+        plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12,
+                   color=[num / 255 for num in self.PlotXAxisColor])
+        plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12,
+                   color=[num / 255 for num in self.PlotYAxisColor])
 
         # 创建对应文件夹
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_7_plot")
@@ -4997,12 +4872,14 @@ class ClassPlot:
         ClassIndex = 2  # 类别对应的Index
         DBEIndex = 3  # 不饱和度对应的Index
         CIndex = 6  # C数对应的Index
+        formulaIndex = 4  # formula数对应的Index
         if self.RemoveFPId == 2:  # 4.峰识别 去假阳性后的数据，需要加和的为area
             # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian",
             # "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
             ClassIndex = 7
             DBEIndex = 8
             CIndex = 11
+            formulaIndex = 9
         sumIndex = 1  # 需要加和的为SampleIntensity，或者Area
 
         # 根据图的类型不同，绘制图形
@@ -5027,10 +4904,11 @@ class ClassPlot:
             for num in sumList:
                 sum += num
             # 计算比例
-            sumList = [num*100/sum for num in sumList]
+            sumList = [num * 100 / sum for num in sumList]
 
             # 添加标题
-            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12,
+                      color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：self.PlotClassList，纵坐标：sumList
             plt.bar(self.PlotClassList, sumList)
             imagePath = newDirectory + "/" + self.PlotTitleName
@@ -5038,7 +4916,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+self.PlotClassList, [self.PlotYAxisName]+[num/100 for num in sumList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + self.PlotClassList,
+                                        [self.PlotYAxisName] + [num / 100 for num in sumList]]
         elif self.PlotType == 2:  # DBE distribution by class
             if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -5082,7 +4961,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList,
+                                        [self.PlotYAxisName] + [num / 100 for num in yList]]
         elif self.PlotType == 3:  # Carbon number distribution by class and DBE
             if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -5128,7 +5008,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList,
+                                        [self.PlotYAxisName] + [num / 100 for num in yList]]
         elif self.PlotType == 4:  # DBE vs carbon number by class
             if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -5175,7 +5056,7 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList, ["Size"]+sizeList]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList, ["Size"] + sizeList]
         elif self.PlotType == 5:  # Kendrick mass defect （KMD）
             def round_up(num):
                 # 默认num大于0，用round函数会造成数据错误，如：round(2.5) --> 2
@@ -5207,7 +5088,8 @@ class ClassPlot:
                     sampleMassSet.add(sampleMass)
 
             # 添加标题
-            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12,
+                      color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：xList，纵坐标：yList
             plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
             imagePath = newDirectory + "/" + self.PlotTitleName
@@ -5217,7 +5099,8 @@ class ClassPlot:
             # 返回图片路径
             return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
         elif self.PlotType == 6:  # Retention time vs carbon number
-            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (
+                    self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
                 plt.close()
                 return None, []
 
@@ -5249,7 +5132,94 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
+        elif self.PlotType == 7:  # van Krevelen by class
+            if len(self.PlotClassList) == 0:  # 不存在要绘制的类别，绘制失败
+                plt.close()
+                return None, []
+
+            # 检查绘图是否有意义，比如：self.PlotClassList = ["N1"]，横坐标为S/C，因为分子式中不存在S，因此无意义
+            elementSet = set()
+            for Class in self.PlotClassList:  # 获取某个类别，比如："N1S1"
+                elementSet.clear()
+                for element in Class:  # 获取某个字符，比如："N"
+                    if not element.isdigit():
+                        elementSet.add(element)
+                for element in self.PlotAxisList:
+                    if element == "C" or element == "H":
+                        continue
+                    if not (element in elementSet):
+                        return None, []
+
+            # 此时的数据一定有意义，计算绘图所需数据
+            formulaDictionary = {}  # key : formula,   value : 总量
+
+            for item in self.RemoveFPResult:
+                if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
+                    itemClass = item[ClassIndex]  # 获取类别
+                    itemFormula = item[formulaIndex]  # formula
+                    if itemClass in self.PlotClassList:  # 是需要绘制的类别
+                        if itemFormula not in formulaDictionary:
+                            formulaDictionary[itemFormula] = item[sumIndex]
+                        else:
+                            formulaDictionary[itemFormula] += item[sumIndex]
+
+            # 提取出横纵坐标，气泡图的大小
+            formulaList = []
+            xList = []
+            yList = []
+            sizeList = []
+            for key in sorted(formulaDictionary):
+                value = formulaDictionary[key]
+                # 计算self.PlotAxisList中元素的个数
+                elementDictionary = {}  # 格式：{"C":5, "H":14}
+                i = 0
+                while i < len(key):
+                    j = i+1
+                    while j < len(key):
+                        if not key[j].isdigit():
+                            break
+                        j += 1
+                    elementDictionary[key[i]] = key[i+1:j]
+                    i = j
+                xNumerator = int(elementDictionary[self.PlotAxisList[0]])  # x的分子
+                xDenominator = int(elementDictionary[self.PlotAxisList[1]])  # x的分母
+                yNumerator = int(elementDictionary[self.PlotAxisList[2]])  # y的分子
+                yDenominator = int(elementDictionary[self.PlotAxisList[3]])  # y的分母
+                xValue = 0
+                if xNumerator > 0 and xDenominator > 0:
+                    xValue = xNumerator / xDenominator
+                yValue = 0
+                if yNumerator > 0 and yDenominator > 0:
+                    yValue = yNumerator / yDenominator
+                formulaList.append(key)
+                xList.append(xValue)
+                yList.append(yValue)
+                sizeList.append(value)
+
+            sum = 0  # 计算总和
+            for num in sizeList:
+                sum += num
+            scaledSizeList = [num * 10000 / sum for num in sizeList]  # 计算比例
+
+            # 添加标题
+            title = self.PlotTitleName + "_("
+            for i in range(len(self.PlotClassList)):
+                if i != len(self.PlotClassList) - 1:
+                    title = title + str(self.PlotClassList[i]) + "_"
+                else:
+                    title = title + str(self.PlotClassList[i]) + ")"
+            plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            # 可以绘制图形，横坐标：xList，纵坐标：yList
+            plt.scatter(xList, yList, s=scaledSizeList, c="red", alpha=0.6)
+            imagePath = newDirectory + "/" + title
+            plt.savefig(fname=imagePath, dpi=150)
+            # 关闭绘图
+            plt.close()
+            # 返回图片路径
+            return imagePath + ".png", [["formula"] + formulaList, [self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList, ["Size"] + sizeList]
 
 # 帮助
 class ClassHelp:
@@ -5548,6 +5518,7 @@ class SetupInterface:
         self.PlotClassItem = None  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
         self.PlotDBENum = None  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = None  # 用户是否确认要画图
+        self.PlotAxisList = None
 
         # 绘图模式选择设置
         # 运行模式
@@ -6484,8 +6455,8 @@ class SetupInterface:
         self.RemoveFPResult = self.RemoveFPResult[1:]  # 去掉表头
 
         # 图形生成参数设置对话框，设置默认参数，这是第一个主窗口
-        self.PlotNewParameters = parameters[2:]
-        self.PlotDefaultParameters(self.PlotNewParameters)
+        self.PlotDefaultParameters(parameters[2:])
+        self.PlotNewParameters = copy.deepcopy(parameters[2:])
 
         # 获取需要绘图的类别
         self.PlotClass = set()
@@ -6523,6 +6494,7 @@ class SetupInterface:
             globals()["radioBox_3_1" + item] = None
             globals()["radioBox_4" + item] = None
             globals()["radioBox_6_1" + item] = None
+            globals()["checkBox_7" + item] = None
         for key in self.PlotDictionary:  # 用户带勾选DBE初始化
             for num in self.PlotDictionary[key]:
                 globals()["radioBox_3_2" + str(key) + str(num)] = None
@@ -6535,6 +6507,7 @@ class SetupInterface:
 
         # 创建标志位，负责进程互斥
         self.PlotSubUI_1_1AllNoneFlag = False
+        self.PlotSubUI_1_7AllNoneFlag = False
 
         # 创建QDialog
         self.PlotDialog = self.CreateDialog("图形生成参数设置", 67, 40)
@@ -6550,6 +6523,7 @@ class SetupInterface:
         self.PlotSubUI_4List = self.PlotSubUI_4CreateWidget()  # SubUI_4控件
         self.PlotSubUI_5List = self.PlotSubUI_5CreateWidget()  # SubUI_5控件
         self.PlotSubUI_6List = self.PlotSubUI_6CreateWidget()  # SubUI_6控件
+        self.PlotSubUI_7List = self.PlotSubUI_7CreateWidget()  # SubUI_7控件
 
         self.PlotSubUINameList = self.PlotSubUINameCreateWidget()  # 命名控件
 
@@ -6592,7 +6566,8 @@ class SetupInterface:
                     self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
                     self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
                     self.PlotDBENum,  # 整数，记录用户选择的DBE数目
-                    self.PlotConfirm  # 是否确认要画图
+                    self.PlotConfirm,  # 是否确认要画图
+                    self.PlotAxisList
                 ]
 
     # -------------------------------------- 删除控件
@@ -6612,6 +6587,8 @@ class SetupInterface:
             destoryList = self.PlotSubUI_5List
         elif IdStr == "SubUI_6":
             destoryList = self.PlotSubUI_6List
+        elif IdStr == "SubUI_7":
+            destoryList = self.PlotSubUI_7List
         elif IdStr == "SubUIName":
             destoryList = self.PlotSubUINameList
         for item in destoryList:
@@ -6633,6 +6610,8 @@ class SetupInterface:
             self.PlotSubUI_5AddWidget()
         elif IdStr == "SubUI_6":
             self.PlotSubUI_6AddWidget()
+        elif IdStr == "SubUI_7":
+            self.PlotSubUI_7AddWidget()
         elif IdStr == "SubUIName":
             self.PlotSubUINameAddWidget()
 
@@ -6652,14 +6631,15 @@ class SetupInterface:
         self.PlotMainUIRadioButton4 = QRadioButton("DBE vs carbon number by class")
         self.PlotMainUIRadioButton5 = QRadioButton("Kendrick mass defect （KMD）")
         self.PlotMainUIRadioButton6 = QRadioButton("Retention time vs carbon number")
+        self.PlotMainUIRadioButton7 = QRadioButton("van Krevelen by class")
         if self.RemoveFPId == 1:
             self.PlotMainUIRadioButton6.setEnabled(False)
         PlotMainUIRadioButtonList = [
             self.PlotMainUIRadioButton1, self.PlotMainUIRadioButton2, self.PlotMainUIRadioButton3,
-            self.PlotMainUIRadioButton4, self.PlotMainUIRadioButton5, self.PlotMainUIRadioButton6,
+            self.PlotMainUIRadioButton4, self.PlotMainUIRadioButton5, self.PlotMainUIRadioButton6, self.PlotMainUIRadioButton7
         ]
         flag = False
-        for i in range(6):
+        for i in range(len(PlotMainUIRadioButtonList)):
             PlotMainUIRadioButtonList[i].setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
             if (self.PlotType == i+1) and (not flag):
                 PlotMainUIRadioButtonList[i].setChecked(True)
@@ -6688,6 +6668,7 @@ class SetupInterface:
         self.PlotMainUIRadioButton4.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton4, 4))
         self.PlotMainUIRadioButton5.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton5, 5))
         self.PlotMainUIRadioButton6.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton6, 6))
+        self.PlotMainUIRadioButton7.toggled.connect(lambda: self.PlotMainUIRadioButtonState(self.PlotMainUIRadioButton7, 7))
 
         self.PlotMainUIButton1.clicked.connect(self.PlotMainToSubUI)
         self.PlotMainUIButton2.clicked.connect(lambda: self.HBCPlot(False))
@@ -6699,6 +6680,7 @@ class SetupInterface:
             self.PlotMainUIRadioButton4,
             self.PlotMainUIRadioButton5,
             self.PlotMainUIRadioButton6,
+            self.PlotMainUIRadioButton7,
             self.PlotMainUILabel1,
             self.PlotMainUILabel2,
             self.PlotMainUILabel3,
@@ -6721,17 +6703,18 @@ class SetupInterface:
         self.PlotLayout.addWidget(self.PlotMainUILabel4, 2, 2, 1, 2)
         # 第四个：单选按钮
         self.PlotLayout.addWidget(self.PlotMainUIRadioButton1, 3, 0, 1, 2)
-        self.PlotLayout.addWidget(self.PlotMainUIRadioButton4, 3, 2, 1, 2)
         self.PlotLayout.addWidget(self.PlotMainUIRadioButton2, 4, 0, 1, 2)
-        self.PlotLayout.addWidget(self.PlotMainUIRadioButton5, 4, 2, 1, 2)
         self.PlotLayout.addWidget(self.PlotMainUIRadioButton3, 5, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton4, 3, 2, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton5, 4, 2, 1, 2)
         self.PlotLayout.addWidget(self.PlotMainUIRadioButton6, 5, 2, 1, 2)
+        self.PlotLayout.addWidget(self.PlotMainUIRadioButton7, 6, 2, 1, 2)
         # 空行
-        self.PlotLayout.addWidget(self.PlotMainUILabel5, 6, 0, 1, 5)
-        self.PlotLayout.addWidget(self.PlotMainUILabel6, 7, 0, 1, 5)
+        self.PlotLayout.addWidget(self.PlotMainUILabel5, 7, 0, 1, 5)
+        self.PlotLayout.addWidget(self.PlotMainUILabel6, 8, 0, 1, 5)
         # 最后一行
-        self.PlotLayout.addWidget(self.PlotMainUIButton1, 8, 3, 1, 1)
-        self.PlotLayout.addWidget(self.PlotMainUIButton2, 8, 4, 1, 1)
+        self.PlotLayout.addWidget(self.PlotMainUIButton1, 9, 3, 1, 1)
+        self.PlotLayout.addWidget(self.PlotMainUIButton2, 9, 4, 1, 1)
 
     # 当单选按钮状态改变会进入该函数
     def PlotMainUIRadioButtonState(self, radioButton, Id):  # 用一个整数代表选中了哪个单选按钮
@@ -7276,6 +7259,167 @@ class SetupInterface:
                     )
                 break
 
+    # -------------------------------------- 第七个：Class distribution，创建控件
+    def PlotSubUI_7CreateWidget(self):
+        # 返回上一个界面按钮
+        self.PlotSubUI_7ButtonPrev = QPushButton("back")
+        self.PlotSubUI_7ButtonPrev.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        if ConstValues.PsIconType == 1:
+            self.PlotSubUI_7ButtonPrev.setIcon(QIcon(QPixmap(ConstValues.PsIconBack)))
+        elif ConstValues.PsIconType == 2:
+            self.PlotSubUI_7ButtonPrev.setIcon(qtawesome.icon(ConstValues.PsqtaIconBack))
+        self.PlotSubUI_7LabelPrev = self.GetQLabel("")  # 标签
+        # 复选按钮
+        self.PlotSubUI_7CheckBoxAll = QCheckBox("All")
+        self.PlotSubUI_7CheckBoxAll.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        # 全选按钮更新值
+        if len(self.PlotClassList) == len(self.PlotClass):
+            self.PlotSubUI_7CheckBoxAll.setChecked(True)
+        self.PlotSubUI_7CheckBoxNone = QCheckBox("None")
+        self.PlotSubUI_7CheckBoxNone.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        # 复选按钮，根据类别数目（self.PlotClass：一个列表，里面是种类str）生成复选框
+        self.PlotSubUI_7ListWidget = QListWidget()  # 列表控件
+        if self.MainWindowsStyle != "Qdarkstyle":
+            self.PlotSubUI_7ListWidget.setStyleSheet("background-color: white;")
+        for item in self.PlotClass:
+            if globals()["checkBox_7" + item] is None:
+                globals()["checkBox_7" + item] = QCheckBox(item)
+            listWidgetItem = QListWidgetItem()
+            self.PlotSubUI_7ListWidget.addItem(listWidgetItem)
+            self.PlotSubUI_7ListWidget.setItemWidget(listWidgetItem, globals()["checkBox_7" + item])
+            if item in self.PlotClassList:
+                globals()["checkBox_7" + item].setChecked(True)
+
+        QComboBoxContent = ["C", "H", "O", "N", "S"]
+        self.PlotSubUI_7QComboBox1 = QComboBox()
+        self.PlotSubUI_7QComboBox2 = QComboBox()
+        self.PlotSubUI_7QComboBox3 = QComboBox()
+        self.PlotSubUI_7QComboBox4 = QComboBox()
+        # 设置选项，字体
+        QComboBoxList = [
+            self.PlotSubUI_7QComboBox1,
+            self.PlotSubUI_7QComboBox2,
+            self.PlotSubUI_7QComboBox3,
+            self.PlotSubUI_7QComboBox4,
+        ]
+        for i in range(len(QComboBoxList)):
+            # 设置选项
+            QComboBoxList[i].addItems(QComboBoxContent)
+            QComboBoxList[i].setCurrentText(self.PlotAxisList[i])
+            # 设置字体
+            QComboBoxList[i].setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+
+        self.PlotSubUI_7QComboBoxLabel1 = self.GetQLabel("van Krevelen Ratios", "font:15pt '楷体'; font-weight: bold;")
+        self.PlotSubUI_7QComboBoxLabel2 = self.GetQLabel("X axis ratio")
+        self.PlotSubUI_7QComboBoxLabel3 = self.GetQLabel("Y axis ratio")
+        self.PlotSubUI_7QComboBoxLabel4 = self.GetQLabel("/")
+        self.PlotSubUI_7QComboBoxLabel5 = self.GetQLabel("/")
+
+
+        # Next/Cancel
+        self.PlotSubUI_7Button1 = QPushButton("Next")
+        self.PlotSubUI_7Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+        self.PlotSubUI_7Button2 = QPushButton("Cancel")
+        self.PlotSubUI_7Button2.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
+
+        # 绑定槽函数
+        self.PlotSubUI_7ButtonPrev.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_7", "MainUI"))  # 返回按钮
+        self.PlotSubUI_7CheckBoxAll.clicked.connect(lambda: self.PlotSubUI_7CheckBox(1))  # 全选按钮
+        self.PlotSubUI_7CheckBoxNone.clicked.connect(lambda: self.PlotSubUI_7CheckBox(2))  # 全不选按钮
+        k = 3
+        for item in self.PlotClass:
+            globals()["checkBox_7" + item].clicked.connect(lambda: self.PlotSubUI_7CheckBox(k))
+            k += 1
+
+        self.PlotSubUI_7QComboBox1.currentIndexChanged.connect(lambda: self.PlotSubUI_7SelectChange(1))
+        self.PlotSubUI_7QComboBox2.currentIndexChanged.connect(lambda: self.PlotSubUI_7SelectChange(2))
+        self.PlotSubUI_7QComboBox3.currentIndexChanged.connect(lambda: self.PlotSubUI_7SelectChange(3))
+        self.PlotSubUI_7QComboBox4.currentIndexChanged.connect(lambda: self.PlotSubUI_7SelectChange(4))
+
+        self.PlotSubUI_7Button1.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUI_7", "SubUIName"))  # next按钮
+        self.PlotSubUI_7Button2.clicked.connect(lambda: self.HBCPlot(False))  # 取消按钮
+
+        return [
+            self.PlotSubUI_7ButtonPrev,
+            self.PlotSubUI_7LabelPrev,
+            self.PlotSubUI_7CheckBoxAll,
+            self.PlotSubUI_7CheckBoxNone,
+            self.PlotSubUI_7ListWidget,
+            self.PlotSubUI_7QComboBox1,
+            self.PlotSubUI_7QComboBox2,
+            self.PlotSubUI_7QComboBox3,
+            self.PlotSubUI_7QComboBox4,
+            self.PlotSubUI_7QComboBoxLabel1,
+            self.PlotSubUI_7QComboBoxLabel2,
+            self.PlotSubUI_7QComboBoxLabel3,
+            self.PlotSubUI_7QComboBoxLabel4,
+            self.PlotSubUI_7QComboBoxLabel5,
+            self.PlotSubUI_7Button1,
+            self.PlotSubUI_7Button2,
+        ]
+
+    # 添加控件
+    def PlotSubUI_7AddWidget(self):
+        self.PlotLayout.setVerticalSpacing(20)
+        # 向 self.PlotDialog 添加控件， 第一个文本
+        self.PlotLayout.addWidget(self.PlotSubUI_7ButtonPrev, 0, 0, 1, 4)
+        self.PlotLayout.addWidget(self.PlotSubUI_7LabelPrev, 0, 1, 1, 16)
+        # 第二行
+        self.PlotLayout.addWidget(self.PlotSubUI_7CheckBoxAll, 1, 0, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7CheckBoxNone, 1, 2, 1, 2)
+
+        # 第三行
+        self.PlotLayout.addWidget(self.PlotSubUI_7ListWidget, 2, 0, 6, 8)
+        # 标题
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBoxLabel1, 3, 10, 1, 4)
+        # X轴
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBoxLabel2, 4, 10, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBox1, 4, 12, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBoxLabel4, 4, 14, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBox2, 4, 15, 1, 2)
+        # Y轴
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBoxLabel3, 5, 10, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBox3, 5, 12, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBoxLabel5, 5, 14, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_7QComboBox4, 5, 15, 1, 2)
+
+        # 最后一行
+        self.PlotLayout.addWidget(self.PlotSubUI_7Button1, 8, 15, 1, 2)
+        self.PlotLayout.addWidget(self.PlotSubUI_7Button2, 8, 18, 1, 2)
+
+    # 一级子界面第一个界面 全选/全不选
+    def PlotSubUI_7CheckBox(self, DType):
+        if self.PlotSubUI_1_7AllNoneFlag:
+            return
+        self.PlotSubUI_1_7AllNoneFlag = True
+
+        if DType == 1 and self.PlotSubUI_7CheckBoxAll.isChecked():  # 全选按钮
+            self.PlotSubUI_7CheckBoxNone.setChecked(False)
+            for item in self.PlotClass:
+                globals()["checkBox_7" + item].setChecked(True)
+        elif DType == 2 and self.PlotSubUI_7CheckBoxNone.isChecked():  # 全部取消按钮
+            self.PlotSubUI_7CheckBoxAll.setChecked(False)
+            for item in self.PlotClass:
+                globals()["checkBox_7" + item].setChecked(False)
+        # 更新数据
+        ClassList = []
+        for item in self.PlotClass:
+            if globals()["checkBox_7" + item].isChecked():
+                ClassList.append(item)
+        self.PlotClassList = ClassList
+
+        self.PlotSubUI_1_7AllNoneFlag = False
+
+    def PlotSubUI_7SelectChange(self, index):
+        if index == 1:
+            self.PlotAxisList[0] = self.PlotSubUI_7QComboBox1.currentText()
+        elif index == 2:
+            self.PlotAxisList[1] = self.PlotSubUI_7QComboBox2.currentText()
+        elif index == 3:
+            self.PlotAxisList[2] = self.PlotSubUI_7QComboBox3.currentText()
+        elif index == 4:
+            self.PlotAxisList[3] = self.PlotSubUI_7QComboBox4.currentText()
+
     # -------------------------------------- 一级子界面对应的二级子界面，命名功能等
     def PlotSubUINameCreateWidget(self):
         # 返回上一个界面按钮
@@ -7410,6 +7554,10 @@ class SetupInterface:
             self.PlotTitleName = "Retention_time_vs_carbon_number"  # 标题名称
             self.PlotXAxisName = "Carbon number"  # x轴名称
             self.PlotYAxisName = "startRTValue"  # y轴名称
+        elif self.PlotType == 7:  # van Krevelen by class
+            self.PlotTitleName = "van Krevelen by class"  # 标题名称
+            self.PlotXAxisName = self.PlotAxisList[0] + "/" + self.PlotAxisList[1] + " Ratio"  # x轴名称
+            self.PlotYAxisName = self.PlotAxisList[2] + "/" + self.PlotAxisList[3] + " Ratio"  # y轴名称
 
         self.PlotSubUINameEdit1.setPlaceholderText(self.PlotTitleName)
         self.PlotSubUINameEdit2.setPlaceholderText(self.PlotXAxisName)
@@ -7461,6 +7609,7 @@ class SetupInterface:
         self.PlotClassItem = newParameters[9]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
         self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = newParameters[11]  # 用户是否确认要画图
+        self.PlotAxisList = newParameters[12]  # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表
 
     # HBC：HandleButtonClicked 用户点击 Finished/Cancel后，会进入这个函数处理
     def HBCPlot(self, isOK):

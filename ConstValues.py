@@ -274,6 +274,7 @@ class ConstValues:
     PsPlotClassItem = []  # 需要绘制的类型，单选
     PsPlotDBENum = -1
     PsPlotConfirm = False  # 用户是否确认要画图
+    PsPlotAxisList = ["N", "C", "H", "C"]  # x轴：N/C，y轴：H/C
 
     # 初始化显示图片列表，必须在./__system/images/show文件夹中
     PstitleList = [
@@ -312,4 +313,8 @@ class ConstValues:
         v1.5相对于v1.4更改1处错误：
             （1）ClassPeakDistinguish.py 中 中位数错误改正
     """
-    PsSoftwareEdition = " v1.5"
+    """
+        v1.6相对于v1.5的变化：
+            （1）ClassPlot添加一种图形绘制
+    """
+    PsSoftwareEdition = " v1.6"

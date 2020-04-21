@@ -7,7 +7,7 @@ from ConstValues import ConstValues
 
 class ClassPlot:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 14, "ClassPlot参数个数不对!"
+        assert len(parameterList) == 15, "ClassPlot参数个数不对!"
         self.RemoveFPId = parameterList[0]  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
         self.RemoveFPResult = parameterList[1]  # 所有类别去假阳性的结果，二维列表，有表头
         self.PlotTitleName = parameterList[2]  # 标题名称
@@ -22,6 +22,7 @@ class ClassPlot:
         self.PlotClassItem = parameterList[11]  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
         self.PlotDBENum = parameterList[12]  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = parameterList[13]  # 是否需要绘图
+        self.PlotAxisList = parameterList[14]  # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表，x轴：N/C，y轴：H/C
 
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
@@ -32,8 +33,10 @@ class ClassPlot:
     # 主逻辑，画图
     def Plot(self):
         # 添加坐标名称，标题
-        plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotXAxisColor])
-        plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotYAxisColor])
+        plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12,
+                   color=[num / 255 for num in self.PlotXAxisColor])
+        plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12,
+                   color=[num / 255 for num in self.PlotYAxisColor])
 
         # 创建对应文件夹
         newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_7_plot")
@@ -43,12 +46,14 @@ class ClassPlot:
         ClassIndex = 2  # 类别对应的Index
         DBEIndex = 3  # 不饱和度对应的Index
         CIndex = 6  # C数对应的Index
+        formulaIndex = 4  # formula数对应的Index
         if self.RemoveFPId == 2:  # 4.峰识别 去假阳性后的数据，需要加和的为area
             # ["SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian",
             # "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"]
             ClassIndex = 7
             DBEIndex = 8
             CIndex = 11
+            formulaIndex = 9
         sumIndex = 1  # 需要加和的为SampleIntensity，或者Area
 
         # 根据图的类型不同，绘制图形
@@ -73,10 +78,11 @@ class ClassPlot:
             for num in sumList:
                 sum += num
             # 计算比例
-            sumList = [num*100/sum for num in sumList]
+            sumList = [num * 100 / sum for num in sumList]
 
             # 添加标题
-            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12,
+                      color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：self.PlotClassList，纵坐标：sumList
             plt.bar(self.PlotClassList, sumList)
             imagePath = newDirectory + "/" + self.PlotTitleName
@@ -84,7 +90,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+self.PlotClassList, [self.PlotYAxisName]+[num/100 for num in sumList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + self.PlotClassList,
+                                        [self.PlotYAxisName] + [num / 100 for num in sumList]]
         elif self.PlotType == 2:  # DBE distribution by class
             if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -128,7 +135,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList,
+                                        [self.PlotYAxisName] + [num / 100 for num in yList]]
         elif self.PlotType == 3:  # Carbon number distribution by class and DBE
             if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum):  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -174,7 +182,8 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+[num / 100 for num in yList]]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList,
+                                        [self.PlotYAxisName] + [num / 100 for num in yList]]
         elif self.PlotType == 4:  # DBE vs carbon number by class
             if len(self.PlotClassItem) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()
@@ -221,7 +230,7 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList, ["Size"]+sizeList]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList, ["Size"] + sizeList]
         elif self.PlotType == 5:  # Kendrick mass defect （KMD）
             def round_up(num):
                 # 默认num大于0，用round函数会造成数据错误，如：round(2.5) --> 2
@@ -253,7 +262,8 @@ class ClassPlot:
                     sampleMassSet.add(sampleMass)
 
             # 添加标题
-            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            plt.title(self.PlotTitleName, fontproperties='SimHei', fontsize=12,
+                      color=[num / 255 for num in self.PlotTitleColor])
             # 可以绘制图形，横坐标：xList，纵坐标：yList
             plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
             imagePath = newDirectory + "/" + self.PlotTitleName
@@ -263,7 +273,8 @@ class ClassPlot:
             # 返回图片路径
             return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
         elif self.PlotType == 6:  # Retention time vs carbon number
-            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
+            if (len(self.PlotClassItem) == 0) or (self.PlotDBENum == ConstValues.PsPlotDBENum) or (
+                    self.RemoveFPId == 1):  # 不存在要绘制的类别，绘制失败
                 plt.close()
                 return None, []
 
@@ -295,7 +306,91 @@ class ClassPlot:
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName]+xList, [self.PlotYAxisName]+yList]
+            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
+        elif self.PlotType == 7:  # van Krevelen by class
+            if len(self.PlotClassList) == 0:  # 不存在要绘制的类别，绘制失败
+                plt.close()
+                return None, []
 
+            # 检查绘图是否有意义，比如：self.PlotClassList = ["N1"]，横坐标为S/C，因为分子式中不存在S，因此无意义
+            elementSet = set()
+            for Class in self.PlotClassList:  # 获取某个类别，比如："N1S1"
+                elementSet.clear()
+                for element in Class:  # 获取某个字符，比如："N"
+                    if not element.isdigit():
+                        elementSet.add(element)
+                for element in self.PlotAxisList:
+                    if element == "C" or element == "H":
+                        continue
+                    if not (element in elementSet):
+                        return None, []
 
+            # 此时的数据一定有意义，计算绘图所需数据
+            formulaDictionary = {}  # key : formula,   value : 总量
 
+            for item in self.RemoveFPResult:
+                if len(item) != 0:
+                    if len(item) == 3:  # 搜同位素后去假阳性文件，还要跳过同位素
+                        continue
+                    itemClass = item[ClassIndex]  # 获取类别
+                    itemFormula = item[formulaIndex]  # formula
+                    if itemClass in self.PlotClassList:  # 是需要绘制的类别
+                        if itemFormula not in formulaDictionary:
+                            formulaDictionary[itemFormula] = item[sumIndex]
+                        else:
+                            formulaDictionary[itemFormula] += item[sumIndex]
+
+            # 提取出横纵坐标，气泡图的大小
+            formulaList = []
+            xList = []
+            yList = []
+            sizeList = []
+            for key in sorted(formulaDictionary):
+                value = formulaDictionary[key]
+                # 计算self.PlotAxisList中元素的个数
+                elementDictionary = {}  # 格式：{"C":5, "H":14}
+                i = 0
+                while i < len(key):
+                    j = i+1
+                    while j < len(key):
+                        if not key[j].isdigit():
+                            break
+                        j += 1
+                    elementDictionary[key[i]] = key[i+1:j]
+                    i = j
+                xNumerator = int(elementDictionary[self.PlotAxisList[0]])  # x的分子
+                xDenominator = int(elementDictionary[self.PlotAxisList[1]])  # x的分母
+                yNumerator = int(elementDictionary[self.PlotAxisList[2]])  # y的分子
+                yDenominator = int(elementDictionary[self.PlotAxisList[3]])  # y的分母
+                xValue = 0
+                if xNumerator > 0 and xDenominator > 0:
+                    xValue = xNumerator / xDenominator
+                yValue = 0
+                if yNumerator > 0 and yDenominator > 0:
+                    yValue = yNumerator / yDenominator
+                formulaList.append(key)
+                xList.append(xValue)
+                yList.append(yValue)
+                sizeList.append(value)
+
+            sum = 0  # 计算总和
+            for num in sizeList:
+                sum += num
+            scaledSizeList = [num * 10000 / sum for num in sizeList]  # 计算比例
+
+            # 添加标题
+            title = self.PlotTitleName + "_("
+            for i in range(len(self.PlotClassList)):
+                if i != len(self.PlotClassList) - 1:
+                    title = title + str(self.PlotClassList[i]) + "_"
+                else:
+                    title = title + str(self.PlotClassList[i]) + ")"
+            plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+            # 可以绘制图形，横坐标：xList，纵坐标：yList
+            plt.scatter(xList, yList, s=scaledSizeList, c="red", alpha=0.6)
+            imagePath = newDirectory + "/" + title
+            plt.savefig(fname=imagePath, dpi=150)
+            # 关闭绘图
+            plt.close()
+            # 返回图片路径
+            return imagePath + ".png", [["formula"] + formulaList, [self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList, ["Size"] + sizeList]

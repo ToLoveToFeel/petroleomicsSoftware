@@ -1,13 +1,14 @@
 # coding=utf-8
 # 此文件负责定义：负责画图
 import matplotlib.pyplot as plt
+import numpy as np
 from Utils import *
 from ConstValues import ConstValues
 
 
 class ClassPlot:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 15, "ClassPlot参数个数不对!"
+        assert len(parameterList) == 17, "ClassPlot参数个数不对!"
         self.RemoveFPId = parameterList[0]  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
         self.RemoveFPResult = parameterList[1]  # 所有类别去假阳性的结果，二维列表，有表头
         self.PlotTitleName = parameterList[2]  # 标题名称
@@ -23,6 +24,9 @@ class ClassPlot:
         self.PlotDBENum = parameterList[12]  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = parameterList[13]  # 是否需要绘图
         self.PlotAxisList = parameterList[14]  # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表，x轴：N/C，y轴：H/C
+        # 第六种图形去假阳性需要用户输入的内容
+        self.PlotNeedRFP = parameterList[15]  # 是否需要根据图形绘制假阳性
+        self.PlotMoveDistance = parameterList[16]  # 用户定义的平移的距离
 
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
@@ -298,15 +302,104 @@ class ClassPlot:
 
             # 添加标题
             title = self.PlotTitleName + "_(" + str(self.PlotClassItem[0]) + "_DBE_" + str(self.PlotDBENum) + ")"
-            plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
-            # 可以绘制图形，横坐标：xList，纵坐标：yList
-            plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
             imagePath = newDirectory + "/" + title
+            returnData = None
+            if (not self.PlotNeedRFP) or (len(xList) <= 15):  # 不需要去假阳性 或者 点数目较少时直接存储
+                plt.title(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+                # 可以绘制图形，横坐标：xList，纵坐标：yList
+                plt.scatter(xList, yList, s=20, c="blue", alpha=0.8)
+                returnData = [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
+            else:  # 需要去假阳性
+                splitXList = []  # 二维数组，[[x, ...], [...]]，分开是因为可能不连续
+                splitYList = []
+                coordinateList = []  # 二维数组，[[x1, x2], [y1, y2], ...]
+
+                # 不连续的数据分割
+                j = 0
+                notContinueNum = 5
+                while j < len(xList) - 1:
+                    if not (xList[j] == xList[j + 1] or
+                            (xList[j + 1] <= xList[j] + notContinueNum)):
+                        break
+                    j += 1
+                if j == len(xList) - 1:  # 说明全部连续
+                    splitXList.append(xList)
+                    splitYList.append(yList)
+                    # 求坐标
+                    xMin = np.min(xList)
+                    xMax = np.max(xList)
+                    yMin = np.min(yList)
+                    yMax = np.max(yList)
+                    coordinateList.append([xMin, xMax])
+                    coordinateList.append([yMin, yMax])
+                else:  # 说明不是全部连续，需要分为两部分处理：[0...j]  [j+1...end]
+                    # 第一段
+                    splitXList.append(xList[:j + 1])
+                    splitYList.append(yList[:j + 1])
+                    xMin = np.min(xList[:j + 1])  # 求坐标
+                    xMax = np.max(xList[:j + 1])
+                    yMin = np.min(yList[:j + 1])
+                    yMax = np.max(yList[:j + 1])
+                    coordinateList.append([xMin, xMax])
+                    coordinateList.append([yMin, yMax])
+                    # 第二段
+                    splitXList.append(xList[j + 1:])
+                    splitYList.append(yList[j + 1:])
+                    xMin = np.min(xList[j + 1:])  # 求坐标
+                    xMax = np.max(xList[j + 1:])
+                    yMin = np.min(yList[j + 1:])
+                    yMax = np.max(yList[j + 1:])
+                    coordinateList.append([xMin, xMax])
+                    coordinateList.append([yMin, yMax])
+
+                # 假阳性去除
+                oneXList = []
+                oneYList = []
+                for j in range(len(splitXList)):  # 一幅图可能分为多个部分
+                    deltaX = coordinateList[j * 2][1] - coordinateList[j * 2][0]
+                    deltaY = coordinateList[j * 2 + 1][1] - coordinateList[j * 2 + 1][0]
+                    if (deltaX == 0) or (deltaY == 0):  # 说明分割线水平或者垂直，直接保留全部数据
+                        oneXList += splitXList[j]
+                        oneYList += splitYList[j]
+                        continue
+                    xMin = coordinateList[j * 2][0]
+                    yMin = coordinateList[j * 2 + 1][0]
+                    for k in range(len(splitXList[j])):  # 依次考察各个点
+                        x = splitXList[j][k]
+                        y = splitYList[j][k]
+                        # x * (yMax - yMin) - (y - moveDistance) * (xMax - xMin) - xMin * (yMax - yMin) + yMin * (xMax - xMin) > 0
+                        if (x * deltaY - (y - self.PlotMoveDistance) * deltaX - xMin * deltaY + yMin * deltaX) >= 0:
+                            oneXList.append(x)
+                            oneYList.append(y)
+                # 绘图
+                plt.figure(figsize=(8, 4))
+                plt.suptitle(title, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotTitleColor])
+                plt.subplot2grid((1, 2), (0, 0))  # 左图，未除假阳性
+                plt.title("去假阳性前", fontproperties='SimHei', fontsize=12)
+                plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotXAxisColor])
+                plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotYAxisColor])
+                plt.scatter(xList, yList, s=10, c="blue", alpha=0.8)
+                for j in range(int(len(coordinateList) / 2)):
+                    plt.plot(coordinateList[j * 2], [Max + self.PlotMoveDistance for Max in coordinateList[j * 2 + 1]], ":", color="red")
+
+                plt.subplot2grid((1, 2), (0, 1))  # 右图，去除假阳性
+                plt.title("去假阳性后", fontproperties='SimHei', fontsize=12)
+                plt.xlabel(self.PlotXAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotXAxisColor])
+                # plt.ylabel(self.PlotYAxisName, fontproperties='SimHei', fontsize=12, color=[num / 255 for num in self.PlotYAxisColor])
+                plt.scatter(oneXList, oneYList, s=10, c="blue", alpha=0.8)
+
+                returnData = [
+                    [self.PlotXAxisName] + xList + ["", "去假阳性后数据:", self.PlotXAxisName] + oneXList,
+                    [self.PlotYAxisName] + yList + ["", "", self.PlotYAxisName] + oneYList
+                ]
+            # 保存图像
             plt.savefig(fname=imagePath, dpi=150)
             # 关闭绘图
             plt.close()
             # 返回图片路径
-            return imagePath + ".png", [[self.PlotXAxisName] + xList, [self.PlotYAxisName] + yList]
+            return imagePath + ".png", returnData
+            # # 为了考虑处理假阳性，生成数据：第1,3,5行...为x，2,4,6行...为y
+            # return xList, yList
         elif self.PlotType == 7:  # van Krevelen by class
             if len(self.PlotClassList) == 0:  # 不存在要绘制的类别，绘制失败
                 plt.close()

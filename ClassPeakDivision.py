@@ -160,10 +160,10 @@ class ClassPeakDivision:
         smoothData = []  # 平滑后的数据，每一项均为numpy类型数据
         for item in dataProcessing:
             # 拟合滤波算法
-            smoothData.append(self.FilterPoly(item[9:]))
+            # smoothData.append(self.FilterPoly(item[9:]))
 
             # # 普通滤波算法
-            # smoothData.append(self.Filter(item[9:], "mean"))
+            smoothData.append(self.Filter(item[9:], "oneDelay"))
 
         # 主逻辑
         ret = []
@@ -200,21 +200,33 @@ class ClassPeakDivision:
         newData = []
         halfFilterSize = int(filterSize / 2)  # 开始滤波的位置
         endEdge = rawDataLength - halfFilterSize  # 滤波结束位置
-        # 前面halfFilterSize个数据
-        for i in range(halfFilterSize):
-            newData.append(data[i])
         # 滤波
         if filterType == "median":  # 中位值滤波法
+            # 前面halfFilterSize个数据
+            for i in range(halfFilterSize):
+                newData.append(data[i])
             for i in range(halfFilterSize, endEdge):
                 newData.append(np.median(np.array(data[i - halfFilterSize:i + halfFilterSize])))
+            # 后面halfFilterSize个数据
+            for i in range(endEdge, rawDataLength):
+                newData.append(data[i])
         elif filterType == "mean":  # 滑动平均数滤波
+            # 前面halfFilterSize个数据
+            for i in range(halfFilterSize):
+                newData.append(data[i])
             for i in range(halfFilterSize, endEdge):
                 newData.append(np.mean(np.array(data[i - halfFilterSize:i + halfFilterSize])))
-        # 后面halfFilterSize个数据
-        for i in range(endEdge, rawDataLength):
-            newData.append(data[i])
+            # 后面halfFilterSize个数据
+            for i in range(endEdge, rawDataLength):
+                newData.append(data[i])
+        elif filterType == "oneDelay":  # 一阶滞后滤波
+            alpha = 0.2  # 上次值的权重
+            beta = 1 - alpha
+            newData.append(data[0])
+            for i in range(1, rawDataLength):
+                newData.append(beta * data[i] + alpha * newData[i - 1])
 
-        return np.array(newData)
+        return newData
 
     # 拟合滤波算法
     def FilterPoly(self, data):

@@ -10,7 +10,7 @@ from ConstValues import ConstValues
 def ReadExcelToList(filepath="", hasNan=True):
     if not hasNan:
         result = []
-        result += pd.read_excel(io=filepath, header=None).values.tolist()
+        result += pd.read_excel(io=filepath, header=None).values.tolist()  # 必须要求每行数据个数相同
     else:  # 每一行的数据长度不一致，且nan在正常数据最后
         dataFrame = pd.read_excel(io=filepath, header=None)
         result = [dataFrame.values[0].tolist()]  # 处理表头

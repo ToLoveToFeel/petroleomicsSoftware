@@ -187,7 +187,7 @@ class ClassRemoveFalsePositive:
                     i += 1
                     if i >= dataLength:
                         break
-                # 或取到某一个DBE所对应的记录
+                # 获取到某一个DBE所对应的记录
                 everyDBEListLength = len(everyDBEList)
                 if everyDBEListLength < self.RemoveFPContinue_CNum:  # 长度不足，直接舍去
                     continue

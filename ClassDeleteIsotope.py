@@ -38,7 +38,7 @@ class ClassDeleteIsotope:
         result = self.DelIsoSort(result)
 
         # 数据写入excel文件中
-        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_3_deleteIsotope")
+        newDirectory = CreateDirectory(self.outputFilesPath, "./intermediateFiles", "/_3_findIsotope")
         WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameDeleteIsotope)
 
         return result, True

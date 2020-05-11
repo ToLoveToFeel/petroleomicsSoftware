@@ -8,9 +8,9 @@ class ConstValues:
         pass
 
     # 用于打开调试
-    PsIsDebug = False
+    PsIsDebug = True
     # 用于是否可以单独运行
-    PsIsSingleRun = False
+    PsIsSingleRun = True
     # 主窗口名称
     PsMainWindowTitle = "石油组学软件"
     # 主窗口单位长度
@@ -111,7 +111,7 @@ class ConstValues:
     PsNameGDB = "__GDB.xlsx"
     PsNameDeleteIsotope = "__FindIsotope.xlsx"
     PsNamePeakDistinguish = "__PeakDistinguish.xlsx"  # 原始名称 PeakDisPart1.xlsx
-    PsNameRemoveFPFrom_DelIsoResult = "__RemoveFPFrom_DelIsoResult.xlsx"
+    PsNameRemoveFPFrom_DelIsoResult = "__RemoveFPFrom_FindIsoResult.xlsx"
     PsNameRemoveFPFrom_PeakDisResult = "__RemoveFPFrom_PeakDisResult.xlsx"
     PsNamePeakDivision = "__PeakDivision.xlsx"
 
@@ -147,7 +147,7 @@ class ConstValues:
     # 主页面最多显示的表格行数
     PsMainMaxRowNum = 10000
     # 读入文件默认目录
-    PsReadFileDefaultDirectoy = "./inputData/test"
+    PsReadFileDefaultDirectoy = "./inputData/350"
 
     # 设置框字体以及大小
     PsSetupFontType = "Arial"
@@ -275,6 +275,11 @@ class ConstValues:
     PsPlotDBENum = -1
     PsPlotConfirm = False  # 用户是否确认要画图
     PsPlotAxisList = ["N", "C", "H", "C"]  # x轴：N/C，y轴：H/C
+    PsPlotNeedRFP = True  # 第六种图形去假阳性需要用户输入的内容
+    PsPlotMoveDistance = 60  # 第六种图形去假阳性需要用户输入的内容
+
+    PsPlotMoveDistanceMin = 0
+    PsPlotMoveDistanceMax = 500
 
     # 初始化显示图片列表，必须在./__system/images/show文件夹中
     PstitleList = [

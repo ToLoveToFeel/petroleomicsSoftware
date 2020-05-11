@@ -97,6 +97,9 @@ class SetupInterface:
         self.PlotDBENum = None  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = None  # 用户是否确认要画图
         self.PlotAxisList = None
+        # 第六种图形去假阳性需要用户输入的内容
+        self.PlotNeedRFP = None  # 是否需要根据图形绘制假阳性
+        self.PlotMoveDistance = None  # 用户定义的平移的距离
 
         # 绘图模式选择设置
         # 运行模式
@@ -1109,6 +1112,7 @@ class SetupInterface:
         self.PlotMainUIAddWidget()
 
         # # 绘制 Retention time vs carbon number 图，探究如何去除假阳性
+        # RFPPlot = []  # 为了考虑处理假阳性，生成数据：第1,3,5行...为x，2,4,6行...为y
         # for key in self.PlotDictionary:  # 用户带勾选DBE初始化
         #     for num in self.PlotDictionary[key]:
         #         params = [
@@ -1125,13 +1129,18 @@ class SetupInterface:
         #             self.PlotClassList,  # 列表，需要绘制的类型，例子：["CH", "N1"]
         #             [key],  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
         #             num,  # 整数，记录用户选择的DBE数目
-        #             self.PlotConfirm  # 是否确认要画图
+        #             self.PlotConfirm,  # 是否确认要画图
+        #             self.PlotAxisList
         #         ]
-        #         ClassPlot(params, "").Plot()
+        #         xList, yList = ClassPlot(params, "").Plot()
+        #         RFPPlot.append(xList)
+        #         RFPPlot.append(yList)
+        # WriteDataToExcel(RFPPlot, "./intermediateFiles/_7_plot/RFPPlot.xlsx")
 
         # 运行
         self.PlotDialog.exec()
 
+        pass
         return [
                     self.PlotTitleName,  # 标题名称
                     self.PlotTitleColor,  # 标题颜色
@@ -1145,7 +1154,9 @@ class SetupInterface:
                     self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
                     self.PlotDBENum,  # 整数，记录用户选择的DBE数目
                     self.PlotConfirm,  # 是否确认要画图
-                    self.PlotAxisList
+                    self.PlotAxisList,
+                    self.PlotNeedRFP,
+                    self.PlotMoveDistance,
                 ]
 
     # -------------------------------------- 删除控件
@@ -1195,6 +1206,11 @@ class SetupInterface:
 
     # 删除控件后再添加控件
     def PlotRemoveAddWidget(self, RemoveIdStr, AddIdStr):
+        # 防止界面跳转错乱
+        if RemoveIdStr == "SubUIName":
+            backUI = "SubUI_" + str(self.PlotType)
+            if AddIdStr != backUI:
+                return
         # 删除控件
         self.PlotRemoveWidget(RemoveIdStr)
         # 添加控件
@@ -1754,10 +1770,22 @@ class SetupInterface:
             # 关联槽函数
             globals()["radioBox_6_2" + str(key) + str(num)].clicked.connect(
                 lambda: self.PlotSubUI_3RadioButtonDBE(key))
-        # 默认勾选C数赋初值
-        self.PlotDBENum = self.PlotDictionary[key][0]
-        # 默认勾选第一个
-        globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)
+        self.PlotDBENum = self.PlotDictionary[key][0]  # 默认勾选C数赋初值
+        globals()["radioBox_6_2" + str(key) + str(self.PlotDBENum)].setChecked(True)  # 默认勾选第一个
+
+        # 是否需要去假阳性单选按钮
+        self.PlotSubUI_6RFPLabel1 = self.GetQLabel("是否根据此图去假阳性：")
+        self.PlotSubUI_6RFPCheckBox = QCheckBox("使能")
+        self.PlotSubUI_6RFPCheckBox.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))
+        self.PlotSubUI_6RFPCheckBox.setChecked(self.PlotNeedRFP)
+        self.PlotSubUI_6RFPCheckBox.toggled.connect(self.PlotSubUI_6RFPNeed)
+        # 去假阳性直线截距
+        self.PlotSubUI_6RFPLabel2 = self.GetQLabel("去假阳性偏移量(" + str(ConstValues.PsPlotMoveDistanceMin) + "~" + str(ConstValues.PsPlotMoveDistanceMax) + "):")
+        self.PlotSubUI_6RFPEdit = self.IntQLineEdit(ConstValues.PsPlotMoveDistanceMin, ConstValues.PsPlotMoveDistanceMax, str(self.PlotMoveDistance))
+        self.PlotSubUI_6RFPEdit.textChanged.connect(lambda: self.HandleTextChangedPlot("moveDistance", self.PlotSubUI_6RFPEdit))
+        self.PlotSubUI_6RFPEdit.setFixedWidth(ConstValues.PsSetupFontSize*15)
+        self.PlotSubUI_6RFPEdit.setEnabled(self.PlotNeedRFP)
+
         # Next/Cancel
         self.PlotSubUI_6Button1 = QPushButton("Next")
         self.PlotSubUI_6Button1.setFixedSize(ConstValues.PsSetupFontSize * 6, ConstValues.PsSetupFontSize * 2)
@@ -1777,6 +1805,10 @@ class SetupInterface:
             self.PlotSubUI_6LabelPrev,
             self.PlotSubUI_6ListWidget1,
             self.PlotSubUI_6ListWidget2,
+            self.PlotSubUI_6RFPLabel1,
+            self.PlotSubUI_6RFPCheckBox,
+            self.PlotSubUI_6RFPLabel2,
+            self.PlotSubUI_6RFPEdit,
             self.PlotSubUI_6Button1,
             self.PlotSubUI_6Button2,
         ]
@@ -1790,6 +1822,11 @@ class SetupInterface:
         # 第二行
         self.PlotLayout.addWidget(self.PlotSubUI_6ListWidget1, 1, 0, 1, 2)
         self.PlotLayout.addWidget(self.PlotSubUI_6ListWidget2, 1, 2, 1, 2)
+        # 第三行
+        self.PlotLayout.addWidget(self.PlotSubUI_6RFPLabel1, 7, 0, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_6RFPCheckBox, 7, 1, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_6RFPLabel2, 7, 2, 1, 1)
+        self.PlotLayout.addWidget(self.PlotSubUI_6RFPEdit, 7, 3, 1, 1)
         # 最后一行
         self.PlotLayout.addWidget(self.PlotSubUI_6Button1, 8, 3, 1, 1)
         self.PlotLayout.addWidget(self.PlotSubUI_6Button2, 8, 4, 1, 1)
@@ -1836,6 +1873,11 @@ class SetupInterface:
                         "self.PlotClassItem[0]:", self.PlotClassItem[0], "; self.PlotDBENum:", self.PlotDBENum
                     )
                 break
+
+    # 是否选择去假阳性
+    def PlotSubUI_6RFPNeed(self):
+        self.PlotNeedRFP = self.PlotSubUI_6RFPCheckBox.isChecked()
+        self.PlotSubUI_6RFPEdit.setEnabled(self.PlotNeedRFP)
 
     # -------------------------------------- 第七个：Class distribution，创建控件
     def PlotSubUI_7CreateWidget(self):
@@ -2104,6 +2146,7 @@ class SetupInterface:
         self.PlotLayout.addWidget(self.PlotSubUINameButtonFinish, 8, 5, 1, 1)
 
         # 根据图的类型不同，绑定返回不同的界面
+
         backUI = "SubUI_" + str(self.PlotType)
         self.PlotSubUINamePrev.clicked.connect(lambda: self.PlotRemoveAddWidget("SubUIName", backUI))  # 返回按钮
 
@@ -2172,6 +2215,8 @@ class SetupInterface:
                 self.PlotXAxisName = edit.text()
             elif DType == 3:  # y轴名称
                 self.PlotYAxisName = edit.text()
+            elif DType == "moveDistance":
+                self.PlotMoveDistance = int(edit.text())
 
     # -------------------------------------- 设置参数为用户上次输入的值
     def PlotDefaultParameters(self, newParameters):
@@ -2188,6 +2233,9 @@ class SetupInterface:
         self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
         self.PlotConfirm = newParameters[11]  # 用户是否确认要画图
         self.PlotAxisList = newParameters[12]  # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表
+        # 第六种图形去假阳性需要用户输入的内容
+        self.PlotNeedRFP = newParameters[13]  # 是否需要根据图形绘制假阳性
+        self.PlotMoveDistance = newParameters[14]  # 用户定义的平移的距离
 
     # HBC：HandleButtonClicked 用户点击 Finished/Cancel后，会进入这个函数处理
     def HBCPlot(self, isOK):
@@ -2201,11 +2249,16 @@ class SetupInterface:
             inputState = self.PlotIsParameterValidate()
             if inputState == 1:
                 self.PlotDialog.close()
+            elif inputState == 2:
+                PromptBox().warningMessage("去假阳性偏移量 输入不合法！")
 
     # 参数合法性检查
     def PlotIsParameterValidate(self):
-
-        # 一定合法
+        # 合法返回1，不合法返回对应的代码
+        # 判断self.PlotMoveDistance 是否合法，对应代码2
+        if not (ConstValues.PsPlotMoveDistanceMin <= self.PlotMoveDistance <= ConstValues.PsPlotMoveDistanceMax):
+            return 2
+        # 合法
         return 1
 
     #################################################################################################################

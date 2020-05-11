@@ -764,6 +764,9 @@ class MainWin(QMainWindow):
         self.PlotConfirm = ConstValues.PsPlotConfirm
         # 第七种类型图形绘制需要的数据，复选框选择的数据，为列表
         self.PlotAxisList = ConstValues.PsPlotAxisList
+        # 第六种图形去假阳性需要用户输入的内容
+        self.PlotNeedRFP = ConstValues.PsPlotNeedRFP  # 是否需要根据图形绘制假阳性
+        self.PlotMoveDistance = ConstValues.PsPlotMoveDistance  # 用户定义的平移的距离
         # 输出文件路径
         self.PlotImagePath = ""
         # 画图原始数据
@@ -784,7 +787,9 @@ class MainWin(QMainWindow):
                             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
                             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
                             self.PlotConfirm,
-                            self.PlotAxisList
+                            self.PlotAxisList,
+                            self.PlotNeedRFP,
+                            self.PlotMoveDistance
                         ]
 
         # 运行模式
@@ -1236,8 +1241,9 @@ class MainWin(QMainWindow):
     # 复位主窗口中的一些组件（如：标签）
     def ResetAssembly(self):
         self.plotStack.removeWidget(globals()["Plot_" + ConstValues.PsTreePlotInit])
-        self.Layout.removeWidget(self.mainTreeWidget)
+        self.plotStack.removeWidget(self.tabWidgetShowData)
         self.Layout.removeWidget(self.plotStack)
+        self.Layout.removeWidget(self.mainTreeWidget)
         # initShow 初始化数据
         self.initShowDataInit()
         # self.Layout 添加控件
@@ -1767,6 +1773,8 @@ class MainWin(QMainWindow):
             self.PlotDBENum = newParameters[10]  # 整数，记录用户选择的DBE数目
             self.PlotConfirm = newParameters[11]
             self.PlotAxisList = newParameters[12]
+            self.PlotNeedRFP = newParameters[13]  # 是否需要根据图形绘制假阳性
+            self.PlotMoveDistance = newParameters[14]  # 用户定义的平移的距离
             self.UpdateList()
 
             if ConstValues.PsIsDebug:
@@ -2335,7 +2343,9 @@ class MainWin(QMainWindow):
             self.PlotClassItem,  # 列表，需要绘制的类型，例子：["CH"]，对应单选钮，长度必须为1
             self.PlotDBENum,  # 整数，记录用户选择的DBE数目
             self.PlotConfirm,
-            self.PlotAxisList
+            self.PlotAxisList,
+            self.PlotNeedRFP,
+            self.PlotMoveDistance
         ]
         self.startModeList = [
             self.startMode,

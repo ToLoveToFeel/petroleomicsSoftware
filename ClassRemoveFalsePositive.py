@@ -4,11 +4,12 @@ import os
 import matplotlib.pyplot as plt
 from Utils import *
 from ConstValues import ConstValues
+import numpy as np
 
 
 class ClassRemoveFalsePositive:
     def __init__(self, parameterList, outputFilesPath):
-        assert len(parameterList) == 5, "ClassRemoveFalsePositive参数个数不对!"
+        assert len(parameterList) == 7, "ClassRemoveFalsePositive参数个数不对!"
         self.DelIsoResult = parameterList[0]  # 扣同位素后生成的文件，两项记录之间通过空列表分割（格式：list二维数组，有表头）
 
         peakDisResult = parameterList[1]
@@ -22,6 +23,8 @@ class ClassRemoveFalsePositive:
         self.RemoveFPId = parameterList[2]  # 1：去同位素之后的内容self.DelIsoResult 2：峰识别之后的内容self.DelIsoResult
         self.RemoveFPContinue_CNum = parameterList[3]
         self.RemoveFPContinue_DBENum = parameterList[4]
+        self.RemoveFPFromPlot6Need = parameterList[5]  # 是否需要根据Retention time vs carbon number去假阳性
+        self.RemoveFPFromPlotMoveDistance = parameterList[6]  # 直线的截距
         # 用户选择的文件的生成位置
         self.outputFilesPath = outputFilesPath
 
@@ -41,6 +44,8 @@ class ClassRemoveFalsePositive:
             WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameRemoveFPFrom_DelIsoResult)
         elif self.RemoveFPId == 2:
             result = self.RemoveFPFromPeakDis()
+            if self.RemoveFPFromPlot6Need:
+                result = self.RemoveFPFromPlot(result)
             WriteDataToExcel(result, newDirectory + "/" + ConstValues.PsNameRemoveFPFrom_PeakDisResult)
 
         # 去假阳性后峰识别的峰
@@ -286,3 +291,126 @@ class ClassRemoveFalsePositive:
                                            )
             plt.savefig(fname=newDirectory+"/"+Class+"_DBE"+str(DBE)+"_C"+str(item[6]), dpi=300)
             plt.close()
+
+    # 根据绘图中的 Retention time vs carbon number 去除假阳性
+    def RemoveFPFromPlot(self, data):
+        # {(Class, Neutral DBE):[[...], [...]], ...}    二维列表存储的分别是C和startRTValue
+        dictionary = {}
+        # "SampleMass", "Area", "startRT", "startRTValue", "endRT", "endRTValue", "TICMassMedian", "Class", "Neutral DBE", "Formula", "Calc m/z", "C", "ion"
+        newData = [data[0]]  # 存储表头
+        i = 1  # 从1开始跳过表头
+        while i < len(data):
+            firstItem = data[i]
+            if len(firstItem) == 0:
+                i += 1
+                continue
+            firstClass = firstItem[7]
+            firstDBE = firstItem[8]
+            firstCNum = firstItem[11]
+            firstStartRTValue = firstItem[3]
+            dictionary[(firstClass, firstDBE)] = [[firstCNum], [firstStartRTValue]]  # 此时字典中一定不存在这个
+            j = i + 1
+            while j < len(data):
+                item = data[j]
+                if len(item) == 0:
+                    j += 1
+                    continue
+                Class = item[7]
+                DBE = item[8]
+                if not (Class == firstClass and DBE == firstDBE):
+                    break
+                CNum = item[11]
+                startRTValue = item[3]
+                dictionary[(Class, DBE)][0].append(CNum)  # 此时字典中一定存在这个
+                dictionary[(Class, DBE)][1].append(startRTValue)
+                j += 1
+            i = j
+        # 去除假阳性
+        for key in dictionary.keys():
+            newXList, newYList = self.RemoveFPFromOnePlot(dictionary[key][0], dictionary[key][1])
+            dictionary[key][0] = newXList
+            dictionary[key][1] = newYList
+        # 生成去假阳性后的数据
+        flag = False  # 判断何时加上空行
+        for item in data[1:]:
+            if len(item) == 0:
+                if flag:
+                    newData.append([])
+                    flag = False
+                continue
+            Class = item[7]
+            DBE = item[8]
+            CNum = item[11]
+            startRTValue = item[3]
+            if (CNum in dictionary[(Class, DBE)][0]) and (startRTValue in dictionary[(Class, DBE)][1]):
+                flag = True
+                newData.append(item)
+        return newData
+
+    # 根据绘图中的一幅 Retention time vs carbon number图 去除假阳性
+    def RemoveFPFromOnePlot(self, xList, yList):
+        if len(xList) <= 15:  # 长度过短，直接返回
+            return xList, yList
+
+        splitXList = []  # 二维数组，[[x, ...], [...]]，分开是因为可能不连续
+        splitYList = []
+        coordinateList = []  # 二维数组，[[x1, x2], [y1, y2], ...]
+
+        # 不连续的数据分割
+        j = 0
+        notContinueNum = 5
+        while j < len(xList) - 1:
+            if not (xList[j] == xList[j + 1] or
+                    (xList[j + 1] <= xList[j] + notContinueNum)):
+                break
+            j += 1
+        if j == len(xList) - 1:  # 说明全部连续
+            splitXList.append(xList)
+            splitYList.append(yList)
+            # 求坐标
+            xMin = np.min(xList)
+            xMax = np.max(xList)
+            yMin = np.min(yList)
+            yMax = np.max(yList)
+            coordinateList.append([xMin, xMax])
+            coordinateList.append([yMin, yMax])
+        else:  # 说明不是全部连续，需要分为两部分处理：[0...j]  [j+1...end]
+            # 第一段
+            splitXList.append(xList[:j + 1])
+            splitYList.append(yList[:j + 1])
+            xMin = np.min(xList[:j + 1])  # 求坐标
+            xMax = np.max(xList[:j + 1])
+            yMin = np.min(yList[:j + 1])
+            yMax = np.max(yList[:j + 1])
+            coordinateList.append([xMin, xMax])
+            coordinateList.append([yMin, yMax])
+            # 第二段
+            splitXList.append(xList[j + 1:])
+            splitYList.append(yList[j + 1:])
+            xMin = np.min(xList[j + 1:])  # 求坐标
+            xMax = np.max(xList[j + 1:])
+            yMin = np.min(yList[j + 1:])
+            yMax = np.max(yList[j + 1:])
+            coordinateList.append([xMin, xMax])
+            coordinateList.append([yMin, yMax])
+
+        # 假阳性去除
+        oneXList = []
+        oneYList = []
+        for j in range(len(splitXList)):  # 一幅图可能分为多个部分
+            deltaX = coordinateList[j * 2][1] - coordinateList[j * 2][0]
+            deltaY = coordinateList[j * 2 + 1][1] - coordinateList[j * 2 + 1][0]
+            if (deltaX == 0) or (deltaY == 0):  # 说明分割线水平或者垂直，直接保留全部数据
+                oneXList += splitXList[j]
+                oneYList += splitYList[j]
+                continue
+            xMin = coordinateList[j * 2][0]
+            yMin = coordinateList[j * 2 + 1][0]
+            for k in range(len(splitXList[j])):  # 依次考察各个点
+                x = splitXList[j][k]
+                y = splitYList[j][k]
+                # x * (yMax - yMin) - (y - moveDistance) * (xMax - xMin) - xMin * (yMax - yMin) + yMin * (xMax - xMin) > 0
+                if (x * deltaY - (y - self.RemoveFPFromPlotMoveDistance) * deltaX - xMin * deltaY + yMin * deltaX) >= 0:
+                    oneXList.append(x)
+                    oneYList.append(y)
+        return oneXList, oneYList

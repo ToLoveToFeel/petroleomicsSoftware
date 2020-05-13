@@ -73,6 +73,10 @@ class SetupInterface:
         self.RemoveFPContinue_CNum = None  # 连续碳数
         # 0~100（整数）
         self.RemoveFPContinue_DBENum = None
+        # false/true
+        self.RemoveFPFromPlot6Need = None  # 是否需要根据Retention time vs carbon number去假阳性
+        # 直线的截距
+        self.RemoveFPFromPlotMoveDistance = None  # 直线的截距
 
         # 峰检测全过程所需要的数据  0~1000000(整数)
         self.PeakDivNoiseThreshold = None  # 噪音阈值
@@ -807,7 +811,7 @@ class SetupInterface:
         self.RemoveFalsePositiveDefaultParameters(parameters)
 
         # 创建QDialog
-        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 45, 20)
+        self.RemoveFPDialog = self.CreateDialog("去假阳性参数设置", 45, 30)
 
         # PsRemoveFPId二选一按钮
         RemoveFPQRadioButton1 = QRadioButton("去同位素后的文件")
@@ -828,6 +832,14 @@ class SetupInterface:
         # RemoveFPContinue_DBENum对话框
         RemoveFPEdit2 = self.IntQLineEdit(ConstValues.PsRemoveFPContinue_DBENumMin, ConstValues.PsRemoveFPContinue_DBENumMax, str(self.RemoveFPContinue_DBENum))
         RemoveFPEdit2.textChanged.connect(lambda: self.HandleTextChangedRemoveFalsePositive("Continuity DBE Num", RemoveFPEdit2))
+        # 只有一个多选框，是否需要根据 Retention time vs carbon number 去假阳性
+        RemoveFPBoxFromPlot = QCheckBox("Enable")  # self.PeakDivNeedMerge
+        RemoveFPBoxFromPlot.setFont(QFont(ConstValues.PsSetupFontType, ConstValues.PsSetupFontSize))  # 设置字体
+        RemoveFPBoxFromPlot.setChecked(self.RemoveFPFromPlot6Need)  # 设置初始勾选
+        RemoveFPBoxFromPlot.stateChanged.connect(lambda: self.RemoveFalsePositiveCheckboxState(RemoveFPBoxFromPlot))  # 绑定槽函数
+        # MoveDistance 对话框
+        self.RemoveFPEdit3 = self.IntQLineEdit(ConstValues.PsRemoveFPFromPlotMoveDistanceMin, ConstValues.PsRemoveFPFromPlotMoveDistanceMax, str(self.RemoveFPFromPlotMoveDistance))
+        self.RemoveFPEdit3.textChanged.connect(lambda: self.HandleTextChangedRemoveFalsePositive("MoveDistance", self.RemoveFPEdit3))
 
         # 创建按钮
         peakDistinguishButton1 = QPushButton("确定")
@@ -849,15 +861,23 @@ class SetupInterface:
         # 第三行内容，Continuity DBE Num
         layout.addWidget(self.GetQLabel("Continuity DBE Num(" + str(ConstValues.PsRemoveFPContinue_DBENumMin) + "~" + str(ConstValues.PsRemoveFPContinue_DBENumMax) + ") :"), 2, 0, 1, 3)
         layout.addWidget(RemoveFPEdit2, 2, 3, 1, 3)
+        # 第4行内容，是否需要根据 Retention time vs carbon number 去假阳性
+        layout.addWidget(self.GetQLabel("是否根据Retention time vs carbon number特点去假阳性："), 3, 0, 1, 5)
+        layout.addWidget(RemoveFPBoxFromPlot, 3, 5, 1, 1)
+        # 第五行内容，MoveDistance
+        layout.addWidget(self.GetQLabel("MoveDistance(" + str(ConstValues.PsRemoveFPFromPlotMoveDistanceMin) + "~" + str(ConstValues.PsRemoveFPFromPlotMoveDistanceMax) + ") :"), 4, 0, 1, 3)
+        layout.addWidget(self.RemoveFPEdit3, 4, 3, 1, 3)
         # 最后一行内容，按钮行
-        layout.addWidget(peakDistinguishButton1, 3, 4)
-        layout.addWidget(peakDistinguishButton2, 3, 5)
+        layout.addWidget(peakDistinguishButton1, 5, 4)
+        layout.addWidget(peakDistinguishButton2, 5, 5)
 
         self.RemoveFPDialog.exec()
         # 返回值类型：list
         retList = [self.RemoveFPId,  # 决定选择哪一个文件 1：self.DelIsoResult 或者 2：self.PeakDisResult
                    self.RemoveFPContinue_CNum,
-                   self.RemoveFPContinue_DBENum
+                   self.RemoveFPContinue_DBENum,
+                   self.RemoveFPFromPlot6Need,
+                   self.RemoveFPFromPlotMoveDistance
                   ]
         return retList
 
@@ -870,6 +890,10 @@ class SetupInterface:
         self.RemoveFPContinue_CNum = parameters[1]
         # 1~100(整数)
         self.RemoveFPContinue_DBENum = parameters[2]
+        # false/true
+        self.RemoveFPFromPlot6Need = parameters[3]  # 是否需要根据Retention time vs carbon number去假阳性
+        # 直线的截距
+        self.RemoveFPFromPlotMoveDistance = parameters[4]  # 直线的截距
 
     # 用户输入文本后，会进入这个函数处理
     def HandleTextChangedRemoveFalsePositive(self, DBType, edit):
@@ -878,6 +902,8 @@ class SetupInterface:
                 self.RemoveFPContinue_CNum = int(edit.text())
             elif DBType == "Continuity DBE Num":
                 self.RemoveFPContinue_DBENum = int(edit.text())
+            elif DBType == "MoveDistance":
+                self.RemoveFPFromPlotMoveDistance = int(edit.text())
 
     # HBC：HandleButtonClicked 用户点击确认/取消后，会进入这个函数处理
     def HBCRemoveFalsePositive(self, parameters, isOK):
@@ -892,6 +918,8 @@ class SetupInterface:
                 PromptBox().warningMessage("Continuity C Num输入不合法！")
             elif inputState == 3:
                 PromptBox().warningMessage("Continuity DBE Num输入不合法！")
+            elif inputState == 4:
+                PromptBox().warningMessage("MoveDistance输入不合法！")
 
     # 单选按钮
     def RemoveFalsePositiveQRadioButton(self, radioButton):
@@ -906,6 +934,11 @@ class SetupInterface:
             else:
                 self.RemoveFPId = 1
 
+    # 勾选按钮，是否根据 Retention time vs carbon number 去假阳性
+    def RemoveFalsePositiveCheckboxState(self, cb):
+        self.RemoveFPFromPlot6Need = cb.isChecked()
+        self.RemoveFPEdit3.setEnabled(self.RemoveFPFromPlot6Need)
+
     # 参数合法性检查
     def RemoveFalsePositiveIsParameterValidate(self):
         # 合法返回1，不合法返回对应的代码
@@ -915,6 +948,9 @@ class SetupInterface:
         # 判断self.RemoveFPContinue_DBENum 是否合法，对应代码3
         if not (ConstValues.PsRemoveFPContinue_DBENumMin <= self.RemoveFPContinue_DBENum <= ConstValues.PsRemoveFPContinue_DBENumMax):
             return 3
+        # 判断self.RemoveFPFromPlotMoveDistance 是否合法，对应代码4
+        if not (ConstValues.PsRemoveFPFromPlotMoveDistanceMin <= self.RemoveFPFromPlotMoveDistance <= ConstValues.PsRemoveFPFromPlotMoveDistanceMax):
+            return 4
         # 合法
         return 1
 
@@ -1848,6 +1884,8 @@ class SetupInterface:
                     self.PlotSubUI_6ListWidget2.setItemWidget(listWidgetItem, globals()["radioBox_6_2" + str(key) + str(num)])
                     # 关联槽函数
                     globals()["radioBox_6_2" + str(key) + str(num)].clicked.connect(lambda: self.PlotSubUI_6RadioButtonDBE(key))
+                # 更新类别
+                self.PlotClassItem[0] = key
                 # C数更新值
                 self.PlotDBENum = self.PlotDictionary[key][0]
                 # 默认勾选第一个

@@ -713,12 +713,18 @@ class MainWin(QMainWindow):
         self.RemoveFPContinue_CNum = ConstValues.PsRemoveFPContinue_CNum  # 连续碳数
         # 0~100（整数）
         self.RemoveFPContinue_DBENum = ConstValues.PsRemoveFPContinue_DBENum  # 连续DBE数
+        # false/true
+        self.RemoveFPFromPlot6Need = ConstValues.PsRemoveFPFromPlot6Need  # 是否需要根据Retention time vs carbon number去假阳性
+        # 直线的截距
+        self.RemoveFPFromPlotMoveDistance = ConstValues.PsRemoveFPFromPlotMoveDistance  # 直线的截距
         self.RemoveFPList = [
                                  self.DelIsoResult,
                                  self.PeakDisResult,
                                  self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
                                  self.RemoveFPContinue_CNum,
-                                 self.RemoveFPContinue_DBENum
+                                 self.RemoveFPContinue_DBENum,
+                                 self.RemoveFPFromPlot6Need,
+                                 self.RemoveFPFromPlotMoveDistance
                              ]
         # 结果是一个列表，有两个元素
         # 第一个所有类别去假阳性的结果，二维列表，或者1：去同位素之后的内容，或者2：峰识别之后的内容 都有表头
@@ -1746,6 +1752,8 @@ class MainWin(QMainWindow):
             self.RemoveFPId = newParameters[0]
             self.RemoveFPContinue_CNum = newParameters[1]
             self.RemoveFPContinue_DBENum = newParameters[2]
+            self.RemoveFPFromPlot6Need = newParameters[3]
+            self.RemoveFPFromPlotMoveDistance = newParameters[4]
             self.UpdateList()
 
             if ConstValues.PsIsDebug:
@@ -2317,7 +2325,9 @@ class MainWin(QMainWindow):
             self.PeakDisResult,
             self.RemoveFPId,  # 决定选择哪一个文件：self.DelIsoResult 或者 self.PeakDisResult
             self.RemoveFPContinue_CNum,
-            self.RemoveFPContinue_DBENum
+            self.RemoveFPContinue_DBENum,
+            self.RemoveFPFromPlot6Need,
+            self.RemoveFPFromPlotMoveDistance
         ]
         self.PeakDivList = [
             self.RemoveFPId,  # 判断选择了哪一个文件：self.DelIsoResult 或者 self.PeakDisResult

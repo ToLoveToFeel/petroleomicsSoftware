@@ -245,6 +245,12 @@ class ConstValues:
     PsRemoveFPContinue_DBENum = 2
     PsRemoveFPContinue_DBENumMin = 1
     PsRemoveFPContinue_DBENumMax = 100
+    # false/true
+    PsRemoveFPFromPlot6Need = True  # 是否需要根据 Retention time vs carbon number去假阳性
+    # 直线的截距
+    PsRemoveFPFromPlotMoveDistance = 60
+    PsRemoveFPFromPlotMoveDistanceMin = -1000
+    PsRemoveFPFromPlotMoveDistanceMax = 1000
 
     # 峰检测全过程所需要的数据，必须 PsPeakDisClassIsNeed=True，峰检测过程才有效
     # 0~1000000(整数)
@@ -322,4 +328,10 @@ class ConstValues:
         v1.6相对于v1.5的变化：
             （1）ClassPlot添加一种图形绘制
     """
-    PsSoftwareEdition = " v1.6"
+    """
+        v1.7相对于v1.6的变化：
+            （1）Retention time vs carbon number去假阳性
+            （2）Retention time vs carbon number设置中勾选其他类型未更新参数：self.PlotClassItem
+            （3）ClassRemoveFalsePositive.py 增加根据 Retention time vs carbon number去假阳性
+    """
+    PsSoftwareEdition = " v1.7"
